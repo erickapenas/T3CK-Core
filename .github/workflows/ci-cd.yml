@@ -1,0 +1,273 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '20'
+
+jobs:
+  lint-and-format:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run ESLint
+        run: pnpm lint
+      
+      - name: Check Prettier
+        run: pnpm format --check
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Type check
+        run: pnpm type-check
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run tests
+        run: pnpm test
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, type-check]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build packages
+        run: pnpm build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            packages/*/dist
+            services/*/dist
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build
+        run: pnpm build
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Build and push Docker images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_AUTH: t3ck/auth-service
+          ECR_REPOSITORY_WEBHOOK: t3ck/webhook-service
+          ECR_REPOSITORY_TENANT: t3ck/tenant-service
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_AUTH:staging -f services/auth-service/Dockerfile services/auth-service/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_AUTH:staging
+          
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_WEBHOOK:staging -f services/webhook-service/Dockerfile services/webhook-service/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_WEBHOOK:staging
+          
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_TENANT:staging -f services/tenant-service/Dockerfile services/tenant-service/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_TENANT:staging
+      
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster t3ck-cluster --service auth-service --force-new-deployment
+          aws ecs update-service --cluster t3ck-cluster --service webhook-service --force-new-deployment
+          aws ecs update-service --cluster t3ck-cluster --service tenant-service --force-new-deployment
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run E2E tests
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+        run: pnpm test:e2e
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build
+        run: pnpm build
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Build and push Docker images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_AUTH: t3ck/auth-service
+          ECR_REPOSITORY_WEBHOOK: t3ck/webhook-service
+          ECR_REPOSITORY_TENANT: t3ck/tenant-service
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_AUTH:latest -f services/auth-service/Dockerfile services/auth-service/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_AUTH:latest
+          
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_WEBHOOK:latest -f services/webhook-service/Dockerfile services/webhook-service/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_WEBHOOK:latest
+          
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_TENANT:latest -f services/tenant-service/Dockerfile services/tenant-service/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_TENANT:latest
+      
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster t3ck-cluster --service auth-service --force-new-deployment
+          aws ecs update-service --cluster t3ck-cluster --service webhook-service --force-new-deployment
+          aws ecs update-service --cluster t3ck-cluster --service tenant-service --force-new-deployment

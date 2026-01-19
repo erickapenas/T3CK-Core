@@ -1,0 +1,23 @@
+{
+  "name": "@t3ck/cdk",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for T3CK platform",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "deploy": "cdk deploy",
+    "synth": "cdk synth",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "aws-cdk": "^2.100.0"
+  }
+}

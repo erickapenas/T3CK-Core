@@ -1,0 +1,25 @@
+{
+  "name": "@t3ck/sdk",
+  "version": "1.0.0",
+  "description": "SDK interno T3CK para operações de cart, catalog, checkout e settings",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@t3ck/provisioning-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda for T3CK provisioning workflow orchestration",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc -w",
+    "clean": "rm -rf dist/ *.js *.d.ts",
+    "prebuild": "npm run clean"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1500.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.26",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

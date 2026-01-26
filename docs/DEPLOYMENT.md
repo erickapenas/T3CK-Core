@@ -1,52 +1,165 @@
-# Guia de Deploy
+# 🚀 T3CK Production Deployment Guide
 
-## Deploy Automático
+## Visão Geral
 
-O deploy é automatizado via GitHub Actions:
+O pipeline de CI/CD do T3CK implementa um processo robusto, seguro e rastreável para deployment em produção, com blue-green deployment, smoke tests automáticos e rollback inteligente.
 
-- **Staging**: Push para `develop` → deploy automático
-- **Production**: Push para `main` → deploy manual (requer aprovação)
+## 📊 Fluxo Simplificado
 
-## Deploy Manual
-
-### Build
-
-```bash
-pnpm install
-pnpm build
+```
+develop branch → STAGING (automático) → E2E tests → ✅
+main branch → APPROVAL GATE → PRODUCTION (blue-green) → SMOKE TESTS → ROLLBACK (if fail)
 ```
 
-### Build Docker Images
+## 🔄 Branches
 
-```bash
-docker build -t t3ck/auth-service:latest -f services/auth-service/Dockerfile .
-docker build -t t3ck/webhook-service:latest -f services/webhook-service/Dockerfile .
-docker build -t t3ck/tenant-service:latest -f services/tenant-service/Dockerfile .
+| Branch | Destino | Deploy | Approval | Testes |
+|--------|---------|--------|----------|--------|
+| `develop` | Staging | Automático | Não | E2E |
+| `main` | Production | Manual | Sim | Smoke + Health |
+
+## ✨ Recursos Implementados
+
+### 1. Quality Gates (Before Deploy)
+- ✅ ESLint (code style)
+- ✅ Prettier (formatting)
+- ✅ TypeScript (type safety)
+- ✅ Jest (unit tests, 80% coverage)
+- ✅ Snyk (security scanning)
+
+### 2. Blue-Green Deployment
+- Two versions running in parallel
+- Zero downtime switching
+- Instant rollback capability
+
+### 3. Smoke Tests (Automatic)
+- Health endpoints check
+- Authentication flow validation
+- Webhook service connectivity
+- Service stability verification
+
+### 4. Automatic Rollback
+- Detects failures
+- Reverts to previous version
+- Stabilizes services
+- Notifies via Slack
+
+### 5. Manual Approval for Production
+- Required code reviews (1+ approvals)
+- Manual approval in GitHub Actions
+- Full audit trail
+
+### 6. Slack Notifications
+- Deployment started
+- Deployment succeeded
+- Deployment failed
+- Automatic rollback triggered
+
+## 📝 Quick Setup
+
+### 1. Configure Secrets (see `.github/SECRETS.md`)
+```
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+STAGING_URL (environment: staging)
+PROD_URL (environment: production)
+SLACK_WEBHOOK (optional)
 ```
 
-### Push para ECR
+### 2. Configure GitHub Environments
+- `Settings → Environments → staging` (auto-deploy)
+- `Settings → Environments → production` (manual approval)
 
-```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+### 3. Verify IAM Permissions
+- ECR: push/pull
+- ECS: describe/update
+- CloudWatch: logs access
 
-docker tag t3ck/auth-service:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/t3ck/auth-service:latest
-docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/t3ck/auth-service:latest
+See `.github/SECRETS.md` for complete IAM policy
+
+## 🔧 Operations
+
+### Deploy Process
+1. ✅ Lint & Format check passes
+2. ✅ Type check passes
+3. ✅ Unit tests pass
+4. ✅ Build succeeds
+5. 🎯 Deploy to staging (develop) OR wait approval (main)
+6. ✅ E2E tests pass (staging)
+7. ✅ Smoke tests pass (production)
+8. ✅ Health checks pass
+9. ✨ Deployment complete!
+
+### Manual Approval (Production Only)
+```
+GitHub.com → Repository → Actions → [Workflow Run]
+→ Review Deployments → Approve and deploy
 ```
 
-### Deploy no ECS
+### Rollback Script
 
+**Linux/macOS:**
 ```bash
-aws ecs update-service --cluster t3ck-cluster --service auth-service --force-new-deployment
+./scripts/rollback-production.sh auth-service           # Rollback to previous
+./scripts/rollback-production.sh auth-service abc123    # Rollback to commit
+./scripts/rollback-production.sh all                    # Rollback all
 ```
 
-## Rollback
+**Windows:**
+```powershell
+.\scripts\rollback-production.ps1 -Service auth-service
+.\scripts\rollback-production.ps1 -Service auth-service -CommitSha abc123
+.\scripts\rollback-production.ps1 -Service all
+```
 
-Em caso de problemas:
-
+### Check Status
 ```bash
-# Listar revisões anteriores
+# CloudWatch logs
+aws logs tail /aws/ecs/t3ck-cluster --follow
+
+# ECS service status
 aws ecs describe-services --cluster t3ck-cluster --services auth-service
 
-# Fazer rollback para revisão anterior
-aws ecs update-service --cluster t3ck-cluster --service auth-service --task-definition <previous-task-definition-arn>
+# GitHub Actions
+GitHub.com → Actions → View workflow run
 ```
+
+## 🐛 Troubleshooting
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| "Services Not Stable" | Task failed to start | Check CloudWatch logs, rollback executed |
+| "Smoke Tests Failed" | Service unresponsive | Check ALB health, security groups, rollback executed |
+| "Invalid AWS Credentials" | Expired or wrong keys | Generate new AWS keys, update secrets |
+| "ECR Image Not Found" | Docker build failed | Check build logs in GitHub Actions |
+
+## 📊 Success Metrics
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Deployment Success | > 95% | Monitor rollback rate |
+| Smoke Test Pass Rate | 100% | Auto-rollback if fail |
+| Deploy Time (staging) | < 15m | Total pipeline time |
+| Deploy Time (prod) | < 30m | Includes approval gate |
+| MTTR (Mean Time to Recover) | < 5m | Auto-rollback helps |
+
+## 🔐 Security Features
+
+✅ Secrets encrypted at rest
+✅ Manual approval for production
+✅ Automatic rollback on failure
+✅ Blue-green deployment (zero downtime)
+✅ Health checks after deployment
+✅ Audit trail of all deployments
+✅ Credentials rotated every 90 days
+
+## 📚 Full Documentation
+
+- Secrets: `.github/SECRETS.md`
+- Infrastructure: `/infrastructure/cdk/README.md`
+- Terraform: `/infrastructure/terraform/README.md`
+- GitHub Actions: `https://docs.github.com/en/actions`
+
+---
+
+**Last Updated:** January 2026 | **Status:** ✅ Production Ready

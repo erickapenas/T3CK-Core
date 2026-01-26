@@ -1,3 +1,4 @@
+import { ProvisioningStateMachine } from './provisioning-state-machine';
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
@@ -332,5 +333,111 @@ export class T3CKStack extends cdk.Stack {
       value: eventBus.eventBusName,
       description: 'EventBridge Event Bus Name',
     });
-  }
-}
+
+    // =========================================================================
+    // PROVISIONING STATE MACHINE INTEGRATION
+    // =========================================================================
+    
+    // Create Lambda functions for state machine tasks
+    const terraformLambda = new lambda.Function(this, 'TerraformLambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/provisioning'),
+      role: props?.lambdaRoleArn
+        ? lambda.Role.fromRoleArn(this, 'TerraformLambdaRole', props.lambdaRoleArn)
+        : undefined,
+      timeout: cdk.Duration.minutes(10),
+      memorySize: 512,
+      environment: {
+        PROVISIONING_TYPE: 'terraform',
+      },
+    });
+
+    const cdkLambda = new lambda.Function(this, 'CDKLambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/provisioning'),
+      role: props?.lambdaRoleArn
+        ? lambda.Role.fromRoleArn(this, 'CDKLambdaRole', props.lambdaRoleArn)
+        : undefined,
+      timeout: cdk.Duration.minutes(15),
+      memorySize: 1024,
+      environment: {
+        PROVISIONING_TYPE: 'cdk',
+      },
+    });
+
+    const firebaseConfigLambda = new lambda.Function(this, 'FirebaseConfigLambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/provisioning'),
+      role: props?.lambdaRoleArn
+        ? lambda.Role.fromRoleArn(this, 'FirebaseConfigLambdaRole', props.lambdaRoleArn)
+        : undefined,
+      timeout: cdk.Duration.minutes(5),
+      memorySize: 256,
+      environment: {
+        PROVISIONING_TYPE: 'firebase',
+      },
+    });
+
+    const route53ConfigLambda = new lambda.Function(this, 'Route53ConfigLambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/provisioning'),
+      role: props?.lambdaRoleArn
+        ? lambda.Role.fromRoleArn(this, 'Route53ConfigLambdaRole', props.lambdaRoleArn)
+        : undefined,
+      timeout: cdk.Duration.minutes(3),
+      memorySize: 256,
+      environment: {
+        PROVISIONING_TYPE: 'route53',
+      },
+    });
+
+    const healthCheckLambda = new lambda.Function(this, 'HealthCheckLambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/provisioning'),
+      role: props?.lambdaRoleArn
+        ? lambda.Role.fromRoleArn(this, 'HealthCheckLambdaRole', props.lambdaRoleArn)
+        : undefined,
+      timeout: cdk.Duration.minutes(10),
+      memorySize: 256,
+      environment: {
+        PROVISIONING_TYPE: 'healthcheck',
+      },
+    });
+
+    // Create the provisioning state machine
+    const provisioningStateMachine = new ProvisioningStateMachine(
+      this,
+      'ProvisioningStateMachine',
+      {
+        terraformLambda,
+        cdkLambda,
+        firebaseConfigLambda,
+        route53ConfigLambda,
+        healthCheckLambda,
+      }
+    );
+
+    // Export state machine and DLQ information
+    new cdk.CfnOutput(this, 'ProvisioningStateMachineArn', {
+      value: provisioningStateMachine.stateMachine.stateMachineArn,
+      description: 'Provisioning State Machine ARN',
+      exportName: 't3ck-provisioning-state-machine-arn',
+    });
+
+    new cdk.CfnOutput(this, 'ProvisioningDLQUrl', {
+      value: provisioningStateMachine.dlqQueue.queueUrl,
+      description: 'Provisioning DLQ URL',
+      exportName: 't3ck-provisioning-dlq-url',
+    });
+
+    new cdk.CfnOutput(this, 'ProvisioningSuccessTopicArn', {
+      value: provisioningStateMachine.successTopic.topicArn,
+      description: 'Provisioning Success Notification Topic ARN',
+      exportName: 't3ck-provisioning-success-topic-arn',
+    });
+  }}

@@ -5,13 +5,17 @@
   "description": "Plataforma T3CK Core - Multi-tenant SaaS Platform",
   "workspaces": [
     "packages/*",
-    "services/*"
+    "services/*",
+    "e2e"
   ],
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "test:watch": "pnpm -r test --watch",
     "test:coverage": "jest --coverage",
+    "test:e2e": "pnpm --filter @t3ck/e2e-tests test",
+    "test:e2e:staging": "pnpm --filter @t3ck/e2e-tests test:staging",
+    "test:e2e:production": "pnpm --filter @t3ck/e2e-tests test:production",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",

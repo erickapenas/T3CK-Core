@@ -1,5 +1,5 @@
 import { T3CKClient } from './client';
-import { Cart, CartItem, Product, ApiResponse } from './types';
+import { Cart, Product, ApiResponse } from './types';
 
 export class CartModule {
   constructor(private client: T3CKClient) {}

@@ -1,4 +1,3 @@
-import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { WebhookManager } from './webhook-manager';
 import { Logger } from '@t3ck/shared';
 
@@ -6,7 +5,6 @@ export interface EventBridgeEvent {
   source: string;
   'detail-type': string;
   detail: Record<string, unknown>;
-  'detail-type': string;
 }
 
 export class EventHandler {

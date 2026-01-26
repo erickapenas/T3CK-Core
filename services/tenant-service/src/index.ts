@@ -31,7 +31,7 @@ app.post('/provisioning/submit', async (req: Request, res: Response) => {
       domain: form.domain,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: tenant,
       message: 'Form submitted successfully. Provisioning will begin shortly.',
@@ -46,7 +46,7 @@ app.post('/provisioning/submit', async (req: Request, res: Response) => {
       });
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to submit provisioning form',
     });

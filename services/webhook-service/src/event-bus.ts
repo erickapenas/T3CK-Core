@@ -1,8 +1,6 @@
 import {
   EventBridgeClient,
   PutEventsCommand,
-  CreateRuleCommand,
-  PutTargetsCommand,
 } from '@aws-sdk/client-eventbridge';
 import { Logger } from '@t3ck/shared';
 
@@ -52,44 +50,6 @@ export class EventBus {
       });
     } catch (error) {
       this.logger.error('Failed to publish event', { error, event });
-      throw error;
-    }
-  }
-
-  async createRule(ruleName: string, eventPattern: Record<string, unknown>): Promise<void> {
-    try {
-      const command = new CreateRuleCommand({
-        Name: ruleName,
-        EventBusName: this.busName,
-        EventPattern: JSON.stringify(eventPattern),
-        State: 'ENABLED',
-      });
-
-      await this.client.send(command);
-      this.logger.info('Event rule created', { ruleName });
-    } catch (error) {
-      this.logger.error('Failed to create event rule', { error, ruleName });
-      throw error;
-    }
-  }
-
-  async addTargetToRule(ruleName: string, targetArn: string): Promise<void> {
-    try {
-      const command = new PutTargetsCommand({
-        Rule: ruleName,
-        EventBusName: this.busName,
-        Targets: [
-          {
-            Id: '1',
-            Arn: targetArn,
-          },
-        ],
-      });
-
-      await this.client.send(command);
-      this.logger.info('Target added to rule', { ruleName, targetArn });
-    } catch (error) {
-      this.logger.error('Failed to add target to rule', { error, ruleName });
       throw error;
     }
   }

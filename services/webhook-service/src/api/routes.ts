@@ -1,8 +1,8 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, Router } from 'express';
 import { WebhookManager } from '../webhook-manager';
 import { Logger } from '@t3ck/shared';
 
-const router = express.Router();
+const router: Router = express.Router();
 const webhookManager = new WebhookManager();
 const logger = new Logger('webhook-api');
 
@@ -29,10 +29,10 @@ router.post('/webhooks', async (req: Request, res: Response) => {
       retryCount: 0,
     });
 
-    res.status(201).json({ data: webhook });
+    return res.status(201).json({ data: webhook });
   } catch (error) {
     logger.error('Failed to create webhook', { error });
-    res.status(500).json({ error: 'Failed to create webhook' });
+    return res.status(500).json({ error: 'Failed to create webhook' });
   }
 });
 
@@ -45,10 +45,10 @@ router.get('/webhooks', async (req: Request, res: Response) => {
     }
 
     const webhooks = await webhookManager.getWebhooksByTenant(tenantId);
-    res.json({ data: webhooks });
+    return res.json({ data: webhooks });
   } catch (error) {
     logger.error('Failed to list webhooks', { error });
-    res.status(500).json({ error: 'Failed to list webhooks' });
+    return res.status(500).json({ error: 'Failed to list webhooks' });
   }
 });
 
@@ -62,10 +62,10 @@ router.get('/webhooks/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Webhook not found' });
     }
 
-    res.json({ data: webhook });
+    return res.json({ data: webhook });
   } catch (error) {
     logger.error('Failed to get webhook', { error });
-    res.status(500).json({ error: 'Failed to get webhook' });
+    return res.status(500).json({ error: 'Failed to get webhook' });
   }
 });
 
@@ -81,10 +81,10 @@ router.put('/webhooks/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Webhook not found' });
     }
 
-    res.json({ data: webhook });
+    return res.json({ data: webhook });
   } catch (error) {
     logger.error('Failed to update webhook', { error });
-    res.status(500).json({ error: 'Failed to update webhook' });
+    return res.status(500).json({ error: 'Failed to update webhook' });
   }
 });
 
@@ -98,10 +98,10 @@ router.delete('/webhooks/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Webhook not found' });
     }
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
     logger.error('Failed to delete webhook', { error });
-    res.status(500).json({ error: 'Failed to delete webhook' });
+    return res.status(500).json({ error: 'Failed to delete webhook' });
   }
 });
 
@@ -112,10 +112,10 @@ router.get('/webhooks/:id/logs', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 50;
 
     const logs = await webhookManager.getDeliveryLogs(id, limit);
-    res.json({ data: logs });
+    return res.json({ data: logs });
   } catch (error) {
     logger.error('Failed to get webhook logs', { error });
-    res.status(500).json({ error: 'Failed to get webhook logs' });
+    return res.status(500).json({ error: 'Failed to get webhook logs' });
   }
 });
 

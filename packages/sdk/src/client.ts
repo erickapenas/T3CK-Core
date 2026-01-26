@@ -4,10 +4,8 @@ import { ClientConfig, ApiError } from './types';
 export class T3CKClient {
   private client: AxiosInstance;
   private retries: number;
-  private baseUrl: string;
 
   constructor(config: ClientConfig) {
-    this.baseUrl = config.baseUrl;
     this.retries = config.retries ?? 3;
 
     this.client = axios.create({

@@ -71,8 +71,7 @@ export class FraudDetectionService {
 
   async detectAnomalies(
     userId: string,
-    ip: string,
-    userAgent: string
+    ip: string
   ): Promise<{ suspicious: boolean; reasons: string[] }> {
     const reasons: string[] = [];
 

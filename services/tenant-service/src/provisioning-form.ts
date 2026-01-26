@@ -1,4 +1,4 @@
-import { Logger, ValidationError } from '@t3ck/shared';
+import { ValidationError } from '@t3ck/shared';
 import { validateEmail, validateTenantId } from '@t3ck/shared/src/validation';
 
 export enum ProvisioningStatus {
@@ -30,11 +30,7 @@ export interface Tenant {
 }
 
 export class ProvisioningFormService {
-  private logger: Logger;
-
-  constructor() {
-    this.logger = new Logger('provisioning-form');
-  }
+  constructor() {}
 
   validateForm(form: Partial<ProvisioningForm>): void {
     const errors: string[] = [];

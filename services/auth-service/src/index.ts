@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth';
 import { EncryptionService } from './encryption';
 import { RateLimiter } from './rate-limiter';
-import { FraudDetectionService } from './fraud-detection';
 import { Logger } from '@t3ck/shared';
 import { initializeFirebase } from './firebase-init';
 
@@ -15,7 +14,6 @@ app.use(express.json());
 const authService = new AuthService();
 const encryptionService = new EncryptionService();
 const rateLimiter = new RateLimiter();
-const fraudDetection = new FraudDetectionService();
 const logger = new Logger('auth-service');
 
 // Middleware de rate limiting

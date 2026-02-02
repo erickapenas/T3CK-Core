@@ -1,9 +1,7 @@
 import {
   validateEmail,
-  validateUUID,
   validateTenantId,
   validateRequired,
-  validateMinLength,
 } from '../validation';
 
 describe('Validation utilities', () => {

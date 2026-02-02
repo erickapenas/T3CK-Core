@@ -9,6 +9,9 @@ on:
     branches:
       - main
       - develop
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 2 * * *' # daily at 02:00 UTC
 
 env:
   AWS_REGION: us-east-1
@@ -352,3 +355,47 @@ jobs:
           text: '❌ Production deployment failed - automatic rollback triggered'
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
           fields: repo,message,commit,author
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    # Run on main merges, manual dispatch or scheduled runs
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "ENV=production" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run integration/E2E tests
+        env:
+          ENVIRONMENT: ${{ steps.env.outputs.ENV }}
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+          PROD_URL: ${{ secrets.PROD_URL }}
+        run: |
+          if [ "${{ steps.env.outputs.ENV }}" = "production" ]; then
+            pnpm test:e2e:production || exit 1
+          else
+            pnpm test:e2e:staging || exit 1
+          fi

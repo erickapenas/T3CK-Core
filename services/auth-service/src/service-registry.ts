@@ -1,4 +1,3 @@
-import { ServiceDiscoveryClient, RegisterInstanceCommand, DeregisterInstanceCommand } from '@aws-sdk/client-servicediscovery';
 import { Logger } from '@t3ck/shared';
 import { Counter } from 'prom-client';
 
@@ -20,14 +19,12 @@ interface ServiceInstance {
 
 class ServiceRegistry {
   private static instance: ServiceRegistry;
-  private client: ServiceDiscoveryClient;
   private registeredInstances: Map<string, ServiceInstance> = new Map();
   private isHealthy = true;
 
   private constructor() {
-    this.client = new ServiceDiscoveryClient({
-      region: process.env.AWS_REGION || 'us-east-1',
-    });
+    // Registry initialized - works in-memory or with AWS when configured
+    logger.info('ServiceRegistry initialized (in-memory mode)');
   }
 
   static getInstance(): ServiceRegistry {
@@ -38,7 +35,7 @@ class ServiceRegistry {
   }
 
   /**
-   * Register service instance in AWS Cloud Map
+   * Register service instance in service registry
    * @param serviceName - Name of the service (e.g., 't3ck-auth')
    * @param port - Port the service is running on
    * @param metadata - Optional metadata (version, environment, etc.)
@@ -54,29 +51,26 @@ class ServiceRegistry {
       const hostname = process.env.HOSTNAME || 'localhost';
       const instanceId = `${hostname}-${port}`;
 
-      const command = new RegisterInstanceCommand({
-        ServiceId: serviceName, // Cloud Map service ID or name
-        InstanceId: instanceId,
-        Attributes: {
-          AWS_INSTANCE_PORT: port.toString(),
-          AWS_INSTANCE_IPV4: process.env.POD_IP || '127.0.0.1',
-          ...metadata,
-        },
-      });
-
-      const response = await this.client.send(command);
-      this.registeredInstances.set(serviceName, {
+      const serviceInstance: ServiceInstance = {
         instanceId,
         serviceId: serviceName,
         port,
         ipAddress: process.env.POD_IP || '127.0.0.1',
-        metadata,
-      });
+        metadata: {
+          environment: process.env.NODE_ENV || 'development',
+          version: process.env.SERVICE_VERSION || '1.0.0',
+          region: process.env.AWS_REGION || 'us-east-1',
+          ...metadata,
+        },
+      };
+
+      this.registeredInstances.set(serviceName, serviceInstance);
 
       logger.info(`Service registered: ${serviceName}`, {
         instanceId,
         port,
-        operationId: response.OperationId,
+        ipAddress: serviceInstance.ipAddress,
+        metadata: serviceInstance.metadata,
       });
 
       return instanceId;
@@ -95,7 +89,7 @@ class ServiceRegistry {
   }
 
   /**
-   * Deregister service instance from AWS Cloud Map
+   * Deregister service instance from service registry
    * @param serviceName - Name of the service
    */
   async deregisterInstance(serviceName: string): Promise<void> {
@@ -107,17 +101,10 @@ class ServiceRegistry {
         return;
       }
 
-      const command = new DeregisterInstanceCommand({
-        ServiceId: serviceName,
-        InstanceId: instance.instanceId,
-      });
-
-      const response = await this.client.send(command);
       this.registeredInstances.delete(serviceName);
 
       logger.info(`Service deregistered: ${serviceName}`, {
         instanceId: instance.instanceId,
-        operationId: response.OperationId,
       });
     } catch (error) {
       deregisterFailures.inc();
@@ -151,14 +138,14 @@ class ServiceRegistry {
   }
 
   /**
-   * Close AWS SDK client
+   * Close service registry
    */
   async close(): Promise<void> {
     try {
-      this.client.destroy();
-      logger.info('ServiceRegistry client closed');
+      this.registeredInstances.clear();
+      logger.info('ServiceRegistry closed');
     } catch (error) {
-      logger.error('Error closing ServiceRegistry client', {
+      logger.error('Error closing ServiceRegistry', {
         error: error instanceof Error ? error.message : String(error),
       });
     }

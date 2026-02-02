@@ -1,13 +1,13 @@
 import express, { Request, Response, Router } from 'express';
 import { WebhookManager } from '../webhook-manager';
-import { Logger } from '@t3ck/shared';
+import { Logger, validateRequest, CreateWebhookSchema, UpdateWebhookSchema } from '@t3ck/shared';
 
 const router: Router = express.Router();
 const webhookManager = new WebhookManager();
 const logger = new Logger('webhook-api');
 
 // Criar webhook
-router.post('/webhooks', async (req: Request, res: Response) => {
+router.post('/webhooks', validateRequest(CreateWebhookSchema), async (req: Request, res: Response) => {
   try {
     const tenantId = req.headers['x-tenant-id'] as string;
     if (!tenantId) {
@@ -70,7 +70,7 @@ router.get('/webhooks/:id', async (req: Request, res: Response) => {
 });
 
 // Atualizar webhook
-router.put('/webhooks/:id', async (req: Request, res: Response) => {
+router.put('/webhooks/:id', validateRequest(UpdateWebhookSchema), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updates = req.body;

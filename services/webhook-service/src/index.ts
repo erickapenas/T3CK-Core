@@ -1,6 +1,6 @@
 import express from 'express';
 import routes from './api/routes';
-import { Logger } from '@t3ck/shared';
+import { Logger, getApiLimiter, getWebhookLimiter, closeRateLimiter, initializeTracing } from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
@@ -8,8 +8,12 @@ import { initializeCache } from './cache';
 import { initializeConfig } from './config';
 import { initializeServiceRegistry } from './service-registry';
 import { initializeBackup } from './backup';
+import { setupSwagger } from './swagger';
 
-// Initialize Sentry (must be first)
+// Initialize OpenTelemetry tracing (must be first)
+initializeTracing('webhook-service');
+
+// Initialize Sentry
 initSentry('webhook-service');
 
 const app = express();
@@ -52,6 +56,13 @@ app.get('/internal/registry', (_req, res) => {
 // Metrics endpoint
 setupMetricsEndpoint(app, '/metrics');
 
+// Swagger / OpenAPI
+setupSwagger(app, { title: 'Webhook Service API', version: process.env.SERVICE_VERSION });
+
+// Rate limiting middleware
+app.use(getApiLimiter()); // Apply API-wide rate limiter
+app.use('/api/webhooks', getWebhookLimiter()); // Stricter limit for webhook operations
+
 app.use('/api', routes);
 
 // Setup Sentry error handlers (after routes)
@@ -66,6 +77,7 @@ process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
   server.close(async () => {
     logger.info('Server closed');
+    await closeRateLimiter();
     await require('./sentry').flushSentry(2000);
     process.exit(0);
   });

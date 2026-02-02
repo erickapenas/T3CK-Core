@@ -1,8 +1,7 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import { AuthService } from './auth';
 import { EncryptionService } from './encryption';
-import { RateLimiter } from './rate-limiter';
-import { Logger } from '@t3ck/shared';
+import { Logger, validateRequest, AuthLoginSchema, AuthRefreshSchema, AuthVerifySchema, EncryptSchema, DecryptSchema, getApiLimiter, getAuthLimiter, closeRateLimiter, initializeTracing } from '@t3ck/shared';
 import { initializeFirebase } from './firebase-init';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
@@ -11,8 +10,12 @@ import { initializeCache } from './cache';
 import { initializeConfig } from './config';
 import { initializeServiceRegistry } from './service-registry';
 import { initializeBackup } from './backup';
+import { setupSwagger } from './swagger';
 
-// Initialize Sentry (must be first)
+// Initialize OpenTelemetry tracing (must be first)
+initializeTracing('auth-service');
+
+// Initialize Sentry
 initSentry('auth-service');
 
 // Inicializar Firebase
@@ -45,28 +48,7 @@ setupMetricsMiddleware(app);
 
 const authService = new AuthService();
 const encryptionService = new EncryptionService();
-const rateLimiter = new RateLimiter();
 const logger = new Logger('auth-service');
-
-// Middleware de rate limiting
-async function rateLimitMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const tenantId = req.headers['x-tenant-id'] as string;
-  const userId = req.headers['x-user-id'] as string;
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
-
-  const tenantAllowed = tenantId ? await rateLimiter.checkTenantLimit(tenantId) : true;
-  const userAllowed = userId ? await rateLimiter.checkUserLimit(userId) : true;
-  const ipAllowed = await rateLimiter.checkIPLimit(ip);
-
-  if (!tenantAllowed || !userAllowed || !ipAllowed) {
-    res.status(429).json({ error: 'Rate limit exceeded' });
-    return;
-  }
-
-  next();
-}
-
-app.use(rateLimitMiddleware);
 
 // Health checks setup
 setupHealthChecks(app);
@@ -82,8 +64,14 @@ app.get('/internal/registry', (_req, res) => {
 // Metrics endpoint
 setupMetricsEndpoint(app, '/metrics');
 
+// Swagger / OpenAPI
+setupSwagger(app, { title: 'Auth Service API', version: process.env.SERVICE_VERSION });
+
+// Rate limiting middleware
+app.use(getApiLimiter()); // Apply API-wide rate limiter
+
 // Autenticação
-app.post('/auth/login', async (req: Request, res: Response) => {
+app.post('/auth/login', getAuthLimiter(), validateRequest(AuthLoginSchema), async (req: Request, res: Response) => {
   try {
     const { provider, token, username, password } = req.body;
 
@@ -108,7 +96,7 @@ app.post('/auth/login', async (req: Request, res: Response) => {
 });
 
 // Refresh token
-app.post('/auth/refresh', async (req: Request, res: Response) => {
+app.post('/auth/refresh', validateRequest(AuthRefreshSchema), async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
     const result = await authService.refreshToken(refreshToken);
@@ -120,7 +108,7 @@ app.post('/auth/refresh', async (req: Request, res: Response) => {
 });
 
 // Verificar token
-app.post('/auth/verify', async (req: Request, res: Response) => {
+app.post('/auth/verify', validateRequest(AuthVerifySchema), async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
     const payload = await authService.verifyJWT(token);
@@ -132,7 +120,7 @@ app.post('/auth/verify', async (req: Request, res: Response) => {
 });
 
 // Criptografia de campos sensíveis
-app.post('/encrypt', async (req: Request, res: Response) => {
+app.post('/encrypt', validateRequest(EncryptSchema), async (req: Request, res: Response) => {
   try {
     const { data } = req.body;
     const encrypted = await encryptionService.encryptSensitiveFields(data);
@@ -144,7 +132,7 @@ app.post('/encrypt', async (req: Request, res: Response) => {
 });
 
 // Descriptografia de campos sensíveis
-app.post('/decrypt', async (req: Request, res: Response) => {
+app.post('/decrypt', validateRequest(DecryptSchema), async (req: Request, res: Response) => {
   try {
     const { data } = req.body;
     const decrypted = await encryptionService.decryptSensitiveFields(data);
@@ -168,6 +156,7 @@ process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
   server.close(async () => {
     logger.info('Server closed');
+    await closeRateLimiter();
     await require('./sentry').flushSentry(2000);
     process.exit(0);
   });

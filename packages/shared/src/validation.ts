@@ -1,3 +1,84 @@
+import { z, ZodSchema } from 'zod';
+
+export const validateRequest = (schema: ZodSchema) => {
+  return (req: any, res: any, next: any) => {
+    try {
+      schema.parse({ body: req.body, params: req.params, query: req.query });
+      next();
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: err.errors });
+      }
+      return res.status(400).json({ error: 'Invalid request' });
+    }
+  };
+};
+
+export const AuthLoginSchema = z.object({
+  body: z.object({
+    provider: z.string(),
+    token: z.string().optional(),
+    username: z.string().optional(),
+    password: z.string().optional(),
+  }),
+});
+
+export const ProvisioningSubmitSchema = z.object({
+  body: z.object({
+    domain: z.string().min(3),
+    companyName: z.string().min(1),
+    adminEmail: z.string().email(),
+  }),
+});
+
+export const AuthRefreshSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().min(1),
+  }),
+});
+
+export const AuthVerifySchema = z.object({
+  body: z.object({
+    token: z.string().min(1),
+  }),
+});
+
+export const EncryptSchema = z.object({
+  body: z.object({
+    data: z.record(z.any()).optional().or(z.string()),
+  }),
+});
+
+export const DecryptSchema = z.object({
+  body: z.object({
+    data: z.record(z.any()).optional().or(z.string()),
+  }),
+});
+
+export const CreateWebhookSchema = z.object({
+  body: z.object({
+    url: z.string().url(),
+    events: z.array(z.string()).min(1),
+    secret: z.string().optional(),
+  }),
+});
+
+export const UpdateWebhookSchema = z.object({
+  body: z.object({
+    url: z.string().url().optional(),
+    events: z.array(z.string()).min(1).optional(),
+    secret: z.string().optional(),
+    active: z.boolean().optional(),
+  }),
+});
+
+export const ProvisioningStatusParamSchema = z.object({
+  params: z.object({
+    tenantId: z.string().min(1),
+  }),
+});
+
+export default { validateRequest };
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);

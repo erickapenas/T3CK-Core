@@ -4,12 +4,16 @@ import { Logger } from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
+import { initializeCache } from './cache';
 
 // Initialize Sentry (must be first)
 initSentry('tenant-service');
 
 const app = express();
 app.use(express.json());
+
+// Initialize Redis cache
+initializeCache({ prefix: 'tenant:' });
 
 // Setup Prometheus metrics middleware
 setupMetricsMiddleware(app);

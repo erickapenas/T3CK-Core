@@ -7,12 +7,16 @@ import { initializeFirebase } from './firebase-init';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
+import { initializeCache } from './cache';
 
 // Initialize Sentry (must be first)
 initSentry('auth-service');
 
 // Inicializar Firebase
 initializeFirebase();
+
+// Initialize Redis cache
+initializeCache({ prefix: 'auth:' });
 
 const app = express();
 app.use(express.json());

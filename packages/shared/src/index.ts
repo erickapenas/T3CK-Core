@@ -7,4 +7,5 @@ export * from './tracing';
 export * from './queue';
 export * from './database';
 export * from './service-discovery';
+export * from './backup';
 export { Tenant } from './entities/tenant';

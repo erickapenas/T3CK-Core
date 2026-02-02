@@ -4,6 +4,7 @@ import { EncryptionService } from './encryption';
 import { RateLimiter } from './rate-limiter';
 import { Logger } from '@t3ck/shared';
 import { initializeFirebase } from './firebase-init';
+import { setupHealthChecks } from './health';
 
 // Inicializar Firebase
 initializeFirebase();
@@ -36,10 +37,8 @@ async function rateLimitMiddleware(req: Request, res: Response, next: NextFuncti
 
 app.use(rateLimitMiddleware);
 
-// Health check
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok' });
-});
+// Health checks setup
+setupHealthChecks(app);
 
 // Autenticação
 app.post('/auth/login', async (req: Request, res: Response) => {

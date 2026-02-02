@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { ProvisioningFormService, ProvisioningStatus } from './provisioning-form';
 import { Logger } from '@t3ck/shared';
+import { setupHealthChecks } from './health';
 
 const app = express();
 app.use(express.json());
@@ -8,10 +9,8 @@ app.use(express.json());
 const provisioningService = new ProvisioningFormService();
 const logger = new Logger('tenant-service');
 
-// Health check
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok' });
-});
+// Health checks setup
+setupHealthChecks(app);
 
 // Submeter formulário de provisionamento
 app.post('/provisioning/submit', async (req: Request, res: Response) => {

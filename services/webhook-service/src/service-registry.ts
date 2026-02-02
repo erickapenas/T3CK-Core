@@ -1,7 +1,14 @@
 import { ServiceDiscoveryClient, RegisterInstanceCommand, DeregisterInstanceCommand } from '@aws-sdk/client-servicediscovery';
 import { Logger } from '@t3ck/shared';
+import { Counter } from 'prom-client';
 
 const logger = new Logger('service-registry');
+
+// Prometheus counters for registration metrics
+const registerAttempts = new Counter({ name: 'service_registry_register_attempts_total', help: 'Service registry register attempts' });
+const registerFailures = new Counter({ name: 'service_registry_register_failures_total', help: 'Service registry register failures' });
+const deregisterAttempts = new Counter({ name: 'service_registry_deregister_attempts_total', help: 'Service registry deregister attempts' });
+const deregisterFailures = new Counter({ name: 'service_registry_deregister_failures_total', help: 'Service registry deregister failures' });
 
 interface ServiceInstance {
   instanceId?: string;
@@ -41,6 +48,7 @@ class ServiceRegistry {
     port: number,
     metadata?: Record<string, string>
   ): Promise<string> {
+    registerAttempts.inc();
     try {
       // Generate instance ID from hostname + port if not provided
       const hostname = process.env.HOSTNAME || 'localhost';
@@ -73,6 +81,7 @@ class ServiceRegistry {
 
       return instanceId;
     } catch (error) {
+      registerFailures.inc();
       logger.error('Failed to register service instance', {
         serviceName,
         port,
@@ -90,6 +99,7 @@ class ServiceRegistry {
    * @param serviceName - Name of the service
    */
   async deregisterInstance(serviceName: string): Promise<void> {
+    deregisterAttempts.inc();
     try {
       const instance = this.registeredInstances.get(serviceName);
       if (!instance) {
@@ -110,6 +120,7 @@ class ServiceRegistry {
         operationId: response.OperationId,
       });
     } catch (error) {
+      deregisterFailures.inc();
       logger.error('Failed to deregister service instance', {
         serviceName,
         error: error instanceof Error ? error.message : String(error),

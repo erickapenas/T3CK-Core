@@ -71,6 +71,14 @@ app.use(rateLimitMiddleware);
 // Health checks setup
 setupHealthChecks(app);
 
+// Internal registry endpoint for debugging
+import { getServiceRegistry } from './service-registry';
+app.get('/internal/registry', (_req, res) => {
+  const registry = getServiceRegistry();
+  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({ service: k, instance: v }));
+  res.json({ registered: entries });
+});
+
 // Metrics endpoint
 setupMetricsEndpoint(app, '/metrics');
 

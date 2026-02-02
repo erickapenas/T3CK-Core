@@ -1,4 +1,8 @@
 import { Logger } from '@t3ck/shared';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 const logger = new Logger('backup');
 
@@ -26,10 +30,10 @@ export class BackupManager {
     logger.info('Starting backup run');
 
     try {
-      // Firestore backup stub
+      // Firestore backup (gcloud)
       await this.backupFirestore();
 
-      // Redis backup stub
+      // Redis backup (redis-cli + aws s3)
       await this.backupRedis();
 
       logger.info('Backup run finished successfully');
@@ -42,26 +46,64 @@ export class BackupManager {
 
   private async backupFirestore(): Promise<void> {
     logger.info('backupFirestore: starting');
-    // TODO: Implement Firestore export to GCS (gcloud SDK or REST)
-    // Placeholder behavior: log and return
     if (!this.options.gcsBucket) {
       logger.warn('No gcsBucket configured; skipping Firestore backup');
       return;
     }
 
-    logger.info(`Would export Firestore to gs://${this.options.gcsBucket}`);
-    // Example: call gcloud or use Google Cloud Admin SDK
+    const project = process.env.GCP_PROJECT;
+    if (!project) {
+      logger.warn('GCP_PROJECT not set; cannot run gcloud export');
+      return;
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const destination = `gs://${this.options.gcsBucket}/firestore-backups/${project}/${timestamp}`;
+
+    const cmd = `gcloud firestore export ${destination} --project=${project}`;
+    logger.info('Running Firestore export command', { cmd });
+    try {
+      const { stdout, stderr } = await execAsync(cmd);
+      logger.info('gcloud stdout', { stdout });
+      if (stderr) logger.warn('gcloud stderr', { stderr });
+    } catch (err) {
+      logger.error('gcloud export failed', { error: err instanceof Error ? err.message : String(err) });
+    }
   }
 
   private async backupRedis(): Promise<void> {
     logger.info('backupRedis: starting');
-    // TODO: Implement Redis snapshot export to S3 (ElastiCache snapshot or redis-cli SAVE + upload)
     if (!this.options.s3Bucket) {
       logger.warn('No s3Bucket configured; skipping Redis backup');
       return;
     }
 
-    logger.info(`Would push Redis snapshot to s3://${this.options.s3Bucket}`);
+    const host = process.env.REDIS_HOST || '127.0.0.1';
+    const port = parseInt(String(process.env.REDIS_PORT || '6379'));
+    const dumpPath = process.env.REDIS_DUMP_PATH || '/data/dump.rdb';
+
+    // Attempt redis-cli SAVE
+    try {
+      const saveCmd = `redis-cli -h ${host} -p ${port} SAVE`;
+      logger.info('Running redis SAVE', { cmd: saveCmd });
+      const { stdout, stderr } = await execAsync(saveCmd);
+      logger.info('redis-cli stdout', { stdout });
+      if (stderr) logger.warn('redis-cli stderr', { stderr });
+    } catch (err) {
+      logger.error('redis-cli SAVE failed', { error: err instanceof Error ? err.message : String(err) });
+    }
+
+    // Upload dump to S3 using aws cli
+    const s3Key = `redis-backups/${new Date().toISOString().replace(/[:.]/g, '-')}/dump.rdb`;
+    const awsCmd = `aws s3 cp ${dumpPath} s3://${this.options.s3Bucket}/${s3Key}`;
+    logger.info('Uploading Redis dump to S3 (aws cli)', { cmd: awsCmd });
+    try {
+      const { stdout, stderr } = await execAsync(awsCmd);
+      logger.info('aws s3 cp stdout', { stdout });
+      if (stderr) logger.warn('aws s3 cp stderr', { stderr });
+    } catch (err) {
+      logger.error('aws s3 cp failed', { error: err instanceof Error ? err.message : String(err) });
+    }
   }
 
   clearSchedule(): void {

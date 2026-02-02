@@ -1,4 +1,8 @@
 import { Logger } from '@t3ck/shared';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 const logger = new Logger('backup');
 
@@ -42,7 +46,25 @@ export class BackupManager {
       logger.warn('No gcsBucket configured; skipping Firestore backup');
       return;
     }
-    logger.info(`Would export Firestore to gs://${this.options.gcsBucket}`);
+
+    const project = process.env.GCP_PROJECT;
+    if (!project) {
+      logger.warn('GCP_PROJECT not set; cannot run gcloud export');
+      return;
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const destination = `gs://${this.options.gcsBucket}/firestore-backups/${project}/${timestamp}`;
+
+    const cmd = `gcloud firestore export ${destination} --project=${project}`;
+    logger.info('Running Firestore export command', { cmd });
+    try {
+      const { stdout, stderr } = await execAsync(cmd);
+      logger.info('gcloud stdout', { stdout });
+      if (stderr) logger.warn('gcloud stderr', { stderr });
+    } catch (err) {
+      logger.error('gcloud export failed', { error: err instanceof Error ? err.message : String(err) });
+    }
   }
 
   private async backupRedis(): Promise<void> {
@@ -51,7 +73,31 @@ export class BackupManager {
       logger.warn('No s3Bucket configured; skipping Redis backup');
       return;
     }
-    logger.info(`Would push Redis snapshot to s3://${this.options.s3Bucket}`);
+
+    const host = process.env.REDIS_HOST || '127.0.0.1';
+    const port = parseInt(String(process.env.REDIS_PORT || '6379'));
+    const dumpPath = process.env.REDIS_DUMP_PATH || '/data/dump.rdb';
+
+    try {
+      const saveCmd = `redis-cli -h ${host} -p ${port} SAVE`;
+      logger.info('Running redis SAVE', { cmd: saveCmd });
+      const { stdout, stderr } = await execAsync(saveCmd);
+      logger.info('redis-cli stdout', { stdout });
+      if (stderr) logger.warn('redis-cli stderr', { stderr });
+    } catch (err) {
+      logger.error('redis-cli SAVE failed', { error: err instanceof Error ? err.message : String(err) });
+    }
+
+    const s3Key = `redis-backups/${new Date().toISOString().replace(/[:.]/g, '-')}/dump.rdb`;
+    const awsCmd = `aws s3 cp ${dumpPath} s3://${this.options.s3Bucket}/${s3Key}`;
+    logger.info('Uploading Redis dump to S3 (aws cli)', { cmd: awsCmd });
+    try {
+      const { stdout, stderr } = await execAsync(awsCmd);
+      logger.info('aws s3 cp stdout', { stdout });
+      if (stderr) logger.warn('aws s3 cp stderr', { stderr });
+    } catch (err) {
+      logger.error('aws s3 cp failed', { error: err instanceof Error ? err.message : String(err) });
+    }
   }
 
   clearSchedule(): void {

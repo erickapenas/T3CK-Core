@@ -8,4 +8,5 @@ export * from './queue';
 export * from './database';
 export * from './service-discovery';
 export * from './backup';
+export * from './multi-region';
 export { Tenant } from './entities/tenant';

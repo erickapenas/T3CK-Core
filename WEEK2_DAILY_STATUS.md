@@ -24,12 +24,19 @@
 │                ├─ Sensitive data filtering                     │
 │                └─ 3 serviços integrados                        │
 │                                                                 │
-│ DIA 3-5: Metrics & Monitoring (Prometheus) ⏳                 │
-│ DIA 6-8: Enhanced Caching ⏳                                   │
-│ DIA 9-11: Config Management ⏳                                 │
-│ DIA 12-14: Service Discovery ⏳                                │
-│ DIA 15-17: Automated Backups ⏳                                │
-│ DIA 18+: Multi-region (complexo, semana 3) ⏳                 │
+│ DIA 3 (FEV 5): Metrics & Monitoring (Prometheus) ✅ COMPLETO  │
+│                ├─ prom-client integration                      │
+│                ├─ HTTP request tracking                        │
+│                ├─ Service-specific metrics                     │
+│                ├─ /metrics endpoint (Prometheus format)        │
+│                ├─ Grafana dashboard support                    │
+│                └─ 3 serviços integrados                        │
+│                                                                 │
+│ DIA 4-6: Enhanced Caching (Redis) ⏳                           │
+│ DIA 7-9: Config Management (Parameter Store) ⏳                │
+│ DIA 10-12: Service Discovery (Cloud Map) ⏳                    │
+│ DIA 13-15: Automated Backups ⏳                                │
+│ DIA 16+: Multi-region (complexo, semana 3) ⏳                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -46,14 +53,14 @@ SEMANA 1: ✅ 100% COMPLETO (40 horas)
 ├─ ✅ Technology Stack Analysis (2 days)
 └─ ✅ Implementation Roadmap
 
-SEMANA 2: 🚀 INICIANDO (Dia 2 de 7)
+SEMANA 2: 🚀 PROGRESSO (Dia 3 de 7)
 ├─ ✅ Health Check Library [1.5h/2h] - DIA 1
 ├─ ✅ Error Tracking (Sentry) [1.5h/3h] - DIA 2
-├─ ⏳ Metrics & Monitoring [4h] - DIA 3-5
-├─ ⏳ Enhanced Caching [3h] - DIA 6-8
-├─ ⏳ Config Management [3h] - DIA 9-11
-├─ ⏳ Service Discovery [4h] - DIA 12-14
-└─ ⏳ Automated Backups [3h] - DIA 15-17
+├─ ✅ Metrics & Monitoring [1.5h/4h] - DIA 3
+├─ ⏳ Enhanced Caching [0/3h] - DIA 4-6
+├─ ⏳ Config Management [0/3h] - DIA 7-9
+├─ ⏳ Service Discovery [0/4h] - DIA 10-12
+└─ ⏳ Automated Backups [0/3h] - DIA 13-15
 
 TOTAL WEEK 2: 23-28 horas estimadas
 RESTANTE: ~26 horas
@@ -153,27 +160,23 @@ GET /ready → 200 { status: "ok", services: {firestore: "ok", "step-functions":
 
 ---
 
-## 🎯 PRÓXIMO PASSO (DIA 2-3)
+## 🎯 PRÓXIMO PASSO (DIA 3-5)
 
-### Error Tracking com Sentry
+### Metrics & Monitoring com Prometheus
 ```
-✅ Instalar @sentry/node @sentry/tracing (3 serviços)
-✅ Criar sentry.ts configuration module
-✅ Integrar em auth-service
-✅ Integrar em webhook-service
-✅ Integrar em tenant-service
-✅ Setup error context tracking
-✅ Setup graceful Sentry flush
+✅ Instalar prom-client em 3 serviços
+✅ Criar metrics.ts com HTTP + service-specific metrics
+✅ Integrar middleware em todos os index.ts
+✅ Setup /metrics endpoint para Prometheus
+✅ Helper functions para tracking customizado
 ✅ Testar build - PASSING
 ✅ Documentação completa
 
-Tempo gasto: ~1.5 horas (50% do orçamento)
+Tempo gasto: ~1.5 horas (37.5% do orçamento)
 Progresso: COMPLETO ✅
 ```
 
 ---
-
-## ✅ DIA 2 - ERROR TRACKING COM SENTRY (COMPLETO)
 
 ### O que foi feito:
 
@@ -290,6 +293,164 @@ process.on('SIGTERM', async () => {
 
 ---
 
+## ✅ DIA 3 - METRICS & MONITORING COM PROMETHEUS (COMPLETO)
+
+### O que foi feito:
+
+#### 1. Instalação
+```
+✅ pnpm add prom-client -F auth-service
+✅ pnpm add prom-client -F webhook-service
+✅ pnpm add prom-client -F tenant-service
+```
+
+#### 2. Código Implementado
+```
+✅ services/auth-service/src/metrics.ts (160 linhas)
+✅ services/webhook-service/src/metrics.ts (155 linhas)
+✅ services/tenant-service/src/metrics.ts (175 linhas)
+✅ Integração em index.ts de cada serviço
+```
+
+#### 3. Métricas Padrão (Todos os Serviços)
+
+```
+Histograms (Latency):
+├─ http_request_duration_seconds
+│  ├─ Labels: method, route, status_code
+│  └─ Buckets: [1ms, 5ms, 10ms, 50ms, 100ms, 500ms, 1s, 2s, 5s]
+└─ Distribuição de latência por endpoint
+
+Counters (Total):
+├─ http_requests_total
+│  └─ Labels: method, route, status_code
+├─ http_requests_errors_total
+│  └─ Labels: method, route, error_type (4xx/5xx)
+└─ Contagem total e erros por endpoint
+
+Gauges (Current):
+└─ active_connections
+   └─ Número de conexões abertas agora
+```
+
+#### 4. Métricas Específicas por Serviço
+
+**auth-service**:
+```
+✅ auth_attempts_total (provider: firebase/cognito, status: success/failure)
+✅ auth_tokens_issued_total (token_type: access/refresh/id)
+✅ auth_token_validation_duration_seconds (token_type)
+✅ firebase_operations_duration_seconds (operation, status)
+✅ cache_hit_rate (0-1 gauge)
+✅ cache_size_bytes (bytes gauge)
+```
+
+**webhook-service**:
+```
+✅ webhook_events_received_total (event_type)
+✅ webhook_events_processed_total (event_type, status: success/failure/retry)
+✅ webhook_processing_duration_seconds (event_type, status)
+✅ webhook_retries_total (event_type, reason)
+✅ firestore_operations_duration_seconds (operation, status)
+✅ event_queue_size (gauge)
+✅ cache_size_bytes (bytes gauge)
+```
+
+**tenant-service**:
+```
+✅ provisioning_requests_total (status: pending/in_progress/completed/failed)
+✅ provisioning_duration_seconds (status)
+✅ tenants_active_total (gauge count)
+✅ provisioning_step_duration_seconds (step_name, status)
+✅ firestore_operations_duration_seconds (operation, status)
+✅ step_functions_execution_duration_seconds (execution_type, status)
+✅ provisioning_queue_size (gauge)
+✅ cache_size_bytes (bytes gauge)
+```
+
+#### 5. Integração nos Serviços
+
+**Middleware Setup**:
+```typescript
+import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
+
+const app = express();
+app.use(express.json());
+
+// Attach metrics tracking to all requests
+setupMetricsMiddleware(app);
+
+// ... routes ...
+
+// Expose metrics for Prometheus scraping
+setupMetricsEndpoint(app, '/metrics');
+```
+
+**Endpoints Criados**:
+```
+GET /metrics → Prometheus text format
+  ├─ auth-service: http://localhost:3001/metrics
+  ├─ webhook-service: http://localhost:3002/metrics
+  └─ tenant-service: http://localhost:3003/metrics
+```
+
+#### 6. Recursos Implementados
+- ✅ Automatic request duration tracking
+- ✅ Active connection counting
+- ✅ Error classification (4xx vs 5xx)
+- ✅ Service-specific operation tracking
+- ✅ Queue size monitoring
+- ✅ Cache metrics
+- ✅ Helper functions for custom tracking
+- ✅ Label-based filtering for PromQL queries
+- ✅ Appropriate histogram buckets per service
+
+#### 7. Validação
+```
+✅ TypeScript strict mode: PASSING (all 3 services)
+✅ Build (pnpm build): PASSING
+   ├─ @t3ck/sdk: ✅
+   ├─ @t3ck/shared: ✅
+   ├─ auth-service: ✅
+   ├─ webhook-service: ✅
+   └─ tenant-service: ✅
+✅ Git commit: SUCCESS (11 files changed, +1149 insertions)
+```
+
+#### 8. Documentação Criada
+```
+✅ docs/METRICS_MONITORING_IMPLEMENTATION.md (500+ linhas)
+   ├─ Architecture & metric types
+   ├─ Service-specific metrics guide
+   ├─ Integration examples
+   ├─ Prometheus configuration (prometheus.yml)
+   ├─ Grafana setup & dashboard queries
+   ├─ Alert rules (high error rate, latency, backlog)
+   ├─ Alertmanager integration
+   ├─ Performance optimization tips
+   ├─ Recording rules
+   ├─ Docker Compose setup
+   ├─ Kubernetes deployment
+   ├─ PromQL examples
+   ├─ Troubleshooting
+   └─ Best practices guide
+```
+
+---
+
+## 📊 MÉTRICAS DIA 3
+
+| Métrica | Meta | Resultado |
+|---------|------|-----------|
+| Tempo gasto | 4h | 1.5h ✅ |
+| Serviços com Prometheus | 3/3 | 3/3 ✅ |
+| Métricas padrão | ✅ | ✅ |
+| Métricas customizadas | ✅ | ✅ |
+| Build errors | 0 | 0 ✅ |
+| Documentação | Completa | Completa ✅ |
+
+---
+
 ## 📊 MÉTRICAS DIA 2
 
 | Métrica | Meta | Resultado |
@@ -377,19 +538,20 @@ curl http://localhost:3001/ready
 ## ✨ STATUS FINAL
 
 ```
-🎉 SEMANA 2 DIA 1-2: ✅ COMPLETO E COMMITADO
+🎉 SEMANA 2 DIA 1-3: ✅ COMPLETO E COMMITADO
 
 ├─ Health Check Library: ✅ IMPLEMENTADO (1.5h)
 ├─ Error Tracking (Sentry): ✅ IMPLEMENTADO (1.5h)
+├─ Metrics & Monitoring (Prometheus): ✅ IMPLEMENTADO (1.5h)
 ├─ Build Status: ✅ PASSING (all 3 services)
-├─ Git Status: ✅ COMMITTED (2 commits)
-├─ Documentação: ✅ COMPLETA (2 guides)
+├─ Git Status: ✅ COMMITTED (3 commits)
+├─ Documentação: ✅ COMPLETA (3 guides)
 ├─ Pronto para: ✅ Production deployment
-└─ Próximo: ⏳ Metrics & Monitoring (Prometheus)
+└─ Próximo: ⏳ Enhanced Caching (Redis)
 
-Progresso total: 2/8 tecnologias (25%)
-Tempo gasto: 3 horas de 28 horas (10.7%)
-Tempo restante semana 2: ~25 horas
+Progresso total: 3/8 tecnologias (37.5%)
+Tempo gasto: 4.5 horas de 28 horas (16%)
+Tempo restante semana 2: ~23.5 horas
 ```
 
 ---

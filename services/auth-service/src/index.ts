@@ -9,6 +9,7 @@ import { initSentry, setupSentryErrorHandler, captureException } from './sentry'
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 import { initializeCache } from './cache';
 import { initializeConfig } from './config';
+import { initializeServiceRegistry } from './service-registry';
 
 // Initialize Sentry (must be first)
 initSentry('auth-service');
@@ -21,6 +22,12 @@ initializeCache({ prefix: 'auth:' });
 
 // Initialize Config Manager
 initializeConfig({ parameterPrefix: '/t3ck-core' });
+
+// Initialize Service Registry (Cloud Map)
+const SERVICE_PORT = parseInt(String(process.env.PORT || 3001));
+initializeServiceRegistry('t3ck-auth', SERVICE_PORT, {
+  service_type: 'authentication',
+});
 
 const app = express();
 app.use(express.json());
@@ -136,10 +143,8 @@ app.post('/decrypt', async (req: Request, res: Response) => {
 // Setup Sentry error handlers (after routes)
 setupSentryErrorHandler(app);
 
-const PORT = process.env.PORT || 3001;
-
-const server = app.listen(PORT, () => {
-  logger.info(`Auth service running on port ${PORT}`);
+const server = app.listen(SERVICE_PORT, () => {
+  logger.info(`Auth service running on port ${SERVICE_PORT}`);
 });
 
 // Graceful shutdown

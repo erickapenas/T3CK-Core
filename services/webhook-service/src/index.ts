@@ -6,6 +6,7 @@ import { initSentry, setupSentryErrorHandler } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 import { initializeCache } from './cache';
 import { initializeConfig } from './config';
+import { initializeServiceRegistry } from './service-registry';
 
 // Initialize Sentry (must be first)
 initSentry('webhook-service');
@@ -18,6 +19,12 @@ initializeCache({ prefix: 'webhook:' });
 
 // Initialize Config Manager
 initializeConfig({ parameterPrefix: '/t3ck-core' });
+
+// Initialize Service Registry (Cloud Map)
+const SERVICE_PORT = parseInt(String(process.env.PORT || 3002));
+initializeServiceRegistry('t3ck-webhook', SERVICE_PORT, {
+  service_type: 'webhooks',
+});
 
 // Setup Prometheus metrics middleware
 setupMetricsMiddleware(app);
@@ -35,10 +42,8 @@ app.use('/api', routes);
 // Setup Sentry error handlers (after routes)
 setupSentryErrorHandler(app);
 
-const PORT = process.env.PORT || 3002;
-
-const server = app.listen(PORT, () => {
-  logger.info(`Webhook service running on port ${PORT}`);
+const server = app.listen(SERVICE_PORT, () => {
+  logger.info(`Webhook service running on port ${SERVICE_PORT}`);
 });
 
 // Graceful shutdown

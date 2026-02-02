@@ -5,6 +5,10 @@ import { RateLimiter } from './rate-limiter';
 import { Logger } from '@t3ck/shared';
 import { initializeFirebase } from './firebase-init';
 import { setupHealthChecks } from './health';
+import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
+
+// Initialize Sentry (must be first)
+initSentry('auth-service');
 
 // Inicializar Firebase
 initializeFirebase();
@@ -109,12 +113,26 @@ app.post('/decrypt', async (req: Request, res: Response) => {
     res.json({ decrypted });
   } catch (error) {
     logger.error('Decryption failed', { error });
+    captureException(error, { operation: 'decrypt' });
     res.status(500).json({ error: 'Decryption failed' });
   }
 });
 
+// Setup Sentry error handlers (after routes)
+setupSentryErrorHandler(app);
+
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`Auth service running on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(async () => {
+    logger.info('Server closed');
+    await require('./sentry').flushSentry(2000);
+    process.exit(0);
+  });
 });

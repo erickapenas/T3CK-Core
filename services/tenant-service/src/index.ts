@@ -2,6 +2,10 @@ import express, { Request, Response } from 'express';
 import { ProvisioningFormService, ProvisioningStatus } from './provisioning-form';
 import { Logger } from '@t3ck/shared';
 import { setupHealthChecks } from './health';
+import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
+
+// Initialize Sentry (must be first)
+initSentry('tenant-service');
 
 const app = express();
 app.use(express.json());
@@ -66,12 +70,27 @@ app.get('/provisioning/:tenantId/status', async (req: Request, res: Response) =>
     });
   } catch (error) {
     logger.error('Failed to get provisioning status', { error });
+    const tenantId = req.params.tenantId || 'unknown';
+    captureException(error, { operation: 'get-provisioning-status', tenantId });
     res.status(500).json({ error: 'Failed to get provisioning status' });
   }
 });
 
+// Setup Sentry error handlers (after routes)
+setupSentryErrorHandler(app);
+
 const PORT = process.env.PORT || 3003;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`Tenant service running on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(async () => {
+    logger.info('Server closed');
+    await require('./sentry').flushSentry(2000);
+    process.exit(0);
+  });
 });

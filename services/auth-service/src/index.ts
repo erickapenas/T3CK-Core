@@ -8,6 +8,7 @@ import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 import { initializeCache } from './cache';
+import { initializeConfig } from './config';
 
 // Initialize Sentry (must be first)
 initSentry('auth-service');
@@ -17,6 +18,9 @@ initializeFirebase();
 
 // Initialize Redis cache
 initializeCache({ prefix: 'auth:' });
+
+// Initialize Config Manager
+initializeConfig({ parameterPrefix: '/t3ck-core' });
 
 const app = express();
 app.use(express.json());

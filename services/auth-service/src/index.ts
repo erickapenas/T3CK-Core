@@ -6,6 +6,7 @@ import { Logger } from '@t3ck/shared';
 import { initializeFirebase } from './firebase-init';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
+import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 
 // Initialize Sentry (must be first)
 initSentry('auth-service');
@@ -15,6 +16,9 @@ initializeFirebase();
 
 const app = express();
 app.use(express.json());
+
+// Setup Prometheus metrics middleware
+setupMetricsMiddleware(app);
 
 const authService = new AuthService();
 const encryptionService = new EncryptionService();
@@ -43,6 +47,9 @@ app.use(rateLimitMiddleware);
 
 // Health checks setup
 setupHealthChecks(app);
+
+// Metrics endpoint
+setupMetricsEndpoint(app, '/metrics');
 
 // Autenticação
 app.post('/auth/login', async (req: Request, res: Response) => {

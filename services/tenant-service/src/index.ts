@@ -3,6 +3,7 @@ import { ProvisioningFormService, ProvisioningStatus } from './provisioning-form
 import { Logger } from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
+import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 
 // Initialize Sentry (must be first)
 initSentry('tenant-service');
@@ -10,11 +11,20 @@ initSentry('tenant-service');
 const app = express();
 app.use(express.json());
 
+// Setup Prometheus metrics middleware
+setupMetricsMiddleware(app);
+
+// Setup Prometheus metrics middleware
+setupMetricsMiddleware(app);
+
 const provisioningService = new ProvisioningFormService();
 const logger = new Logger('tenant-service');
 
 // Health checks setup
 setupHealthChecks(app);
+
+// Metrics endpoint
+setupMetricsEndpoint(app, '/metrics');
 
 // Submeter formulário de provisionamento
 app.post('/provisioning/submit', async (req: Request, res: Response) => {

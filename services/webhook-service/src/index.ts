@@ -3,6 +3,7 @@ import routes from './api/routes';
 import { Logger } from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler } from './sentry';
+import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 
 // Initialize Sentry (must be first)
 initSentry('webhook-service');
@@ -10,10 +11,16 @@ initSentry('webhook-service');
 const app = express();
 app.use(express.json());
 
+// Setup Prometheus metrics middleware
+setupMetricsMiddleware(app);
+
 const logger = new Logger('webhook-service');
 
 // Health checks setup
 setupHealthChecks(app);
+
+// Metrics endpoint
+setupMetricsEndpoint(app, '/metrics');
 
 app.use('/api', routes);
 

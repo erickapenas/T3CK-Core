@@ -7,6 +7,7 @@ import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 import { initializeCache } from './cache';
 import { initializeConfig } from './config';
 import { initializeServiceRegistry } from './service-registry';
+import { initializeBackup } from './backup';
 
 // Initialize Sentry (must be first)
 initSentry('tenant-service');
@@ -103,6 +104,12 @@ app.get('/provisioning/:tenantId/status', async (req: Request, res: Response) =>
 
 // Setup Sentry error handlers (after routes)
 setupSentryErrorHandler(app);
+
+// Initialize Backup manager (stubbed providers)
+initializeBackup({
+  s3Bucket: process.env.BACKUP_S3_BUCKET,
+  gcsBucket: process.env.BACKUP_GCS_BUCKET,
+});
 
 const server = app.listen(SERVICE_PORT, () => {
   logger.info(`Tenant service running on port ${SERVICE_PORT}`);

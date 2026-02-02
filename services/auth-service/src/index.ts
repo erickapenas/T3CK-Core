@@ -10,6 +10,7 @@ import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 import { initializeCache } from './cache';
 import { initializeConfig } from './config';
 import { initializeServiceRegistry } from './service-registry';
+import { initializeBackup } from './backup';
 
 // Initialize Sentry (must be first)
 initSentry('auth-service');
@@ -27,6 +28,13 @@ initializeConfig({ parameterPrefix: '/t3ck-core' });
 const SERVICE_PORT = parseInt(String(process.env.PORT || 3001));
 initializeServiceRegistry('t3ck-auth', SERVICE_PORT, {
   service_type: 'authentication',
+});
+
+// Initialize Backup manager (stubbed providers)
+initializeBackup({
+  // configure s3Bucket/gcsBucket via environment or config manager
+  s3Bucket: process.env.BACKUP_S3_BUCKET,
+  gcsBucket: process.env.BACKUP_GCS_BUCKET,
 });
 
 const app = express();

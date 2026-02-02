@@ -7,6 +7,7 @@ import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 import { initializeCache } from './cache';
 import { initializeConfig } from './config';
 import { initializeServiceRegistry } from './service-registry';
+import { initializeBackup } from './backup';
 
 // Initialize Sentry (must be first)
 initSentry('webhook-service');
@@ -28,6 +29,12 @@ initializeServiceRegistry('t3ck-webhook', SERVICE_PORT, {
 
 // Setup Prometheus metrics middleware
 setupMetricsMiddleware(app);
+
+// Initialize Backup manager (stubbed providers)
+initializeBackup({
+  s3Bucket: process.env.BACKUP_S3_BUCKET,
+  gcsBucket: process.env.BACKUP_GCS_BUCKET,
+});
 
 const logger = new Logger('webhook-service');
 

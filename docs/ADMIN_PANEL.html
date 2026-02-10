@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T3CK Core - Painel de Administração de Tenants</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      color: #333;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      color: #333;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 15px;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .button-secondary {
+      background: #f0f0f0;
+      color: #333;
+      margin-top: 10px;
+    }
+
+    .button-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .tenants-list {
+      margin-top: 20px;
+    }
+
+    .tenant-item {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tenant-info {
+      flex: 1;
+    }
+
+    .tenant-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .tenant-details {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-provisioning {
+      background: #cfe2ff;
+      color: #084298;
+    }
+
+    .status-active {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+
+    .status-suspended {
+      background: #f8d7da;
+      color: #842029;
+    }
+
+    .tenant-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+      width: auto;
+      margin: 0;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+    }
+
+    .btn-view {
+      background: #6c757d;
+    }
+
+    .success-message {
+      background: #d1e7dd;
+      color: #0f5132;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #842029;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .modal-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .close-btn {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: auto;
+      padding: 0;
+      margin: -10px -10px 0 0;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <div class="logo">T3</div>
+        T3CK Core - Painel de Administração de Tenants
+      </h1>
+      <p>Gerencie, provisione e monitore seus clientes (tenants) de forma centralizada</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- Formulário de Provisionamento -->
+      <div class="card">
+        <h2>
+          <span class="icon">+</span>
+          Novo Tenant
+        </h2>
+
+        <div class="success-message" id="successMessage"></div>
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="provisioningForm">
+          <div class="form-group">
+            <label for="tenantId">ID do Tenant *</label>
+            <input type="text" id="tenantId" name="tenantId" placeholder="ex: cliente-123" required>
+          </div>
+
+          <div class="form-group">
+            <label for="companyName">Nome da Empresa *</label>
+            <input type="text" id="companyName" name="companyName" placeholder="ex: Empresa ABC" required>
+          </div>
+
+          <div class="form-group">
+            <label for="domain">Domínio *</label>
+            <input type="text" id="domain" name="domain" placeholder="ex: cliente.t3ck.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="contactEmail">Email de Contato *</label>
+            <input type="email" id="contactEmail" name="contactEmail" placeholder="ex: contato@empresa.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="contactName">Nome do Contato *</label>
+            <input type="text" id="contactName" name="contactName" placeholder="ex: João Silva" required>
+          </div>
+
+          <div class="form-group">
+            <label for="plan">Plano *</label>
+            <select id="plan" name="plan" required>
+              <option value="">Selecione um plano</option>
+              <option value="starter">Starter</option>
+              <option value="growth">Growth</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="numberOfSeats">Número de Assentos</label>
+            <input type="number" id="numberOfSeats" name="numberOfSeats" placeholder="50" value="50" min="1">
+          </div>
+
+          <div class="form-group">
+            <label for="region">Região AWS</label>
+            <select id="region" name="region">
+              <option value="us-east-1">us-east-1 (N. Virginia)</option>
+              <option value="us-west-2">us-west-2 (Oregon)</option>
+              <option value="eu-west-1">eu-west-1 (Ireland)</option>
+              <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+              <option value="ap-northeast-1">ap-northeast-1 (Tokyo)</option>
+            </select>
+          </div>
+
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Enviando solicitação...</p>
+          </div>
+
+          <button type="submit" id="submitBtn">Provisionar Novo Tenant</button>
+          <button type="reset" class="button-secondary">Limpar Formulário</button>
+        </form>
+      </div>
+
+      <!-- Monitoramento da Fila e Status -->
+      <div class="card">
+        <h2>
+          <span class="icon">📊</span>
+          Fila de Provisionamento & Status
+        </h2>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-label">Aguardando</div>
+            <div class="stat-value" id="waitingCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Processando</div>
+            <div class="stat-value" id="activeCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Concluídos</div>
+            <div class="stat-value" id="completedCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Falhados</div>
+            <div class="stat-value" id="failedCount">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <label for="searchStatus">Buscar Status de Tenant:</label>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <input type="text" id="searchStatus" placeholder="ID do tenant" style="flex: 1;">
+            <button type="button" id="searchBtn" style="width: auto;">Buscar</button>
+          </div>
+        </div>
+
+        <div id="statusResult" style="margin-top: 20px;"></div>
+
+        <button type="button" id="refreshBtn" class="button-secondary" style="margin-top: 20px;">Atualizar Estatísticas</button>
+      </div>
+    </div>
+
+    <!-- Lista de Tenants Ativos -->
+    <div class="card">
+      <h2>
+        <span class="icon">📋</span>
+        Tenants Ativos
+      </h2>
+
+      <div id="tenantsList"></div>
+    </div>
+  </div>
+
+  <!-- Modal para detalhes do tenant -->
+  <div id="tenantModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">&times;</button>
+      <div class="modal-header">
+        <h2>Detalhes do Tenant</h2>
+      </div>
+      <div id="tenantModalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3003';
+
+    // Form submission
+    document.getElementById('provisioningForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        tenantId: document.getElementById('tenantId').value,
+        companyName: document.getElementById('companyName').value,
+        domain: document.getElementById('domain').value,
+        contactEmail: document.getElementById('contactEmail').value,
+        contactName: document.getElementById('contactName').value,
+        numberOfSeats: parseInt(document.getElementById('numberOfSeats').value),
+        region: document.getElementById('region').value,
+        plan: document.getElementById('plan').value,
+      };
+
+      const requiredFields = [
+        { key: 'tenantId', label: 'ID do Tenant' },
+        { key: 'companyName', label: 'Nome da Empresa' },
+        { key: 'domain', label: 'Domínio' },
+        { key: 'contactEmail', label: 'Email de Contato' },
+        { key: 'contactName', label: 'Nome do Contato' },
+        { key: 'plan', label: 'Plano' },
+      ];
+
+      const missing = requiredFields
+        .filter((field) => !formData[field.key] || String(formData[field.key]).trim().length === 0)
+        .map((field) => field.label);
+
+      if (missing.length > 0) {
+        showError(`❌ Preencha os campos obrigatórios: ${missing.join(', ')}`);
+        return;
+      }
+
+      try {
+        showLoading(true);
+        hideMessages();
+
+        const response = await fetch(`${API_BASE_URL}/provisioning/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showSuccess(`✅ Tenant "${formData.companyName}" criado com sucesso! Job ID: ${data.jobId}`);
+          document.getElementById('provisioningForm').reset();
+          refreshStats();
+          loadTenants();
+        } else {
+          // Handle error - pode ser string ou objeto
+          let errorMessage = 'Erro desconhecido';
+          if (typeof data.error === 'string') {
+            errorMessage = data.error;
+          } else if (data.error && data.error.message) {
+            errorMessage = data.error.message;
+          } else if (data.message) {
+            errorMessage = data.message;
+          } else if (typeof data.error === 'object') {
+            errorMessage = JSON.stringify(data.error);
+          }
+          showError(`❌ Erro ao criar tenant: ${errorMessage}`);
+          console.error('Erro detalhado:', data);
+        }
+      } catch (error) {
+        showError(`❌ Erro ao conectar com o servidor: ${error.message}`);
+        console.error('Erro de conexão:', error);
+      } finally {
+        showLoading(false);
+      }
+    });
+
+    // Refresh stats button
+    document.getElementById('refreshBtn').addEventListener('click', refreshStats);
+
+    // Search status
+    document.getElementById('searchBtn').addEventListener('click', searchStatus);
+    document.getElementById('searchStatus').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchStatus();
+    });
+
+    // Modal close
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('tenantModal').style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('tenantModal');
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    async function refreshStats() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/queue/stats`);
+        const data = await response.json();
+
+        document.getElementById('waitingCount').textContent = data.waiting || 0;
+        document.getElementById('activeCount').textContent = data.active || 0;
+        document.getElementById('completedCount').textContent = data.completed || 0;
+        document.getElementById('failedCount').textContent = data.failed || 0;
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+        showError(`⚠️ Erro ao conectar ao servidor: ${error.message}`);
+      }
+    }
+
+    async function searchStatus() {
+      const tenantId = document.getElementById('searchStatus').value.trim();
+
+      if (!tenantId) {
+        showError('❌ Por favor, digite um ID de tenant');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/provisioning/${tenantId}/status`);
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          const status = data.data;
+          document.getElementById('statusResult').innerHTML = `
+            <div class="tenant-item">
+              <div class="tenant-info">
+                <div class="tenant-name">${status.companyName || status.tenantId}</div>
+                <div class="tenant-details">Domain: ${status.domain}</div>
+                <div class="tenant-details">Job ID: ${status.provisioningJobId || 'N/A'}</div>
+                <div class="tenant-details">Criado em: ${new Date(status.createdAt).toLocaleString('pt-BR')}</div>
+                ${status.provisionedAt ? `<div class="tenant-details">Provisionado em: ${new Date(status.provisionedAt).toLocaleString('pt-BR')}</div>` : ''}
+              </div>
+              <span class="status-badge status-${status.status.toLowerCase()}">${status.status}</span>
+            </div>
+            <p style="margin-top: 15px; color: #666; font-size: 14px;">${status.message}</p>
+          `;
+        } else {
+          document.getElementById('statusResult').innerHTML = `<p style="color: #dc3545;">❌ Tenant não encontrado</p>`;
+        }
+      } catch (error) {
+        document.getElementById('statusResult').innerHTML = `<p style="color: #dc3545;">❌ Erro ao buscar status: ${error.message}</p>`;
+      }
+    }
+
+    async function loadTenants() {
+      try {
+        // Carregar lista de tenants do servidor
+        const response = await fetch(`${API_BASE_URL}/provisioning/tenants`);
+        const result = await response.json();
+
+        const list = document.getElementById('tenantsList');
+
+        if (!result.success || !result.data || result.data.length === 0) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Nenhum tenant cadastrado</p></div>';
+          return;
+        }
+
+        const tenants = result.data;
+
+        list.innerHTML = tenants
+          .map(
+            (tenant) => `
+          <div class="tenant-item">
+            <div class="tenant-info">
+              <div class="tenant-name">${tenant.companyName || tenant.id}</div>
+              <div class="tenant-details">ID: ${tenant.id}</div>
+              <div class="tenant-details">Domain: ${tenant.domain}</div>
+              <div class="tenant-details">Criado: ${new Date(tenant.createdAt).toLocaleString('pt-BR')}</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span class="status-badge status-${tenant.status.toLowerCase()}">${tenant.status}</span>
+              <button class="btn-small btn-view" onclick="viewTenant('${tenant.id}')">Visualizar</button>
+            </div>
+          </div>
+        `
+          )
+          .join('');
+      } catch (error) {
+        console.error('Erro ao carregar tenants:', error);
+        const list = document.getElementById('tenantsList');
+        list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Erro ao carregar tenants</p></div>';
+      }
+    }
+
+    function viewTenant(tenantId) {
+      document.getElementById('searchStatus').value = tenantId;
+      searchStatus();
+      document.getElementById('tenantModal').style.display = 'block';
+    }
+
+    function showSuccess(message) {
+      const el = document.getElementById('successMessage');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    function showError(message) {
+      const el = document.getElementById('errorMessage');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    function hideMessages() {
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'block' : 'none';
+      document.getElementById('submitBtn').disabled = show;
+    }
+
+    // Load initial data
+    refreshStats();
+    loadTenants();
+  </script>
+</body>
+</html>

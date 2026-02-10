@@ -11,6 +11,7 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as cloudwatch_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Observability } from './observability';
 import { Construct } from 'constructs';
 
@@ -23,6 +24,14 @@ export interface T3CKStackProps extends cdk.StackProps {
   ecsTaskExecutionRoleArn?: string;
   ecsTaskRoleArn?: string;
   lambdaRoleArn?: string;
+  redisHost?: string;
+  redisPort?: string;
+  dbHost?: string;
+  dbPort?: string;
+  dbName?: string;
+  dbUser?: string;
+  dbPassword?: string;
+  dbSecretArn?: string;
 }
 
 export class T3CKStack extends cdk.Stack {
@@ -146,6 +155,8 @@ export class T3CKStack extends cdk.Stack {
       environment: {
         PORT: '3001',
         NODE_ENV: 'production',
+        ...(props?.redisHost ? { REDIS_HOST: props.redisHost } : {}),
+        ...(props?.redisPort ? { REDIS_PORT: props.redisPort } : {}),
       },
     });
 
@@ -170,6 +181,8 @@ export class T3CKStack extends cdk.Stack {
       environment: {
         PORT: '3002',
         NODE_ENV: 'production',
+        ...(props?.redisHost ? { REDIS_HOST: props.redisHost } : {}),
+        ...(props?.redisPort ? { REDIS_PORT: props.redisPort } : {}),
       },
     });
 
@@ -185,6 +198,10 @@ export class T3CKStack extends cdk.Stack {
         : undefined,
     });
 
+    const dbSecret = props?.dbSecretArn
+      ? secretsmanager.Secret.fromSecretCompleteArn(this, 'DbSecret', props.dbSecretArn)
+      : undefined;
+
     tenantTaskDefinition.addContainer('TenantContainer', {
       image: ecs.ContainerImage.fromRegistry('t3ck/tenant-service:latest'),
       logging: ecs.LogDrivers.awsLogs({
@@ -194,7 +211,21 @@ export class T3CKStack extends cdk.Stack {
       environment: {
         PORT: '3003',
         NODE_ENV: 'production',
+        ...(props?.redisHost ? { REDIS_HOST: props.redisHost } : {}),
+        ...(props?.redisPort ? { REDIS_PORT: props.redisPort } : {}),
+        ...(props?.dbHost ? { DATABASE_HOST: props.dbHost } : {}),
+        ...(props?.dbPort ? { DATABASE_PORT: props.dbPort } : {}),
+        ...(props?.dbName ? { DATABASE_NAME: props.dbName } : {}),
+        ...(props?.dbUser ? { DATABASE_USER: props.dbUser } : {}),
+        ...(props?.dbPassword && !props?.dbSecretArn
+          ? { DATABASE_PASSWORD: props.dbPassword }
+          : {}),
       },
+      secrets: dbSecret
+        ? {
+            DATABASE_PASSWORD: ecs.Secret.fromSecretsManager(dbSecret, 'password'),
+          }
+        : undefined,
     });
 
     // ECS Services

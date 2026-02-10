@@ -143,6 +143,30 @@ GitHub.com → Actions → View workflow run
 | Deploy Time (prod) | < 30m | Includes approval gate |
 | MTTR (Mean Time to Recover) | < 5m | Auto-rollback helps |
 
+## 🧱 Riscos de Infraestrutura (Sizing e Custos)
+
+- **RDS Multi-AZ** e **ElastiCache** aumentam custos. Recomendação:
+	- **Staging/Dev**: `db.t4g.micro` + `cache.t4g.micro`
+	- **Produção**: `db.r6g.large` + `cache.r6g.large`
+- Alternativa: **Aurora Serverless v2** com auto-scaling para picos.
+- Revisar custos mensalmente via AWS Cost Explorer.
+
+## 🐤 Estratégia de Rollout Canário
+
+1. Criar 3 tenants canário em staging.
+2. Validar critérios de sucesso:
+	 - Uptime > 99.5%
+	 - 5xx < 5/h
+	 - Latência p95 < 500ms
+3. Após 72h estáveis, liberar para demais tenants.
+4. Em regressão, acionar rollback urgente.
+
+## 📘 Runbooks de Operação
+
+- [docs/runbooks/incident-response.md](docs/runbooks/incident-response.md)
+- [docs/runbooks/database-failover.md](docs/runbooks/database-failover.md)
+- [docs/runbooks/rollback-urgente.md](docs/runbooks/rollback-urgente.md)
+
 ## 🔐 Security Features
 
 ✅ Secrets encrypted at rest

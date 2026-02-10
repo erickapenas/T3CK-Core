@@ -47,3 +47,48 @@ output "lambda_role_arn" {
   description = "Lambda role ARN"
   value       = module.iam.lambda_role_arn
 }
+
+output "database_secret_arn" {
+  description = "Secrets Manager ARN for database credentials"
+  value       = module.secrets.database_secret_arn
+}
+
+output "database_security_group_id" {
+  description = "Database security group ID"
+  value       = module.security.database_security_group_id
+}
+
+output "db_endpoint" {
+  description = "RDS endpoint"
+  value       = module.database.db_endpoint
+}
+
+output "db_port" {
+  description = "RDS port"
+  value       = module.database.db_port
+}
+
+output "db_name" {
+  description = "RDS database name"
+  value       = module.database.db_name
+}
+
+output "db_username" {
+  description = "RDS master username"
+  value       = module.database.db_username
+}
+
+output "cache_primary_endpoint" {
+  description = "Redis primary endpoint"
+  value       = module.cache.cache_primary_endpoint
+}
+
+output "cache_reader_endpoint" {
+  description = "Redis reader endpoint"
+  value       = module.cache.cache_reader_endpoint
+}
+
+output "cache_port" {
+  description = "Redis port"
+  value       = module.cache.cache_port
+}

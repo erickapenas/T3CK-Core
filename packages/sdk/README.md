@@ -68,3 +68,11 @@ await t3ck.settings.update({ currency: 'BRL' });
 - `update(updates: Partial<Settings>): Promise<Settings>`
 - `getPaymentMethods(): Promise<string[]>`
 - `updatePaymentMethods(methods: string[]): Promise<string[]>`
+
+## Versionamento
+
+Usamos SemVer. Para publicar uma nova versão:
+
+1. Atualize a versão no `packages/sdk/package.json`.
+2. Crie uma tag no formato `sdk-vX.Y.Z` (ex: `sdk-v1.1.0`).
+3. O workflow de publish fará o deploy no NPM privado.

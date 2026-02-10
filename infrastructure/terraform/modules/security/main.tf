@@ -114,6 +114,40 @@ resource "aws_security_group" "redis" {
   }
 }
 
+# Security Group - Database (RDS)
+resource "aws_security_group" "database" {
+  name        = "t3ck-db-sg"
+  description = "Security group for RDS database"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description     = "MySQL from ECS"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs.id]
+  }
+
+  ingress {
+    description     = "MySQL from Lambda"
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lambda.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "t3ck-db-sg"
+  }
+}
+
 # Outputs
 output "alb_security_group_id" {
   value = aws_security_group.alb.id
@@ -129,4 +163,8 @@ output "lambda_security_group_id" {
 
 output "redis_security_group_id" {
   value = aws_security_group.redis.id
+}
+
+output "database_security_group_id" {
+  value = aws_security_group.database.id
 }

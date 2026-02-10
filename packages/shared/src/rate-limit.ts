@@ -20,6 +20,7 @@ export function initializeRedisClient(): Redis {
       port: parseInt(process.env.REDIS_PORT || '6379'),
       retryStrategy: (times: number) => Math.min(times * 50, 2000),
       lazyConnect: true,
+      maxRetriesPerRequest: null,
     });
 
     redisClient.on('connect', () => {
@@ -65,7 +66,7 @@ export function createRateLimiter(options?: {
 
   return rateLimit({
     store: new RedisStore({
-      client: redis as any,
+      sendCommand: (...args: string[]) => (redis as any).call(...args),
       prefix: 'rl:',
     } as any),
     windowMs,

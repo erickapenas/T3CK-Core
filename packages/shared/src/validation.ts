@@ -25,9 +25,21 @@ export const AuthLoginSchema = z.object({
 
 export const ProvisioningSubmitSchema = z.object({
   body: z.object({
+    tenantId: z.string().min(3),
     domain: z.string().min(3),
     companyName: z.string().min(1),
-    adminEmail: z.string().email(),
+    contactName: z.string().min(1),
+    plan: z.string().min(1),
+    contactEmail: z.string().email(),
+    numberOfSeats: z.number().int().min(1).optional(),
+    region: z.string().min(2).optional(),
+    // Campos opcionais adicionais
+    adminEmail: z.string().email().optional(),
+    contactPhone: z.string().optional(),
+    billingAddress: z.string().optional(),
+    billingCountry: z.string().optional(),
+    billingZipCode: z.string().optional(),
+    monthlyBudget: z.number().optional(),
   }),
 });
 

@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 
   backend "s3" {
@@ -19,52 +23,18 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Variáveis
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
+resource "random_password" "db_password" {
+  count = var.db_password == "" && var.db_password_auto ? 1 : 0
+
+  length           = 32
+  special          = true
+  override_special = "_-%+!#@"
 }
 
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  default     = "production"
-}
-
-variable "project_name" {
-  description = "Project name"
-  type        = string
-  default     = "t3ck"
-}
-
-# Outputs
-output "vpc_id" {
-  value = module.networking.vpc_id
-}
-
-output "public_subnet_ids" {
-  value = module.networking.public_subnet_ids
-}
-
-output "private_subnet_ids" {
-  value = module.networking.private_subnet_ids
-}
-
-output "alb_security_group_id" {
-  value = module.security.alb_security_group_id
-}
-
-output "ecs_security_group_id" {
-  value = module.security.ecs_security_group_id
-}
-
-output "s3_bucket_logs" {
-  value = module.storage.s3_bucket_logs
-}
-
-output "s3_bucket_artifacts" {
-  value = module.storage.s3_bucket_artifacts
+locals {
+  db_password_effective = var.db_password != "" ? var.db_password : (
+    var.db_password_auto ? random_password.db_password[0].result : ""
+  )
 }
 
 # Módulos
@@ -107,4 +77,56 @@ module "secrets" {
   
   project_name = var.project_name
   environment  = var.environment
+}
+
+resource "aws_secretsmanager_secret_version" "database" {
+  secret_id = module.secrets.database_secret_arn
+
+  secret_string = jsonencode({
+    host     = module.database.db_endpoint
+    port     = module.database.db_port
+    name     = module.database.db_name
+    username = var.db_username
+    password = local.db_password_effective
+  })
+}
+
+module "database" {
+  source = "./modules/database"
+
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_id             = module.networking.vpc_id
+  subnet_ids         = module.networking.private_subnet_ids
+  security_group_id  = module.security.database_security_group_id
+  db_name            = var.db_name
+  db_username        = var.db_username
+  db_password        = local.db_password_effective
+  db_instance_class  = var.db_instance_class
+  db_allocated_storage     = var.db_allocated_storage
+  db_max_allocated_storage = var.db_max_allocated_storage
+  db_engine_version        = var.db_engine_version
+  db_multi_az              = var.db_multi_az
+  db_backup_retention      = var.db_backup_retention
+  db_deletion_protection   = var.db_deletion_protection
+  db_publicly_accessible   = var.db_publicly_accessible
+  db_skip_final_snapshot   = var.db_skip_final_snapshot
+  db_storage_encrypted     = var.db_storage_encrypted
+}
+
+module "cache" {
+  source = "./modules/cache"
+
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_id             = module.networking.vpc_id
+  subnet_ids         = module.networking.private_subnet_ids
+  security_group_id  = module.security.redis_security_group_id
+  cache_node_type    = var.cache_node_type
+  cache_engine_version      = var.cache_engine_version
+  cache_num_nodes            = var.cache_num_nodes
+  cache_multi_az             = var.cache_multi_az
+  cache_automatic_failover   = var.cache_automatic_failover
+  cache_at_rest_encryption   = var.cache_at_rest_encryption
+  cache_transit_encryption   = var.cache_transit_encryption
 }

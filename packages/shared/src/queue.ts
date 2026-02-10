@@ -22,6 +22,7 @@ export function initializeQueueRedis(): Redis {
       port: parseInt(process.env.REDIS_PORT || '6379'),
       retryStrategy: (times: number) => Math.min(times * 50, 2000),
       lazyConnect: true,
+      maxRetriesPerRequest: null,
     };
 
     redisConnection = new Redis(options as any);

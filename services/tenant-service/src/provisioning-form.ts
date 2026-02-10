@@ -1,5 +1,4 @@
-import { ValidationError } from '@t3ck/shared';
-import { validateEmail, validateTenantId } from '@t3ck/shared/src/validation';
+import { ValidationError, validateEmail, validateTenantId } from '@t3ck/shared';
 
 export enum ProvisioningStatus {
   PENDING = 'pending',
@@ -16,7 +15,7 @@ export interface ProvisioningForm {
   contactName: string;
   contactPhone?: string;
   region?: string;
-  plan?: string;
+  plan: string;
 }
 
 export interface Tenant {
@@ -66,6 +65,11 @@ export class ProvisioningFormService {
     // Contact name obrigatório
     if (!form.contactName || form.contactName.trim().length === 0) {
       errors.push('Contact name is required');
+    }
+
+    // Plan obrigatório
+    if (!form.plan || form.plan.trim().length === 0) {
+      errors.push('Plan is required');
     }
 
     if (errors.length > 0) {

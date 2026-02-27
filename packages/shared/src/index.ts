@@ -2,6 +2,7 @@
 export * from './logger';
 export * from './errors';
 export * from './validation';
+export * from './env-validation';
 export * from './encryption';
 export * from './rate-limit';
 export * from './tracing';
@@ -10,4 +11,5 @@ export * from './database';
 export * from './service-discovery';
 export * from './backup';
 export * from './multi-region';
+export * from './data-governance';
 export { Tenant } from './entities/tenant';

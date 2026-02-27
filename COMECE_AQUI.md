@@ -9,7 +9,7 @@
 ### ✅ FASE 1: Ler Análise (1-2 horas)
 
 ```
-[ ] Ler STATUS_VISUAL.md                    (10 min)
+[X] Ler STATUS_VISUAL.md                    (10 min)
     └─ Entender visão geral em uma página
 
 [ ] Ler RESUMO_EXECUTIVO.md                 (15 min)

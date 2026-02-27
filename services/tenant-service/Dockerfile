@@ -2,33 +2,32 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY package.json pnpm-lock.yaml* ./
-COPY packages/shared/package.json ./packages/shared/
-COPY services/tenant-service/package.json ./services/tenant-service/
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json ./
+COPY packages/shared ./packages/shared
+COPY services/tenant-service ./services/tenant-service
 
-# Instalar pnpm
 RUN npm install -g pnpm
-
-# Instalar dependências
 RUN pnpm install --frozen-lockfile
-
-# Copiar código fonte
-COPY . .
-
-# Build
-RUN pnpm build --filter @t3ck/tenant-service
+RUN pnpm --filter @t3ck/shared build
+RUN pnpm --filter @t3ck/tenant-service build
 
 # Produção
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copiar apenas o necessário
-COPY --from=builder /app/services/tenant-service/dist ./dist
-COPY --from=builder /app/services/tenant-service/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
+RUN npm install -g pnpm
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/shared/package.json ./packages/shared/
+COPY services/tenant-service/package.json ./services/tenant-service/
+
+RUN pnpm install --frozen-lockfile --prod
+
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/services/tenant-service/dist ./services/tenant-service/dist
+
+WORKDIR /app/services/tenant-service
 
 EXPOSE 3003
 

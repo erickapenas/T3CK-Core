@@ -19,8 +19,22 @@ initSentry('webhook-service');
 const app = express();
 app.use(express.json());
 
+const redisEnabled =
+  process.env.REDIS_DISABLED !== 'true' &&
+  (process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production');
+
+if (!redisEnabled) {
+  process.env.REDIS_DISABLED = 'true';
+  if (!process.env.RATE_LIMIT_STORE) {
+    process.env.RATE_LIMIT_STORE = 'memory';
+  }
+  console.warn('[webhook-service] Redis disabled for local/dev execution (using memory fallback)');
+}
+
 // Initialize Redis cache
-initializeCache({ prefix: 'webhook:' });
+if (redisEnabled) {
+  initializeCache({ prefix: 'webhook:' });
+}
 
 // Initialize Config Manager
 initializeConfig({ parameterPrefix: '/t3ck-core' });
@@ -58,6 +72,18 @@ setupMetricsEndpoint(app, '/metrics');
 
 // Swagger / OpenAPI
 setupSwagger(app, { title: 'Webhook Service API', version: process.env.SERVICE_VERSION });
+
+app.get('/', (_req, res) => {
+  res.json({
+    service: 'webhook-service',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      docs: '/api-docs',
+      api: '/api/webhooks',
+    },
+  });
+});
 
 // Rate limiting middleware
 app.use(getApiLimiter()); // Apply API-wide rate limiter

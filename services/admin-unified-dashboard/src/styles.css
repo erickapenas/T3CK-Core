@@ -1,0 +1,275 @@
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	font-family: Inter, Arial, sans-serif;
+	background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 45%, #f1f5f9 100%);
+	color: #0f172a;
+}
+
+.container {
+	max-width: 1320px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	margin-bottom: 18px;
+	gap: 12px;
+}
+
+.tenant-switcher {
+	min-width: 260px;
+	max-width: 320px;
+}
+
+.title {
+	font-size: clamp(1.4rem, 2vw, 1.9rem);
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: #0b1324;
+}
+
+.subtitle {
+	color: #475569;
+	font-size: 0.85rem;
+	margin-top: 4px;
+}
+
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 18px;
+}
+
+.tab {
+	border: 1px solid #cbd5e1;
+	background: #ffffff;
+	color: #334155;
+	border-radius: 999px;
+	padding: 8px 14px;
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+.tab:hover {
+	transform: translateY(-1px);
+	border-color: #94a3b8;
+	box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+
+.tab.active {
+	background: #1e293b;
+	color: #f8fafc;
+	border-color: #1e293b;
+}
+
+.card {
+	background: rgba(255, 255, 255, 0.9);
+	border-radius: 14px;
+	padding: 14px;
+	margin-bottom: 14px;
+	border: 1px solid #e2e8f0;
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.mini-card {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 10px 12px;
+	transition: all 0.2s ease;
+}
+
+.mini-card:hover {
+	border-color: #cbd5e1;
+	box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+}
+
+.grid {
+	display: grid;
+	gap: 12px;
+}
+
+.grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.section-title {
+	margin: 0 0 12px;
+	font-size: 1rem;
+	color: #1e293b;
+}
+
+.section-gap {
+	margin-bottom: 16px;
+}
+
+input,
+select,
+button {
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid #cbd5e1;
+	border-radius: 10px;
+	background: #ffffff;
+	color: #0f172a;
+	font-size: 0.92rem;
+}
+
+input:focus,
+select:focus {
+	outline: none;
+	border-color: #6366f1;
+	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+button {
+	background: #1e293b;
+	color: #f8fafc;
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.2s ease;
+}
+
+button:hover {
+	transform: translateY(-1px);
+	background: #0f172a;
+}
+
+button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+button.secondary {
+	background: #ffffff;
+	color: #0f172a;
+	border-color: #cbd5e1;
+}
+
+button.secondary:hover {
+	background: #f8fafc;
+}
+
+.btn-primary {
+	width: fit-content;
+	min-width: 180px;
+}
+
+.table-wrap {
+	width: 100%;
+	overflow-x: auto;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+}
+
+.table {
+	width: 100%;
+	min-width: 680px;
+	border-collapse: collapse;
+	background: #ffffff;
+}
+
+.table th,
+.table td {
+	padding: 10px;
+	border-bottom: 1px solid #e2e8f0;
+	text-align: left;
+	vertical-align: top;
+	font-size: 0.9rem;
+}
+
+.table th {
+	background: #f8fafc;
+	color: #334155;
+	font-weight: 700;
+}
+
+.table tbody tr:hover {
+	background: #f8fafc;
+}
+
+.label {
+	font-size: 12px;
+	color: #64748b;
+	margin-bottom: 2px;
+}
+
+.metric {
+	font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 999px;
+	background: #e2e8f0;
+	color: #334155;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.checkbox-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 20px;
+}
+
+.checkbox-row input {
+	width: auto;
+}
+
+.status-note {
+	margin: 10px 0 0;
+	color: #0f766e;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.error {
+	color: #b91c1c;
+	margin-bottom: 10px;
+	background: #fee2e2;
+	border: 1px solid #fecaca;
+	padding: 10px 12px;
+	border-radius: 10px;
+}
+
+.links {
+	display: grid;
+	gap: 10px;
+}
+
+.links a {
+	color: #1d4ed8;
+	text-decoration: none;
+	display: block;
+}
+
+.links a:hover {
+	text-decoration: none;
+	color: #1e40af;
+}
+
+@media (max-width: 1024px) {
+	.grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+	.container { padding: 14px; }
+	.header { flex-direction: column; }
+	.tenant-switcher { min-width: 100%; max-width: 100%; }
+	.grid.two,
+	.grid.three { grid-template-columns: 1fr; }
+	.tab { width: 100%; text-align: center; }
+	.btn-primary { width: 100%; }
+	.table { min-width: 560px; }
+}

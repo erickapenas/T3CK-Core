@@ -1,34 +1,74 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function tenantMatchesClaim(tenantId) {
+      return isAuthenticated() && request.auth.token.tenant_id == tenantId;
+    }
+
+    function resourceTenantMatchesClaim() {
+      return isAuthenticated() && resource.data.tenantId == request.auth.token.tenant_id;
+    }
+
+    function requestTenantMatchesClaim() {
+      return isAuthenticated() && request.resource.data.tenantId == request.auth.token.tenant_id;
+    }
+
+    function isTenantAdmin() {
+      return isAuthenticated() && request.auth.token.roles.hasAny(['admin', 'manager', 'owner']);
+    }
+
     // Regras de segurança multi-tenant
     match /tenants/{tenantId}/** {
-      allow read, write: if request.auth != null && 
-        request.auth.token.tenant_id == tenantId;
+      allow read, write: if tenantMatchesClaim(tenantId);
     }
     
     // Regras para orders
     match /orders/{orderId} {
-      allow read: if request.auth != null && 
-        resource.data.tenantId == request.auth.token.tenant_id;
-      allow create: if request.auth != null && 
-        request.resource.data.tenantId == request.auth.token.tenant_id;
-      allow update, delete: if request.auth != null && 
-        resource.data.tenantId == request.auth.token.tenant_id &&
-        request.auth.token.roles.hasAny(['admin', 'manager']);
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim();
+      allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
     }
     
     // Regras para produtos
     match /products/{productId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        request.auth.token.roles.hasAny(['admin', 'manager']);
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim() && isTenantAdmin();
+      allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
     }
     
     // Regras para webhooks
     match /webhooks/{webhookId} {
-      allow read, write: if request.auth != null && 
-        resource.data.tenantId == request.auth.token.tenant_id;
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim();
+      allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim() && isTenantAdmin();
+      allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim() && isTenantAdmin();
+      allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
+    }
+
+    match /settings/{settingsId} {
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim() && isTenantAdmin();
+      allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if resourceTenantMatchesClaim();
+      allow create: if requestTenantMatchesClaim();
+      allow update, delete: if false;
     }
   }
 }

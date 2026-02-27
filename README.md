@@ -45,9 +45,15 @@ motor-t3ck/
 │   ├── sdk/           # @t3ck/sdk
 │   └── shared/        # Código compartilhado
 ├── services/          # Microserviços
-│   ├── auth-service/  # Autenticação e segurança
+│   ├── api-gateway/     # API Gateway (routing, auth, security)
+│   ├── auth-service/    # Autenticação e segurança
 │   ├── webhook-service/ # Webhooks e eventos
-│   └── tenant-service/  # Gerenciamento de tenants
+│   ├── tenant-service/  # Gerenciamento de tenants
+│   ├── product-service/ # Catálogo, estoque e recomendações
+│   ├── admin-service/   # Gestão administrativa (API)
+│   ├── admin-dashboard/ # Dashboard React administrativo
+│   ├── media-service/   # Transformação de imagens (WebP/AVIF)
+│   └── edge-service/    # Pre-rendering e SSG/ISR/SSR
 ├── examples/          # Exemplos de uso
 ├── docs/              # Documentação
 └── .github/           # CI/CD workflows
@@ -59,7 +65,10 @@ motor-t3ck/
 - [Arquitetura](docs/ARCHITECTURE.md) - Visão geral da arquitetura
 - [API Reference](docs/API.md) - Documentação da API
 - [Provisionamento](docs/PROVISIONING.md) - Guia de provisionamento
+- [Cloud Run Example](docs/CLOUD_RUN_EXAMPLE.md) - Deploy de exemplo no GCP Cloud Run
 - [Deploy](docs/DEPLOYMENT.md) - Guia de deploy
+- [API Gateway Implementation](API_GATEWAY_IMPLEMENTATION.md) - Implementação do API Gateway
+- [Performance Services](PERFORMANCE_SERVICES_IMPLEMENTATION.md) - Serviços de performance (Media + Edge)
 
 ## Desenvolvimento
 
@@ -70,6 +79,24 @@ motor-t3ck/
 - Terraform >= 1.5 (opcional)
 - AWS CLI (opcional)
 - Docker (opcional)
+
+### Variáveis JWT obrigatórias (RS256)
+
+Para o `auth-service`, configure no `.env`:
+
+```bash
+JWT_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
+JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----
+JWT_EXPIRATION=3600
+JWT_REFRESH_EXPIRATION=604800
+```
+
+Gerando chaves (OpenSSL):
+
+```bash
+openssl genrsa -out private.key 2048
+openssl rsa -in private.key -pubout -out public.key
+```
 
 ### Comandos Disponíveis
 
@@ -93,6 +120,9 @@ pnpm format:check
 
 # Desenvolvimento
 pnpm dev  # Inicia todos os serviços
+pnpm dev:core  # Apenas core services (auth, webhook, tenant, product)
+pnpm dev:admin  # Apenas admin (admin-service + dashboard)
+pnpm dev:performance  # Apenas performance (media + edge)
 
 # Type check
 pnpm type-check

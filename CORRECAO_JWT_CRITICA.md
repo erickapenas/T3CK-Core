@@ -504,17 +504,17 @@ export function validateAuthEnvironment(): void {
 
 ## CHECKLIST DE IMPLEMENTAÇÃO
 
-- [ ] Gerar RSA key pair com `openssl`
-- [ ] Atualizar `.env.example` com instruções
-- [ ] Atualizar `.env` local com chaves
-- [ ] Modificar `services/auth-service/src/auth.ts`
-- [ ] Criar testes em `services/auth-service/src/__tests__/auth.test.ts`
-- [ ] Criar validação em `packages/shared/src/env-validation.ts`
-- [ ] Atualizar `services/auth-service/src/index.ts`
-- [ ] Testar localmente: `pnpm --filter @t3ck/auth-service test`
-- [ ] Testar JWT generation/verification
-- [ ] Confirmar que outros serviços conseguem verificar tokens
-- [ ] Documentar no README
+- [x] Gerar RSA key pair com `openssl` *(fallback usado: `crypto.generateKeyPairSync` porque `openssl` não está disponível no terminal local)*
+- [x] Atualizar `.env.example` com instruções
+- [x] Atualizar `.env` local com chaves
+- [x] Modificar `services/auth-service/src/auth.ts`
+- [x] Criar testes em `services/auth-service/src/__tests__/auth.test.ts`
+- [x] Criar validação em `packages/shared/src/env-validation.ts`
+- [x] Atualizar `services/auth-service/src/index.ts`
+- [x] Testar localmente: `pnpm --filter @t3ck/auth-service test`
+- [x] Testar JWT generation/verification
+- [x] Confirmar que outros serviços conseguem verificar tokens
+- [x] Documentar no README
 
 ---
 

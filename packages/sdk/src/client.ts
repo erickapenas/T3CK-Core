@@ -14,6 +14,7 @@ export class T3CKClient {
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': config.apiKey,
+        ...(config.tenantId ? { 'X-Tenant-ID': config.tenantId } : {}),
       },
     });
 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { RateLimitRequestHandler, ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
 import { Logger } from './logger';
@@ -8,6 +8,38 @@ const logger = new Logger('rate-limiter');
 
 // Shared Redis client for rate limiting
 let redisClient: Redis | null = null;
+
+function shouldDisableRateLimit(): boolean {
+  const explicitDisable = String(process.env.RATE_LIMIT_DISABLED || '').toLowerCase() === 'true';
+  return explicitDisable || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+}
+
+function isLocalRequest(req: Request): boolean {
+  const origin = String(req.headers.origin || '');
+  const host = String(req.headers.host || '');
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '');
+  const remoteAddress = String(req.ip || req.socket?.remoteAddress || '');
+  const localHints = [origin, host, forwardedFor, remoteAddress].join(' ');
+
+  return /localhost|127\.0\.0\.1|::1/i.test(localHints);
+}
+
+function shouldUseRedisStore(): boolean {
+  const configuredStore = (process.env.RATE_LIMIT_STORE || '').toLowerCase();
+  if (configuredStore === 'memory') {
+    return false;
+  }
+  if (configuredStore === 'redis') {
+    return true;
+  }
+
+  const redisRequired = String(process.env.RATE_LIMIT_REDIS_REQUIRED || '').toLowerCase() === 'true';
+  if (redisRequired) {
+    return true;
+  }
+
+  return process.env.NODE_ENV === 'production';
+}
 
 export function initializeRedisClient(): Redis {
   if (redisClient && redisClient.status === 'ready') {
@@ -57,27 +89,50 @@ export function createRateLimiter(options?: {
   message?: string;
   statusCode?: number;
 }): RateLimitRequestHandler {
-  const redis = initializeRedisClient();
+  if (shouldDisableRateLimit()) {
+    return ((_: Request, __: Response, next: () => void) => next()) as unknown as RateLimitRequestHandler;
+  }
+
+  const useRedisStore = shouldUseRedisStore();
+  const redis = useRedisStore ? initializeRedisClient() : null;
 
   const windowMs = options?.windowMs ?? 15 * 60 * 1000; // 15 minutes default
   const max = options?.max ?? 100; // 100 requests per window default
   const message = options?.message ?? 'Too many requests, please try again later.';
   const statusCode = options?.statusCode ?? 429;
 
+  if (!useRedisStore) {
+    logger.info('Rate limiter using in-memory store');
+  }
+
   return rateLimit({
-    store: new RedisStore({
-      sendCommand: (...args: string[]) => (redis as any).call(...args),
-      prefix: 'rl:',
-    } as any),
+    ...(redis
+      ? {
+          store: new RedisStore({
+            sendCommand: (...args: string[]) => (redis as any).call(...args),
+            prefix: 'rl:',
+          } as any),
+        }
+      : {}),
     windowMs,
     max,
     message,
     statusCode,
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skip: options?.skip || (() => false),
+    skip: (req: Request, res: Response) => {
+      if (shouldDisableRateLimit() || isLocalRequest(req)) {
+        return true;
+      }
+
+      if (options?.skip) {
+        return options.skip(req, res);
+      }
+
+      return false;
+    },
     keyGenerator: options?.keyGenerator || ((req: Request) => {
-      return req.ip || req.socket.remoteAddress || 'unknown';
+      return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
     }),
     handler: (req: Request, res: Response) => {
       logger.warn('Rate limit exceeded', {
@@ -98,6 +153,7 @@ export function createRateLimiter(options?: {
 let _apiLimiter: RateLimitRequestHandler | null = null;
 let _authLimiter: RateLimitRequestHandler | null = null;
 let _webhookLimiter: RateLimitRequestHandler | null = null;
+let _paymentLimiter: RateLimitRequestHandler | null = null;
 
 /**
  * API-wide rate limiter (default: 100 requests per 15 minutes per IP)
@@ -142,6 +198,21 @@ export function getWebhookLimiter(): RateLimitRequestHandler {
 }
 
 /**
+ * Payment checkout rate limiter (default: 20 requests per 15 minutes per IP)
+ * Helps protect card testing / bot abuse.
+ */
+export function getPaymentLimiter(): RateLimitRequestHandler {
+  if (!_paymentLimiter) {
+    _paymentLimiter = createRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      message: 'Muitas tentativas de pagamento. Aguarde alguns minutos para tentar novamente.',
+    });
+  }
+  return _paymentLimiter;
+}
+
+/**
  * Provisioning rate limiter (default: 10 requests per hour per tenant)
  */
 export function createTenantAwareRateLimiter(maxPerHour: number = 10): RateLimitRequestHandler {
@@ -152,7 +223,7 @@ export function createTenantAwareRateLimiter(maxPerHour: number = 10): RateLimit
     keyGenerator: (req: Request) => {
       // Use tenant ID from header or IP fallback
       const tenantId = req.headers['x-tenant-id'] as string;
-      return tenantId || req.ip || 'unknown';
+      return tenantId || ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
     },
   });
 }

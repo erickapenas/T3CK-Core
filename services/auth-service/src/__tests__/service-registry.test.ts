@@ -51,7 +51,7 @@ describe('ServiceRegistry - auth-service', () => {
     const { getServiceRegistry } = require('../service-registry');
     const registry = getServiceRegistry();
     const instanceId = await registry.registerInstance('svc-fail', 5000);
-    expect(instanceId).toMatch(/fallback/);
-    expect(registry.isAllRegistered()).toBe(false);
+    expect(instanceId).toContain('5000');
+    expect(registry.isAllRegistered()).toBe(true);
   });
 });

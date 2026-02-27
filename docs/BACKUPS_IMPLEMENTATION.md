@@ -2,6 +2,13 @@
 
 This document describes the automated backup design and operational guidance for T3CK Core services.
 
+## Security and Retention
+
+- Backups are stored in the dedicated S3 bucket with **SSE-S3 encryption** enforced.
+- Public access is blocked for all backup buckets.
+- S3 lifecycle policy expires backups after **365 days**.
+- TLS is required for all uploads (bucket policy enforced).
+
 Scope
 - Firestore exports to Google Cloud Storage (GCS)
 - Redis snapshot exports to Amazon S3 (or equivalent object store)

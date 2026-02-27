@@ -16,6 +16,7 @@ import { createT3CK } from '@t3ck/sdk';
 const t3ck = createT3CK({
   apiKey: 'your-api-key',
   baseUrl: 'https://api.t3ck.com',
+  tenantId: 'tenant-123',
 });
 
 // Carrinho
@@ -53,7 +54,19 @@ await t3ck.settings.update({ currency: 'BRL' });
 - `search(query: SearchQuery): Promise<SearchResult>`
 - `getProduct(id: string): Promise<Product>`
 - `getProducts(ids: string[]): Promise<Product[]>`
-- `getCategories(): Promise<string[]>`
+- `createProduct(input: ProductCreateInput): Promise<Product>`
+- `updateProduct(id: string, input: ProductUpdateInput): Promise<Product>`
+- `deleteProduct(id: string): Promise<{ deleted: boolean }>`
+- `getCategories(): Promise<Category[]>`
+- `addVariant(productId: string, input: ProductVariantCreateInput): Promise<ProductVariant>`
+- `updateVariant(productId: string, variantId: string, input: ProductVariantUpdateInput): Promise<ProductVariant>`
+- `removeVariant(productId: string, variantId: string): Promise<{ deleted: boolean }>`
+- `addImage(productId: string, input: ProductImageCreateInput): Promise<ProductImage>`
+- `removeImage(productId: string, imageId: string): Promise<{ deleted: boolean }>`
+- `getRecommendations(productId: string, limit?: number): Promise<Product[]>`
+- `getInventory(productId: string): Promise<InventorySnapshot>`
+- `adjustInventory(productId: string, input: InventoryAdjustInput): Promise<InventoryUpdateResult>`
+- `setInventory(productId: string, input: InventorySetInput): Promise<InventoryUpdateResult>`
 
 ### Checkout
 

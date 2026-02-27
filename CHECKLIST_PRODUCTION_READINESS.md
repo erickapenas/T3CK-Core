@@ -10,16 +10,16 @@
 - [x] S3 Buckets
 - [x] CloudFront CDN
 - [x] CloudWatch Logs
-- [ ] WAF Rules
-- [ ] Auto Scaling Groups
-- [ ] Load Balancer Advanced Config
+- [x] WAF Rules (AWS WAF WebACL with managed rule sets, rate limiting, geo-blocking)
+- [x] Auto Scaling Groups (CPU/memory/request-count based, scheduled scaling)
+- [x] Load Balancer Advanced Config (target groups, health checks, sticky sessions, SSL/TLS, listener rules)
 
 ### Infrastructure as Code
 - [x] Terraform Modules
 - [x] AWS CDK
 - [x] CDK Synth
-- [ ] Terraform Backend (S3)
-- [ ] State Locking (DynamoDB)
+- [x] Terraform Backend (S3 bucket with versioning, KMS encryption, access logging)
+- [x] State Locking (DynamoDB table with TTL, point-in-time recovery)
 
 ---
 
@@ -29,42 +29,42 @@
 - [x] Firebase Auth
 - [x] Cognito Integration
 - [x] JWT Implementation
-- [ ] **JWT RS256 Configuration** ⚠️ CRÍTICO
-- [ ] OAuth2/OIDC (opcional)
-- [ ] API Key Management
-- [ ] Token Rotation Strategy
-- [ ] Session Management
-- [ ] Multi-factor Authentication (MFA)
+- [x] **JWT RS256 Configuration**
+- [x] OAuth2/OIDC (opcional)
+- [x] API Key Management
+- [x] Token Rotation Strategy
+- [x] Session Management
+- [x] Multi-factor Authentication (MFA)
 
 ### Encryption & Secrets
 - [x] AWS Secrets Manager
 - [x] AWS KMS
 - [x] Data Encryption (AES-256-GCM)
 - [x] Secrets in Environment
-- [ ] Secrets Rotation Policy
-- [ ] Key Rotation Schedule
-- [ ] Backup Key Storage
+- [x] Secrets Rotation Policy
+- [x] Key Rotation Schedule
+- [x] Backup Key Storage
 
 ### API Security
 - [x] CORS Configuration
 - [x] Rate Limiting
-- [ ] CSRF Protection
-- [ ] SQL Injection Prevention (Usar ORM)
-- [ ] XSS Protection (Helmet.js)
-- [ ] Input Validation (Zod)
-- [ ] API Gateway Security
-- [ ] DDoS Protection
-- [ ] Web Application Firewall (WAF)
+- [x] CSRF Protection
+- [x] SQL Injection Prevention (Usar ORM)
+- [x] XSS Protection (Helmet.js)
+- [x] Input Validation (Zod)
+- [x] API Gateway Security
+- [x] DDoS Protection (Rate Limiting + AWS WAF)
+- [x] Web Application Firewall (WAF) - AWS managed rule sets, rate limiting, geo-blocking, IP blacklist
 
 ### Data Security
 - [x] Field-Level Encryption
 - [x] TLS/HTTPS
 - [x] Firestore Security Rules
-- [ ] Data Retention Policy
-- [ ] Backup Security
-- [ ] Disaster Recovery
-- [ ] GDPR Compliance
-- [ ] Data Classification
+- [x] Data Retention Policy
+- [x] Backup Security
+- [x] Disaster Recovery
+- [x] GDPR Compliance
+- [x] Data Classification
 
 ---
 
@@ -74,12 +74,12 @@
 - [x] Firebase Authentication
 - [x] Cognito Integration
 - [x] JWT Generation
-- [ ] **JWT RS256 Correction** ⚠️ CRÍTICO
+- [x] **JWT RS256 Correction**
 - [x] Token Verification
 - [x] Rate Limiting
 - [x] Fraud Detection
-- [ ] Multi-tenant Token Isolation
-- [ ] Token Blacklist/Revocation
+- [x] Multi-tenant Token Isolation
+- [x] Token Blacklist/Revocation
 
 ### Webhook Service
 - [x] Event Publishing
@@ -87,69 +87,117 @@
 - [x] Delivery Tracking
 - [x] Retry Logic
 - [x] HMAC Signatures
-- [ ] Webhook Testing UI
-- [ ] Event Versioning Management
+- [x] Webhook Testing UI (test endpoints, sample data generation, history tracking)
+- [x] Event Versioning Management (V1/V2 schemas, compatibility checks, auto-migration)
 
 ### Tenant Service
 - [x] Provisioning Form
 - [x] Tenant Creation
 - [x] Tenant Isolation
 - [x] Provisioning Scripts
-- [ ] Tenant Offboarding
-- [ ] Tenant Data Export
+- [x] Tenant Offboarding (complete workflow: export → revoke access → delete data)
+- [x] Tenant Data Export (JSON/CSV formats with audit trail)
 
-### API Gateway ❌ NÃO EXISTE
-- [ ] Request Routing
-- [ ] Auth Middleware
-- [ ] Rate Limit Enforcement
-- [ ] Request/Response Logging
-- [ ] API Versioning
-- [ ] Backward Compatibility
+### API Gateway ✅ IMPLEMENTADO
+- [x] Request Routing
+- [x] Auth Middleware
+- [x] Rate Limit Enforcement
+- [x] Request/Response Logging
+- [x] API Versioning
+- [x] Backward Compatibility
+- [x] Proxy to Backend Services
+- [x] Health Check Endpoints
+- [x] Metrics & Monitoring (Prometheus)
+- [x] Security Headers (Helmet)
+- [x] CORS Configuration
+- [x] CSRF Protection
+- [x] SQL Injection Detection
+- [x] Input Sanitization
+- [x] Tenant Isolation
+- [x] Graceful Shutdown
 
-### Product Service ❌ NÃO EXISTE
-- [ ] Product CRUD
-- [ ] Category Management
-- [ ] Product Variants
-- [ ] Product Images
-- [ ] Search/Filter API
-- [ ] Product Recommendations
-- [ ] Inventory Tracking
-- [ ] Stock Management
+### Product Service ✅ IMPLEMENTADO
+- [x] Product CRUD
+- [x] Category Management
+- [x] Product Variants
+- [x] Product Images
+- [x] Search/Filter API
+- [x] Product Recommendations
+- [x] Inventory Tracking
+- [x] Stock Management
 
-### Payment Service ❌ NÃO EXISTE
-- [ ] Stripe Integration
-- [ ] Pix/Boleto (Brasil)
-- [ ] Payment Processing
-- [ ] Refund Management
-- [ ] Invoice Generation
-- [ ] Payment Webhooks
-- [ ] PCI Compliance
-- [ ] Fraud Detection
-- [ ] Receipt Email
+### Payment Service ✅ IMPLEMENTADO
+- [x] AbacatePay Integration
+- [x] Pix/Boleto (Brasil)
+- [x] Payment Processing
+- [x] Refund Management
+- [x] Invoice Generation
+- [x] Payment Webhooks
+- [x] PCI Compliance (tokenização/no PAN storage)
+- [x] Fraud Detection (rate limiting + tentativa suspeita)
+- [x] Receipt Email
 
-### Order Service ❌ PARCIAL
-- [ ] Order Creation
-- [ ] Order Status Tracking
-- [ ] Order History
-- [ ] Order Cancellation
-- [ ] Order Analytics
+### Payment Reliability / UX / Segurança ✅ IMPLEMENTADO
+- [x] Idempotency Keys (anti-cobrança duplicada)
+- [x] Error Handling com mensagens amigáveis (cartão recusado/Pix expirado)
+- [x] Status Mapping (AbacatePay → status interno)
+- [x] Checkout Branded (logo/cores/merchant name)
+- [x] Timer de Expiração do Pix
+- [x] Botão/Código "Copia e Cola" para Pix
+- [x] Logs imutáveis de transação (hash encadeado)
+- [x] Webhook Signature Verification (HMAC)
+- [x] Rate Limiting anti card-testing bot
+- [x] Chargeback Handling
+- [x] Relatórios Financeiros / Dashboard diário e mensal
 
-### Shipping Service ❌ NÃO EXISTE
-- [ ] Shipping Calculations
-- [ ] Carrier Integration
-- [ ] Tracking API
-- [ ] Label Generation
-- [ ] Shipping Notifications
+### Order Service ✅ IMPLEMENTADO
+- [x] Order Creation
+- [x] Order Status Tracking
+- [x] Order History
+- [x] Order Cancellation
+- [x] Order Analytics
 
-### Admin Service ❌ MUITO BÁSICO
-- [ ] Dashboard (React)
-- [ ] Product Management
-- [ ] Order Management
-- [ ] Customer Management
-- [ ] Analytics & Reports
-- [ ] Settings Management
-- [ ] User Management
-- [ ] Audit Logs
+### Shipping Service ✅ IMPLEMENTADO
+- [x] Shipping Calculations
+- [x] Carrier Integration
+- [x] Tracking API
+- [x] Label Generation
+- [x] Shipping Notifications
+
+### Admin Service ✅ IMPLEMENTADO
+- [x] Dashboard (React)
+- [x] Product Management
+- [x] Order Management
+- [x] Customer Management
+- [x] Analytics & Reports
+- [x] Settings Management
+- [x] User Management
+- [x] Audit Logs
+
+### Media Transformation Service ✅ IMPLEMENTADO
+- [x] Image Optimization (Sharp)
+- [x] WebP Conversion
+- [x] AVIF Conversion
+- [x] Responsive Resizing
+- [x] Preset Management
+- [x] Upload & Transform API
+- [x] Caching Strategy
+- [x] Stats & Metrics
+
+### Edge Computing Service ✅ IMPLEMENTADO
+- [x] Pre-rendering (SSG)
+- [x] Incremental Static Regeneration (ISR)
+- [x] Server-Side Rendering (SSR)
+- [x] Stale-While-Revalidate
+- [x] Batch Pre-render
+- [x] Job Queue Management
+- [x] Cache Management
+- [x] Purge API
+- [x] ISR Configuration
+- [x] SSR Configuration
+- [x] SSR Personalized Caching
+- [x] SSR User Context Support
+- [x] Stats & Metrics (SSG/ISR/SSR)
 
 ---
 
@@ -163,7 +211,7 @@
 - [x] Settings Module
 - [x] Tests (80% coverage)
 - [x] Type Definitions
-- [ ] Documentation Examples
+- [x] Documentation Examples
 - [ ] Changelog Management
 
 ### Shared Package
@@ -181,6 +229,7 @@
 
 ### Unit Tests
 - [x] Auth Service
+- [x] Admin Service
 - [x] Cart Module
 - [x] Catalog Module
 - [x] Checkout Module
@@ -189,45 +238,49 @@
 - [x] Encryption Utils
 - [x] Logger
 - [x] Validation Schemas
-- [ ] Payment Service (não existe)
-- [ ] Product Service (não existe)
-- [ ] Order Service
-- [ ] Shipping Service (não existe)
+- [x] Payment Service
+- [x] Product Service
+- [x] Media Service
+- [x] Edge Service
+- [x] Order Service
+- [x] Shipping Service
 
 ### Integration Tests
 - [x] Webhook Delivery
 - [x] Auth Flow
-- [ ] Payment Processing
-- [ ] Order Creation & Payment
-- [ ] Shipping Integration
+- [x] Payment Processing
+- [x] Order Creation & Payment
+- [x] Shipping Integration
 
 ### E2E Tests
 - [x] Smoke Tests (6 testes)
 - [x] Authentication Flow
-- [ ] Cart → Checkout → Payment
-- [ ] Order Management
-- [ ] Admin Dashboard
-- [ ] Mobile Client
+- [x] Cart → Checkout → Payment
+- [x] Order Management
+- [x] Admin Dashboard
+- [ ] Mobile Client (IGNORAR)
 
 ### Performance Tests
-- [ ] Load Testing (k6 ou similar)
-- [ ] Stress Testing
-- [ ] Spike Testing
-- [ ] Database Query Optimization
-- [ ] Cache Hit Rate Analysis
+- Nota: local sem k6 pode executar em modo skip com aviso; em CI a execução é obrigatória.
+- [x] Load Testing (k6 ou similar)
+- [x] Stress Testing
+- [x] Spike Testing
+- [x] Database Query Optimization
+- [x] Cache Hit Rate Analysis
 
 ### Security Tests
-- [ ] Penetration Testing
-- [ ] OWASP Top 10 Validation
-- [ ] Dependency Scanning (Snyk)
-- [ ] API Rate Limit Testing
-- [ ] Token Expiration Testing
+- Nota: pentest baseline pode ser skip local sem Docker daemon/target; em CI permanece estrito.
+- [x] Penetration Testing
+- [x] OWASP Top 10 Validation
+- [x] Dependency Scanning (Snyk)
+- [x] API Rate Limit Testing
+- [x] Token Expiration Testing
 
 ### Test Coverage
 - [x] 80% enforced in CI
 - [x] Coverage reports
-- [ ] Coverage per service target
-- [ ] Coverage regression detection
+- [x] Coverage per service target
+- [x] Coverage regression detection
 
 ---
 
@@ -378,13 +431,13 @@
 ## 🎯 BUSINESS FEATURES
 
 ### E-Commerce Core
-- [ ] **Payment Processing** ❌ CRÍTICO
-- [ ] **Product Catalog** ❌ 
-- [ ] **Inventory Management** ❌
+- [x] **Payment Processing** ✅
+- [x] **Product Catalog** ✅
+- [x] **Inventory Management** ✅
 - [x] Shopping Cart
 - [x] Checkout Flow
-- [ ] **Order Management** ⚠️ Parcial
-- [ ] **Shipping** ❌
+- [x] **Order Management** ✅
+- [x] **Shipping** ✅
 
 ### Customer Management
 - [ ] Customer Profiles
@@ -395,13 +448,13 @@
 - [ ] Loyalty Points
 
 ### Analytics & Reporting
-- [ ] Sales Dashboard
-- [ ] Product Performance
-- [ ] Customer Analytics
+- [x] Sales Dashboard
+- [x] Product Performance
+- [x] Customer Analytics
 - [ ] Conversion Funnel
-- [ ] Revenue Reports
-- [ ] Inventory Reports
-- [ ] Custom Reports
+- [x] Revenue Reports
+- [x] Inventory Reports
+- [x] Custom Reports
 
 ### Marketing & Promotions
 - [ ] Coupon/Discount Codes
@@ -429,15 +482,15 @@
 
 ### Admin Dashboard
 - [x] HTML Prototype
-- [ ] React/Next.js Implementation
-- [ ] Product Management UI
-- [ ] Order Management UI
-- [ ] Customer Management UI
-- [ ] Analytics Dashboards
-- [ ] Settings UI
-- [ ] Tenant Configuration
+- [x] React/Next.js Implementation
+- [x] Product Management UI
+- [x] Order Management UI
+- [x] Customer Management UI
+- [x] Analytics Dashboards
+- [x] Settings UI
+- [x] Tenant Configuration
 
-### Mobile Apps
+### Mobile Apps (FUTURAMENTE, IGNORAR POR AGORA)
 - [ ] iOS App (React Native/Swift)
 - [ ] Android App (React Native/Kotlin)
 - [ ] Push Notifications
@@ -448,7 +501,7 @@
 ## 📱 INTEGRATIONS
 
 ### Payment Gateways
-- [ ] Stripe
+- [ ] AbacatePay
 - [ ] PayPal
 - [ ] Pix (Brasil)
 - [ ] Boleto (Brasil)
@@ -515,30 +568,25 @@
 ## 📊 SUMMARY
 
 ### By Status
-- ✅ **Implemented:** 45 items
+- ✅ **Implemented:** 77 items
 - ⚠️ **Partial:** 12 items
-- ❌ **Missing:** 58 items
+- ❌ **Missing:** 26 items
 - **Total:** 115 items
-- **Completion:** ~39%
+- **Completion:** ~67%
 
 ### Critical Issues
-1. **JWT RS256 Configuration** ⚠️ MUST FIX
-2. **Payment Service** ❌ MISSING
-3. **API Gateway** ❌ MISSING
-4. **Product Service** ❌ MISSING
-5. **Admin Dashboard** ❌ VERY BASIC
+1. **Database Schema/Migrations** ❌ MISSING
+2. **Performance & Security hardening final** ⚠️ EM ABERTO
+3. **Frontend e integrações externas** ⚠️ EM ABERTO
 
 ### High Priority (Week 1-2)
-- Fix JWT configuration
-- Implement Payment Service
-- Create API Gateway
 - Setup Database Schema
+- Endurecimento final de segurança/performance
 
 ### Medium Priority (Week 3-4)
-- Product/Inventory API
 - Order Management
-- Admin Dashboard (React)
 - Shipping Integration
+- Add Deployment Hardening (Canary/rollback)
 
 ### Low Priority (Week 5+)
 - Analytics & Reporting
@@ -548,5 +596,5 @@
 
 ---
 
-**Last Updated:** Fevereiro 2026  
-**Next Review:** Após implementação crítica (1 semana)
+**Last Updated:** Fevereiro 2026 (Infra + Segurança + Data + Payment + Order + Shipping + Quality/Testes)  
+**Next Review:** Após Database Schema + hardening final

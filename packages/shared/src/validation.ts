@@ -55,6 +55,83 @@ export const AuthVerifySchema = z.object({
   }),
 });
 
+export const AuthVerifyTenantSchema = z.object({
+  body: z.object({
+    token: z.string().min(1),
+    tenantId: z.string().min(1),
+  }),
+});
+
+export const AuthRevokeSchema = z.object({
+  body: z.object({
+    token: z.string().min(1),
+  }),
+});
+
+export const ApiKeyCreateSchema = z.object({
+  body: z.object({
+    tenantId: z.string().min(3),
+    userId: z.string().min(1),
+    name: z.string().optional(),
+    scopes: z.array(z.string()).optional(),
+    expiresAt: z.string().datetime().optional(),
+  }),
+});
+
+export const ApiKeyVerifySchema = z.object({
+  body: z.object({
+    apiKey: z.string().min(10),
+  }),
+});
+
+export const ApiKeyRevokeSchema = z.object({
+  params: z.object({
+    keyId: z.string().min(6),
+  }),
+});
+
+export const SessionListSchema = z.object({
+  params: z.object({
+    userId: z.string().min(1),
+  }),
+});
+
+export const SessionRevokeSchema = z.object({
+  params: z.object({
+    sessionId: z.string().min(1),
+  }),
+});
+
+export const SessionRevokeUserSchema = z.object({
+  body: z.object({
+    userId: z.string().min(1),
+  }),
+});
+
+export const OidcTokenSchema = z.object({
+  body: z.object({
+    code: z.string().optional(),
+    refreshToken: z.string().optional(),
+    redirectUri: z.string().url().optional(),
+  }).refine(data => Boolean(data.code || data.refreshToken), {
+    message: 'code or refreshToken is required',
+  }),
+});
+
+export const MfaSetupSchema = z.object({
+  body: z.object({
+    accessToken: z.string().min(1),
+  }),
+});
+
+export const MfaVerifySchema = z.object({
+  body: z.object({
+    accessToken: z.string().min(1),
+    userCode: z.string().min(4),
+    enableMfa: z.boolean().default(true),
+  }),
+});
+
 export const EncryptSchema = z.object({
   body: z.object({
     data: z.record(z.any()).optional().or(z.string()),
@@ -87,6 +164,54 @@ export const UpdateWebhookSchema = z.object({
 export const ProvisioningStatusParamSchema = z.object({
   params: z.object({
     tenantId: z.string().min(1),
+  }),
+});
+
+export const PaymentCreateSchema = z.object({
+  body: z.object({
+    tenantId: z.string().min(1),
+    orderId: z.string().min(1),
+    customerId: z.string().min(1),
+    amount: z.number().positive(),
+    currency: z.string().min(3).max(3),
+    method: z.enum(['pix', 'boleto', 'card']),
+    description: z.string().optional(),
+    dueMinutes: z.number().int().positive().max(1440).optional(),
+    metadata: z.record(z.unknown()).optional(),
+  }),
+});
+
+export const PaymentRefundSchema = z.object({
+  body: z.object({
+    tenantId: z.string().min(1),
+    paymentId: z.string().min(1),
+    reason: z.string().min(3),
+    amount: z.number().positive().optional(),
+  }),
+});
+
+export const PaymentWebhookSchema = z.object({
+  body: z.object({
+    tenantId: z.string().min(1),
+    paymentId: z.string().min(1),
+    providerStatus: z.enum(['pending', 'paid', 'refunded', 'failed', 'chargeback']),
+    providerDisputeId: z.string().optional(),
+    reason: z.string().optional(),
+    amount: z.number().optional(),
+  }),
+});
+
+export const PaymentSummaryQuerySchema = z.object({
+  query: z.object({
+    tenantId: z.string().min(1),
+    period: z.enum(['daily', 'monthly']),
+  }),
+});
+
+export const PaymentReceiptSchema = z.object({
+  body: z.object({
+    paymentId: z.string().min(1),
+    email: z.string().email(),
   }),
 });
 

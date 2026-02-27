@@ -11,7 +11,27 @@ const workers = new Map<string, Worker>();
 // Redis connection for queues
 let redisConnection: Redis | null = null;
 
+function shouldUseQueueRedis(): boolean {
+  const store = String(process.env.QUEUE_STORE || '').toLowerCase();
+  if (store === 'memory') {
+    return false;
+  }
+  if (store === 'redis') {
+    return true;
+  }
+
+  if (process.env.REDIS_DISABLED === 'true') {
+    return false;
+  }
+
+  return process.env.NODE_ENV === 'production';
+}
+
 export function initializeQueueRedis(): Redis {
+  if (!shouldUseQueueRedis()) {
+    throw new Error('Queue Redis disabled for local/dev execution');
+  }
+
   if (redisConnection && redisConnection.status === 'ready') {
     return redisConnection;
   }

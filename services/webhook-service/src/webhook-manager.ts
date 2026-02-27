@@ -28,14 +28,35 @@ export interface WebhookDelivery {
 }
 
 export class WebhookManager {
-  private redis: Redis;
+  private redis: Redis | null;
   private logger: Logger;
   private maxRetries: number = 5;
   private retryDelays: number[] = [1000, 2000, 5000, 10000, 30000]; // em ms
+  private memoryWebhooks: Map<string, Webhook> = new Map();
+  private memoryTenantWebhooks: Map<string, Set<string>> = new Map();
+  private memoryDeliveries: Map<string, WebhookDelivery[]> = new Map();
+  private memoryDlq: Array<{ webhook: Webhook; delivery: WebhookDelivery }> = [];
+  private useRedis: boolean;
 
   constructor(redisUrl?: string) {
-    this.redis = new Redis(redisUrl || process.env.REDIS_URL || 'redis://localhost:6379');
     this.logger = new Logger('webhook-manager');
+    this.useRedis =
+      process.env.REDIS_DISABLED !== 'true' &&
+      (process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production');
+
+    if (this.useRedis) {
+      this.redis = new Redis(redisUrl || process.env.REDIS_URL || 'redis://localhost:6379', {
+        maxRetriesPerRequest: 1,
+        enableReadyCheck: false,
+      });
+
+      this.redis.on('error', (error) => {
+        this.logger.warn('WebhookManager Redis unavailable, using in-memory fallback', { error: String(error) });
+        this.useRedis = false;
+      });
+    } else {
+      this.redis = null;
+    }
   }
 
   async createWebhook(webhook: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>): Promise<Webhook> {
@@ -49,20 +70,20 @@ export class WebhookManager {
       updatedAt: now,
     };
 
-    await this.redis.set(`webhook:${id}`, JSON.stringify(newWebhook));
-    await this.redis.sadd(`tenant:${webhook.tenantId}:webhooks`, id);
+    await this.setWebhook(id, newWebhook);
+    await this.addTenantWebhook(webhook.tenantId, id);
 
     this.logger.info('Webhook created', { webhookId: id, tenantId: webhook.tenantId });
     return newWebhook;
   }
 
   async getWebhook(id: string): Promise<Webhook | null> {
-    const data = await this.redis.get(`webhook:${id}`);
-    return data ? JSON.parse(data) : null;
+    const data = await this.getWebhookData(id);
+    return data;
   }
 
   async getWebhooksByTenant(tenantId: string): Promise<Webhook[]> {
-    const webhookIds = await this.redis.smembers(`tenant:${tenantId}:webhooks`);
+    const webhookIds = await this.getTenantWebhookIds(tenantId);
     const webhooks: Webhook[] = [];
 
     for (const id of webhookIds) {
@@ -87,7 +108,7 @@ export class WebhookManager {
       updatedAt: new Date().toISOString(),
     };
 
-    await this.redis.set(`webhook:${id}`, JSON.stringify(updated));
+    await this.setWebhook(id, updated);
     this.logger.info('Webhook updated', { webhookId: id });
     return updated;
   }
@@ -98,8 +119,8 @@ export class WebhookManager {
       return false;
     }
 
-    await this.redis.del(`webhook:${id}`);
-    await this.redis.srem(`tenant:${webhook.tenantId}:webhooks`, id);
+    await this.deleteWebhookData(id);
+    await this.removeTenantWebhook(webhook.tenantId, id);
     this.logger.info('Webhook deleted', { webhookId: id });
     return true;
   }
@@ -197,17 +218,95 @@ export class WebhookManager {
   }
 
   private async saveDelivery(webhookId: string, delivery: WebhookDelivery): Promise<void> {
-    await this.redis.lpush(`webhook:${webhookId}:deliveries`, JSON.stringify(delivery));
-    await this.redis.ltrim(`webhook:${webhookId}:deliveries`, 0, 99); // Manter últimos 100
+    if (this.useRedis && this.redis) {
+      await this.redis.lpush(`webhook:${webhookId}:deliveries`, JSON.stringify(delivery));
+      await this.redis.ltrim(`webhook:${webhookId}:deliveries`, 0, 99); // Manter últimos 100
+      return;
+    }
+
+    const deliveries = this.memoryDeliveries.get(webhookId) || [];
+    deliveries.unshift(delivery);
+    this.memoryDeliveries.set(webhookId, deliveries.slice(0, 100));
   }
 
   async getDeliveryLogs(webhookId: string, limit: number = 50): Promise<WebhookDelivery[]> {
-    const deliveries = await this.redis.lrange(`webhook:${webhookId}:deliveries`, 0, limit - 1);
-    return deliveries.map((d) => JSON.parse(d)).reverse();
+    if (this.useRedis && this.redis) {
+      const deliveries = await this.redis.lrange(`webhook:${webhookId}:deliveries`, 0, limit - 1);
+      return deliveries.map((d) => JSON.parse(d)).reverse();
+    }
+
+    return (this.memoryDeliveries.get(webhookId) || []).slice(0, limit).reverse();
   }
 
   private async sendToDeadLetterQueue(webhook: Webhook, delivery: WebhookDelivery): Promise<void> {
-    await this.redis.lpush('dlq:webhooks', JSON.stringify({ webhook, delivery }));
+    if (this.useRedis && this.redis) {
+      await this.redis.lpush('dlq:webhooks', JSON.stringify({ webhook, delivery }));
+      return;
+    }
+
+    this.memoryDlq.unshift({ webhook, delivery });
+  }
+
+  private async setWebhook(id: string, webhook: Webhook): Promise<void> {
+    if (this.useRedis && this.redis) {
+      await this.redis.set(`webhook:${id}`, JSON.stringify(webhook));
+      return;
+    }
+    this.memoryWebhooks.set(id, webhook);
+  }
+
+  private async getWebhookData(id: string): Promise<Webhook | null> {
+    if (this.useRedis && this.redis) {
+      const data = await this.redis.get(`webhook:${id}`);
+      return data ? (JSON.parse(data) as Webhook) : null;
+    }
+
+    return this.memoryWebhooks.get(id) || null;
+  }
+
+  private async deleteWebhookData(id: string): Promise<void> {
+    if (this.useRedis && this.redis) {
+      await this.redis.del(`webhook:${id}`);
+      return;
+    }
+
+    this.memoryWebhooks.delete(id);
+  }
+
+  private async addTenantWebhook(tenantId: string, webhookId: string): Promise<void> {
+    if (this.useRedis && this.redis) {
+      await this.redis.sadd(`tenant:${tenantId}:webhooks`, webhookId);
+      return;
+    }
+
+    const set = this.memoryTenantWebhooks.get(tenantId) || new Set<string>();
+    set.add(webhookId);
+    this.memoryTenantWebhooks.set(tenantId, set);
+  }
+
+  private async removeTenantWebhook(tenantId: string, webhookId: string): Promise<void> {
+    if (this.useRedis && this.redis) {
+      await this.redis.srem(`tenant:${tenantId}:webhooks`, webhookId);
+      return;
+    }
+
+    const set = this.memoryTenantWebhooks.get(tenantId);
+    if (!set) {
+      return;
+    }
+
+    set.delete(webhookId);
+    if (set.size === 0) {
+      this.memoryTenantWebhooks.delete(tenantId);
+    }
+  }
+
+  private async getTenantWebhookIds(tenantId: string): Promise<string[]> {
+    if (this.useRedis && this.redis) {
+      return this.redis.smembers(`tenant:${tenantId}:webhooks`);
+    }
+
+    return Array.from(this.memoryTenantWebhooks.get(tenantId) || []);
   }
 
   private generateSignature(secret: string, payload: Record<string, unknown>): string {

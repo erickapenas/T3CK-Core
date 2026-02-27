@@ -1,13 +1,22 @@
-import jwt from 'jsonwebtoken';
-import { CognitoIdentityProviderClient, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
+import {
+  CognitoIdentityProviderClient,
+  InitiateAuthCommand,
+  AssociateSoftwareTokenCommand,
+  VerifySoftwareTokenCommand,
+  SetUserMFAPreferenceCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
 import * as admin from 'firebase-admin';
 import { Logger } from '@t3ck/shared';
+import { KeyManager } from './key-manager';
+import { TokenStore } from './token-store';
 
 export interface TokenPayload {
   tenantId: string;
   userId: string;
   email: string;
   roles: string[];
+  tokenType?: 'access' | 'refresh';
+  jti?: string;
   iat?: number;
   exp?: number;
 }
@@ -22,14 +31,24 @@ export interface AuthResult {
 export class AuthService {
   private cognitoClient: CognitoIdentityProviderClient;
   private logger: Logger;
-  private jwtSecret: string;
+  private keyManager: KeyManager;
+  private tokenStore: TokenStore;
+  private jwtExpirationSeconds: number;
 
-  constructor() {
+  constructor(keyManager: KeyManager, tokenStore: TokenStore) {
     this.cognitoClient = new CognitoIdentityProviderClient({
       region: process.env.AWS_REGION || 'us-east-1',
     });
     this.logger = new Logger('auth-service');
-    this.jwtSecret = process.env.JWT_SECRET || '';
+    this.keyManager = keyManager;
+    this.tokenStore = tokenStore;
+
+    const parsedExpiration = Number(process.env.JWT_EXPIRATION || 3600);
+    this.jwtExpirationSeconds = Number.isFinite(parsedExpiration) && parsedExpiration > 0
+      ? parsedExpiration
+      : 3600;
+
+    // Refresh expiration is handled by TokenStore
   }
 
   async authenticateWithFirebase(idToken: string): Promise<TokenPayload> {
@@ -80,9 +99,13 @@ export class AuthService {
   }
 
   async generateJWT(payload: TokenPayload): Promise<string> {
-    return jwt.sign(payload, this.jwtSecret, {
-      algorithm: 'RS256',
-      expiresIn: '1h',
+    const normalizedPayload: TokenPayload = {
+      ...payload,
+      tokenType: payload.tokenType || 'access',
+    };
+
+    return this.keyManager.sign(normalizedPayload, {
+      expiresIn: this.jwtExpirationSeconds,
       issuer: 't3ck',
       audience: 't3ck-api',
     });
@@ -90,11 +113,7 @@ export class AuthService {
 
   async verifyJWT(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret, {
-        algorithms: ['RS256'],
-        issuer: 't3ck',
-        audience: 't3ck-api',
-      }) as TokenPayload;
+      const decoded = await this.tokenStore.verifyToken(token);
 
       return decoded;
     } catch (error) {
@@ -103,7 +122,27 @@ export class AuthService {
     }
   }
 
+  async verifyJWTWithTenant(token: string, tenantId: string): Promise<TokenPayload> {
+    const decoded = await this.verifyJWT(token);
+    if (decoded.tenantId !== tenantId) {
+      throw new Error('Tenant mismatch');
+    }
+    return decoded;
+  }
+
   async refreshToken(refreshToken: string): Promise<AuthResult> {
+    try {
+      const rotation = await this.tokenStore.rotateRefreshToken(refreshToken);
+      return {
+        accessToken: rotation.accessToken,
+        refreshToken: rotation.refreshToken,
+        idToken: '',
+        expiresIn: this.jwtExpirationSeconds,
+      };
+    } catch (_jwtRefreshError) {
+      // Fallback para fluxo Cognito existente
+    }
+
     try {
       const clientId = process.env.COGNITO_CLIENT_ID || '';
       
@@ -131,5 +170,55 @@ export class AuthService {
       this.logger.error('Token refresh failed', { error });
       throw new Error('Invalid refresh token');
     }
+  }
+
+  async revokeToken(token: string): Promise<void> {
+    await this.tokenStore.revokeToken(token);
+  }
+
+  async issueTokens(payload: TokenPayload): Promise<AuthResult> {
+    const accessToken = await this.tokenStore.issueAccessToken(payload, this.jwtExpirationSeconds);
+    const refreshToken = await this.tokenStore.issueRefreshToken(payload);
+
+    return {
+      accessToken,
+      refreshToken,
+      idToken: '',
+      expiresIn: this.jwtExpirationSeconds,
+    };
+  }
+
+  async setupMfa(accessToken: string): Promise<{ secretCode: string; session?: string }> {
+    const command = new AssociateSoftwareTokenCommand({ AccessToken: accessToken });
+    const response = await this.cognitoClient.send(command);
+
+    return {
+      secretCode: response.SecretCode || '',
+      session: response.Session,
+    };
+  }
+
+  async verifyMfa(accessToken: string, userCode: string, enableMfa: boolean): Promise<{ status: string }> {
+    const command = new VerifySoftwareTokenCommand({
+      AccessToken: accessToken,
+      UserCode: userCode,
+      FriendlyDeviceName: 't3ck-device',
+    });
+
+    const response = await this.cognitoClient.send(command);
+
+    if (enableMfa) {
+      const prefCommand = new SetUserMFAPreferenceCommand({
+        AccessToken: accessToken,
+        SoftwareTokenMfaSettings: {
+          Enabled: true,
+          PreferredMfa: true,
+        },
+      });
+
+      await this.cognitoClient.send(prefCommand);
+    }
+
+    return { status: response.Status || 'UNKNOWN' };
   }
 }

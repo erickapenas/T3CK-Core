@@ -37,6 +37,12 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test --coverage --coverageThreshold='{"global":{"lines":80,"functions":80,"branches":80,"statements":80}}'
 
+      - name: Check coverage targets per service
+        run: pnpm coverage:targets
+
+      - name: Check coverage regression
+        run: pnpm coverage:regression
+
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest

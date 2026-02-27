@@ -11,6 +11,7 @@ async function exemploUsoSDK() {
   const t3ck = createT3CK({
     apiKey: process.env.API_KEY || 'your-api-key',
     baseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
+    tenantId: process.env.TENANT_ID || 'tenant-demo',
     timeout: 30000,
     retries: 3,
   });

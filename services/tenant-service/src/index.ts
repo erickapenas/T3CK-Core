@@ -11,6 +11,7 @@ import { initializeConfig } from './config';
 import { initializeServiceRegistry } from './service-registry';
 import { initializeBackup } from './backup';
 import { setupSwagger } from './swagger';
+import { initializeFirestore, getFirestore as getTenantFirestore } from './firebase';
 
 // Initialize OpenTelemetry tracing (must be first)
 initializeTracing('tenant-service');
@@ -82,6 +83,8 @@ setupMetricsMiddleware(app);
 const provisioningService = new ProvisioningFormService();
 const logger = new Logger('tenant-service');
 const inMemoryTenants = new Map<string, any>();
+const firestoreDb = initializeFirestore();
+const firestoreAvailable = Boolean(firestoreDb);
 let dbAvailable = true;
 const dbEnabled =
   process.env.DATABASE_DISABLED !== 'true' &&
@@ -102,6 +105,27 @@ if (redisEnabled) {
       async (job) => {
     logger.info('Processing provisioning job', { jobId: job.id, tenantId: job.data.tenantId });
     try {
+      if (firestoreAvailable) {
+        try {
+          const firestore = getTenantFirestore();
+          if (firestore) {
+            await firestore.collection('tenants').doc(job.data.tenantId).set(
+              {
+                status: 'PROVISIONING',
+                provisioningJobId: String(job.id),
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+          }
+        } catch (firestoreError) {
+          logger.warn('Firestore status update failed (PROVISIONING)', {
+            error: (firestoreError as Error).message,
+            tenantId: job.data.tenantId,
+          });
+        }
+      }
+
       if (!dbAvailable) {
         const tenant = inMemoryTenants.get(job.data.tenantId);
         if (tenant) {
@@ -119,6 +143,28 @@ if (redisEnabled) {
         }
 
         logger.info('Provisioning job completed (in-memory)', { jobId: job.id, tenantId: job.data.tenantId });
+
+        if (firestoreAvailable) {
+          try {
+            const firestore = getTenantFirestore();
+            if (firestore) {
+              await firestore.collection('tenants').doc(job.data.tenantId).set(
+                {
+                  status: 'ACTIVE',
+                  provisionedAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                },
+                { merge: true }
+              );
+            }
+          } catch (firestoreError) {
+            logger.warn('Firestore status update failed (ACTIVE in-memory)', {
+              error: (firestoreError as Error).message,
+              tenantId: job.data.tenantId,
+            });
+          }
+        }
+
         return { success: true, tenantId: job.data.tenantId };
       }
       // Update tenant status to PROVISIONING in database
@@ -139,6 +185,28 @@ if (redisEnabled) {
       );
       
       logger.info('Provisioning job completed', { jobId: job.id, tenantId: job.data.tenantId });
+
+      if (firestoreAvailable) {
+        try {
+          const firestore = getTenantFirestore();
+          if (firestore) {
+            await firestore.collection('tenants').doc(job.data.tenantId).set(
+              {
+                status: 'ACTIVE',
+                provisionedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+          }
+        } catch (firestoreError) {
+          logger.warn('Firestore status update failed (ACTIVE db)', {
+            error: (firestoreError as Error).message,
+            tenantId: job.data.tenantId,
+          });
+        }
+      }
+
       return { success: true, tenantId: job.data.tenantId };
     } catch (error) {
       logger.error('Provisioning job failed', { jobId: job.id, tenantId: job.data.tenantId, error });
@@ -157,6 +225,27 @@ if (redisEnabled) {
         { id: job.data.tenantId },
         { status: 'SUSPENDED' }
       );
+
+      if (firestoreAvailable) {
+        try {
+          const firestore = getTenantFirestore();
+          if (firestore) {
+            await firestore.collection('tenants').doc(job.data.tenantId).set(
+              {
+                status: 'SUSPENDED',
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+          }
+        } catch (firestoreError) {
+          logger.warn('Firestore status update failed (SUSPENDED)', {
+            error: (firestoreError as Error).message,
+            tenantId: job.data.tenantId,
+          });
+        }
+      }
+
       throw error;
     }
   },
@@ -302,6 +391,39 @@ app.post('/provisioning/submit', provisioningLimiter, validateRequest(Provisioni
 
     // Criar tenant com status PENDING
     const tenantData = provisioningService.createTenant(form);
+
+    if (firestoreAvailable) {
+      try {
+        const firestore = getTenantFirestore();
+        if (firestore) {
+          const existingById = await firestore.collection('tenants').doc(tenantData.id).get();
+          if (existingById.exists) {
+            return res.status(409).json({
+              success: false,
+              error: `Tenant ${tenantData.id} already exists`,
+            });
+          }
+
+          const existingByDomain = await firestore
+            .collection('tenants')
+            .where('domain', '==', form.domain)
+            .limit(1)
+            .get();
+
+          if (!existingByDomain.empty) {
+            return res.status(409).json({
+              success: false,
+              error: `Domain ${form.domain} already exists`,
+            });
+          }
+        }
+      } catch (firestoreError) {
+        logger.warn('Firestore duplicate check failed, continuing with fallback persistence', {
+          error: (firestoreError as Error).message,
+          tenantId: tenantData.id,
+        });
+      }
+    }
     
     // Salvar tenant no banco de dados (ou fallback em memória)
     let savedTenant: any;
@@ -347,6 +469,39 @@ app.post('/provisioning/submit', provisioningLimiter, validateRequest(Provisioni
       });
     }
 
+    if (firestoreAvailable) {
+      try {
+        const firestore = getTenantFirestore();
+        if (firestore) {
+          const firestoreTenant = {
+            id: savedTenant.id,
+            domain: form.domain,
+            companyName: form.companyName,
+            contactEmail: form.contactEmail,
+            contactName: form.contactName,
+            adminEmail: form.adminEmail || null,
+            numberOfSeats: form.numberOfSeats || 50,
+            status: 'PENDING',
+            billingAddress: form.billingAddress || null,
+            billingCountry: form.billingCountry || null,
+            billingZipCode: form.billingZipCode || null,
+            monthlyBudget: form.monthlyBudget || 0,
+            billingStatus: 'ACTIVE',
+            plan: form.plan,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          await firestore.collection('tenants').doc(savedTenant.id).set(firestoreTenant, { merge: true });
+        }
+      } catch (firestoreError) {
+        logger.warn('Firestore tenant write failed, continuing with fallback persistence', {
+          error: (firestoreError as Error).message,
+          tenantId: savedTenant.id,
+        });
+      }
+    }
+
     let jobId = `local-${Date.now()}`;
 
     if (queueAvailable) {
@@ -377,6 +532,29 @@ app.post('/provisioning/submit', provisioningLimiter, validateRequest(Provisioni
         savedTenant.updatedAt = new Date();
         inMemoryTenants.set(savedTenant.id, savedTenant);
       }
+
+      if (firestoreAvailable) {
+        try {
+          const firestore = getTenantFirestore();
+          if (firestore) {
+            await firestore.collection('tenants').doc(savedTenant.id).set(
+              {
+                status: 'ACTIVE',
+                provisioningJobId: jobId,
+                provisionedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
+          }
+        } catch (firestoreError) {
+          logger.warn('Firestore status update failed (sync fallback path)', {
+            error: (firestoreError as Error).message,
+            tenantId: savedTenant.id,
+          });
+        }
+      }
+
       logger.warn('Provisioning completed synchronously (queue disabled)', {
         tenantId: savedTenant.id,
         jobId,
@@ -445,7 +623,22 @@ app.get('/provisioning/:tenantId/status', validateRequest(ProvisioningStatusPara
 
     // Buscar tenant do banco de dados (ou memória)
     let tenant: any = null;
-    if (dbAvailable) {
+    if (firestoreAvailable) {
+      try {
+        const firestore = getTenantFirestore();
+        if (firestore) {
+          const snapshot = await firestore.collection('tenants').doc(tenantId).get();
+          tenant = snapshot.exists ? snapshot.data() : null;
+        }
+      } catch (firestoreError) {
+        logger.warn('Firestore status read failed, using fallback', {
+          error: (firestoreError as Error).message,
+          tenantId,
+        });
+      }
+    }
+
+    if (!tenant && dbAvailable) {
       const db = getDatabase();
       const tenantRepository = db.getRepository(Tenant);
       tenant = await tenantRepository.findOne({
@@ -543,8 +736,22 @@ app.get('/queue/stats', async (_req, res) => {
 app.get('/provisioning/tenants', async (_req, res) => {
   try {
     let tenants: any[] = [];
-    
-    if (dbAvailable) {
+
+    if (firestoreAvailable) {
+      try {
+        const firestore = getTenantFirestore();
+        if (firestore) {
+          const snapshot = await firestore.collection('tenants').orderBy('createdAt', 'desc').limit(100).get();
+          tenants = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        }
+      } catch (firestoreError) {
+        logger.warn('Firestore tenant list read failed, using fallback', {
+          error: (firestoreError as Error).message,
+        });
+      }
+    }
+
+    if (tenants.length === 0 && dbAvailable) {
       const db = getDatabase();
       const tenantRepository = db.getRepository(Tenant);
       tenants = await tenantRepository.find({

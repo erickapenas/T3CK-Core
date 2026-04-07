@@ -2,17 +2,20 @@
 
 ## Visão Geral
 
-A plataforma T3CK é uma solução multi-tenant escalável construída na AWS, projetada para suportar 60+ implantações por ano.
+A plataforma T3CK é uma solução multi-tenant escalável construída no Google Cloud Platform, projetada para suportar 60+ implantações por ano.
 
 ## Componentes Principais
 
 ### Infraestrutura
 
-- **Terraform**: Recursos base (VPC, networking, security groups, IAM, S3)
-- **AWS CDK**: Recursos complexos (ECS, ALB, Lambda, EventBridge, API Gateway)
-- **ECS Fargate**: Containerização dos serviços
-- **Application Load Balancer**: Roteamento e balanceamento de carga
-- **EventBridge**: Sistema de eventos centralizado
+- **Cloud Run**: Runtime principal para microserviços HTTP
+- **Artifact Registry**: Registro de imagens Docker
+- **Cloud Build**: Build e publicação das imagens
+- **Cloud Load Balancing**: Entrada HTTPS e distribuição de tráfego
+- **Cloud Armor**: Proteção WAF e rate limiting de borda
+- **Cloud Scheduler / Pub/Sub / Workflows**: Orquestração e agendamento
+- **Cloud SQL**: Persistência relacional gerenciada
+- **Memorystore for Redis**: Cache, filas e rate limiting distribuído
 
 ### Serviços
 
@@ -44,28 +47,28 @@ A plataforma T3CK é uma solução multi-tenant escalável construída na AWS, p
 1. Formulário submetido via CRM
 2. Validação obrigatória
 3. Execução Terraform (recursos base)
-4. Execução CDK (recursos específicos)
-5. Criação Firebase project + Firestore
-6. Configuração Route53
-7. Deploy containers Docker
-8. Geração chaves de API
+4. Build de imagens via Cloud Build
+5. Deploy dos serviços no Cloud Run
+6. Configuração de domínio, HTTPS e balanceamento no GCP
+7. Provisionamento de Cloud SQL / Memorystore / Secret Manager
+8. Geração de chaves de API e segredos gerenciados
 9. Health checks finais
 
 **Meta**: < 10 minutos
 
 ## Segurança
 
-- **Autenticação**: Firebase Auth + AWS Cognito (híbrido)
-- **Criptografia**: AWS KMS para dados sensíveis
-- **Rate Limiting**: Redis + API Gateway
-- **Proteção**: AWS WAF, validação de tokens, session management
+- **Autenticação**: Firebase Auth + identidade federada/OIDC quando necessário
+- **Criptografia**: Google Cloud KMS para dados sensíveis
+- **Rate Limiting**: Redis gerenciado + API Gateway / Cloud Armor
+- **Proteção**: Cloud Armor, validação de tokens, session management, Secret Manager
 
 ## Observabilidade
 
-- **CloudWatch**: Logs e métricas
+- **Cloud Logging / Cloud Monitoring**: Logs e métricas
 - **Dashboards**: Uptime, erros 5xx, tempo de resposta
-- **Alertas**: SNS + Email/Slack
-- **X-Ray**: Tracing distribuído (futuro)
+- **Alertas**: Alerting do GCP + Email/Slack
+- **Tracing**: OpenTelemetry + Cloud Trace
 
 ## CI/CD
 

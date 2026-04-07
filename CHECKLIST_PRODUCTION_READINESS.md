@@ -3,23 +3,22 @@
 ## 🏗️ INFRAESTRUTURA
 
 ### Cloud & Compute
-- [x] AWS VPC Network
-- [x] EC2 / ECS Fargate
-- [x] RDS MySQL Database
-- [x] ElastiCache Redis
-- [x] S3 Buckets
-- [x] CloudFront CDN
-- [x] CloudWatch Logs
-- [x] WAF Rules (AWS WAF WebACL with managed rule sets, rate limiting, geo-blocking)
-- [x] Auto Scaling Groups (CPU/memory/request-count based, scheduled scaling)
-- [x] Load Balancer Advanced Config (target groups, health checks, sticky sessions, SSL/TLS, listener rules)
+- [x] Google Cloud Run
+- [x] Cloud SQL MySQL Database
+- [x] Memorystore Redis
+- [x] GCS Buckets
+- [x] HTTPS Load Balancing / Custom Domain
+- [x] Cloud Logging
+- [x] Cloud Armor Rules (managed protections, rate limiting, geo/IP controls)
+- [x] Cloud Run Auto Scaling (min/max instances, concurrency)
+- [x] Service Routing & Health Checks
 
 ### Infrastructure as Code
 - [x] Terraform Modules
-- [x] AWS CDK
-- [x] CDK Synth
-- [x] Terraform Backend (S3 bucket with versioning, KMS encryption, access logging)
-- [x] State Locking (DynamoDB table with TTL, point-in-time recovery)
+- [ ] AWS CDK (LEGADO, despriorizado)
+- [ ] CDK Synth (LEGADO, despriorizado)
+- [x] Terraform Backend (GCS bucket with versioning, encryption, audit logging)
+- [x] State Locking / Remote State Strategy
 
 ---
 
@@ -37,8 +36,8 @@
 - [x] Multi-factor Authentication (MFA)
 
 ### Encryption & Secrets
-- [x] AWS Secrets Manager
-- [x] AWS KMS
+- [x] Google Secret Manager
+- [x] Cloud KMS
 - [x] Data Encryption (AES-256-GCM)
 - [x] Secrets in Environment
 - [x] Secrets Rotation Policy
@@ -53,8 +52,8 @@
 - [x] XSS Protection (Helmet.js)
 - [x] Input Validation (Zod)
 - [x] API Gateway Security
-- [x] DDoS Protection (Rate Limiting + AWS WAF)
-- [x] Web Application Firewall (WAF) - AWS managed rule sets, rate limiting, geo-blocking, IP blacklist
+- [x] DDoS Protection (Rate Limiting + Cloud Armor)
+- [x] Web Application Firewall (WAF) - Cloud Armor managed protections, rate limiting, geo-blocking, IP blacklist
 
 ### Data Security
 - [x] Field-Level Encryption
@@ -287,7 +286,7 @@
 ## 📊 OBSERVABILITY & MONITORING
 
 ### Logging
-- [x] CloudWatch Logs
+- [x] Cloud Logging
 - [x] Logger Service
 - [x] Log Levels
 - [ ] Log Aggregation

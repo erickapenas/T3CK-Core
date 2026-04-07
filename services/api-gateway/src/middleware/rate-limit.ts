@@ -119,23 +119,128 @@ export const tenantRateLimit = (req: Request, res: Response, next: any) => {
 
 /**
  * IP-based Rate Limiter with Redis Store (for production)
- * Note: Requires Redis connection for distributed rate limiting
+ * Provides distributed rate limiting across multiple instances
  */
 export const createRedisRateLimiter = () => {
-  // TODO: Implement Redis store for distributed rate limiting
-  // import RedisStore from 'rate-limit-redis';
-  // import Redis from 'ioredis';
-  
-  // const redis = new Redis(process.env.REDIS_URL);
-  
-  // return rateLimit({
-  //   store: new RedisStore({
-  //     client: redis,
-  //     prefix: 'rl:',
-  //   }),
-  //   windowMs: 60 * 1000,
-  //   max: 100,
-  // });
-  
-  return globalRateLimit;
+  // Check if Redis is available
+  if (process.env.REDIS_DISABLED === 'true' || !process.env.REDIS_HOST) {
+    console.warn('Redis not available for rate limiting, falling back to memory store');
+    return globalRateLimit;
+  }
+
+  try {
+    // Import dynamically to avoid hard dependency if Redis unavailable
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const RedisStore = require('rate-limit-redis');
+    const Redis = require('ioredis').default;
+
+    const redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+      db: parseInt(process.env.REDIS_DB || '0'),
+      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+      reconnectOnError: () => true,
+    });
+
+    redis.on('error', (err: Error) => {
+      console.error('Redis rate limiter connection error:', err);
+    });
+
+    redis.on('connect', () => {
+      console.info('Redis rate limiter connected');
+    });
+
+    return rateLimit({
+      store: new RedisStore({
+        client: redis,
+        prefix: 'rl:ip:', // Rate limit per IP
+        expiry: 60, // 60 seconds (1 minute window)
+        skipFailedRequests: true, // Don't count failed requests
+        skipSuccessfulRequests: false, // Count all responses
+      }),
+      windowMs: 60 * 1000, // 1 minute
+      max: 100, // 100 requests per minute per IP
+      message: 'Too many requests from this IP, please try again later',
+      standardHeaders: true,
+      legacyHeaders: false,
+      skip: shouldSkipRateLimit,
+      handler: (_req: Request, res: Response) => {
+        res.status(429).json({
+          error: 'Too Many Requests',
+          message: 'Rate limit exceeded. Please try again later.',
+          retryAfter: res.getHeader('RateLimit-Reset'),
+        });
+      },
+    });
+  } catch (error) {
+    console.error('Failed to create Redis rate limiter:', error);
+    return globalRateLimit;
+  }
+};
+
+/**
+ * Tenant-specific Rate Limiter with Redis Store
+ * Different limits per tenant tier
+ */
+export const createTenantRedisRateLimiter = (tierName: string = 'standard') => {
+  if (process.env.REDIS_DISABLED === 'true' || !process.env.REDIS_HOST) {
+    return tenantRateLimit;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const RedisStore = require('rate-limit-redis');
+    const Redis = require('ioredis').default;
+
+    const redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+      db: parseInt(process.env.REDIS_DB || '0'),
+      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+      reconnectOnError: () => true,
+    });
+
+    // Tier-based limits
+    const tierLimits: Record<string, {max: number; windowMs: number}> = {
+      free: { max: 50, windowMs: 60 * 1000 }, // 50 req/min
+      standard: { max: 200, windowMs: 60 * 1000 }, // 200 req/min
+      premium: { max: 500, windowMs: 60 * 1000 }, // 500 req/min
+      enterprise: { max: 0, windowMs: 60 * 1000 }, // Unlimited
+    };
+
+    const limits = tierLimits[tierName] || tierLimits.standard;
+
+    // Return unlimited limiter for enterprise tier
+    if (limits.max === 0) {
+      return (_req: Request, _res: Response, next: any) => next();
+    }
+
+    return rateLimit({
+      store: new RedisStore({
+        client: redis,
+        prefix: `rl:tenant:${tierName}:`,
+        expiry: Math.floor(limits.windowMs / 1000),
+        skipFailedRequests: true,
+        skipSuccessfulRequests: false,
+      }),
+      windowMs: limits.windowMs,
+      max: limits.max,
+      message: `Rate limit exceeded for ${tierName} tier`,
+      standardHeaders: true,
+      legacyHeaders: false,
+      skip: shouldSkipRateLimit,
+      handler: (_req: Request, res: Response) => {
+        res.status(429).json({
+          error: 'Too Many Requests',
+          message: `Rate limit exceeded for ${tierName} tier plan`,
+          retryAfter: res.getHeader('RateLimit-Reset'),
+        });
+      },
+    });
+  } catch (error) {
+    console.error('Failed to create tenant Redis rate limiter:', error);
+    return tenantRateLimit;
+  }
 };

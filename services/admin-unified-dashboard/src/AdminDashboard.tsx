@@ -34,11 +34,6 @@ export default function AdminDashboard() {
           dashboardApi.getAuditLogs(1),
         ]);
 
-        // Log responses for debugging
-        console.log('Health:', { success: healthRes.success, time: healthRes.responseTime });
-        console.log('Analytics:', { success: analyticsRes.success, time: analyticsRes.responseTime, error: analyticsRes.error });
-        console.log('Logs:', { success: logsRes.success, time: logsRes.responseTime, error: logsRes.error });
-
         // Extract response time - use only successful calls
         const times = [
           healthRes.responseTime,

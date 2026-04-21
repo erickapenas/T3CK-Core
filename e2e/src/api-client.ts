@@ -38,7 +38,7 @@ export class ApiClient {
         latency,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch {
       return {
         service: this.environment,
         status: 'unhealthy',

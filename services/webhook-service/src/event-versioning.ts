@@ -171,7 +171,6 @@ export class EventVersioningService {
       throw new Error(`Unknown event type: ${event.type}`);
     }
 
-    const currentSchema = schemas[event.version];
     const targetSchema = schemas[targetVersion];
 
     if (!targetSchema) {
@@ -197,7 +196,10 @@ export class EventVersioningService {
   /**
    * Transform event data from V1 to V2 schema
    */
-  private static migrateV1ToV2(eventType: string, data: Record<string, unknown>): Record<string, unknown> {
+  private static migrateV1ToV2(
+    eventType: string,
+    data: Record<string, unknown>
+  ): Record<string, unknown> {
     // Event-specific migrations
     switch (eventType) {
       case 'order.created': {
@@ -321,5 +323,3 @@ export class EventVersioningService {
     return schemas[version] || null;
   }
 }
-
-export { VersionedEvent, EventSchemaVersion };

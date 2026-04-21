@@ -1,8 +1,30 @@
+import 'dotenv/config';
+
 import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { ProvisioningFormService } from './provisioning-form';
-import { Logger, validateRequest, ProvisioningSubmitSchema, ProvisioningStatusParamSchema, createTenantAwareRateLimiter, getApiLimiter, closeRateLimiter, initializeTracing, createQueue, createWorker, enqueueJob, getQueueStats, closeQueues, initializeDatabase, runMigrations, closeDatabase, getDatabase, Tenant, ValidationError } from '@t3ck/shared';
+import {
+  Logger,
+  validateRequest,
+  ProvisioningSubmitSchema,
+  ProvisioningStatusParamSchema,
+  createTenantAwareRateLimiter,
+  getApiLimiter,
+  closeRateLimiter,
+  initializeTracing,
+  createQueue,
+  createWorker,
+  enqueueJob,
+  getQueueStats,
+  closeQueues,
+  initializeDatabase,
+  runMigrations,
+  closeDatabase,
+  getDatabase,
+  Tenant,
+  ValidationError,
+} from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler, captureException } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
@@ -22,31 +44,33 @@ initSentry('tenant-service');
 const app = express();
 
 // Enable CORS with dynamic origin echo (compatible with credentials)
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true);
-    }
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
 
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
 
-    const allowedOrigins = (process.env.CORS_ORIGINS || '')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
+      const allowedOrigins = (process.env.CORS_ORIGINS || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-CSRF-Token']
-}));
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-CSRF-Token'],
+  })
+);
 
 app.use(express.json());
 
@@ -69,7 +93,7 @@ if (redisEnabled) {
 initializeConfig({ parameterPrefix: '/t3ck-core' });
 
 // Initialize Service Registry (Cloud Map)
-const SERVICE_PORT = parseInt(String(process.env.PORT || 3003));
+const SERVICE_PORT = parseInt(String(process.env.PORT || process.env.TENANT_SERVICE_PORT || 3003));
 initializeServiceRegistry('t3ck-tenant', SERVICE_PORT, {
   service_type: 'provisioning',
 });
@@ -103,153 +127,160 @@ if (redisEnabled) {
     createWorker(
       'provisioning',
       async (job) => {
-    logger.info('Processing provisioning job', { jobId: job.id, tenantId: job.data.tenantId });
-    try {
-      if (firestoreAvailable) {
+        logger.info('Processing provisioning job', { jobId: job.id, tenantId: job.data.tenantId });
         try {
-          const firestore = getTenantFirestore();
-          if (firestore) {
-            await firestore.collection('tenants').doc(job.data.tenantId).set(
-              {
-                status: 'PROVISIONING',
-                provisioningJobId: String(job.id),
-                updatedAt: new Date().toISOString(),
-              },
-              { merge: true }
-            );
-          }
-        } catch (firestoreError) {
-          logger.warn('Firestore status update failed (PROVISIONING)', {
-            error: (firestoreError as Error).message,
-            tenantId: job.data.tenantId,
-          });
-        }
-      }
-
-      if (!dbAvailable) {
-        const tenant = inMemoryTenants.get(job.data.tenantId);
-        if (tenant) {
-          tenant.status = 'PROVISIONING';
-          tenant.provisioningJobId = job.id;
-          tenant.updatedAt = new Date();
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        if (tenant) {
-          tenant.status = 'ACTIVE';
-          tenant.provisionedAt = new Date();
-          tenant.updatedAt = new Date();
-        }
-
-        logger.info('Provisioning job completed (in-memory)', { jobId: job.id, tenantId: job.data.tenantId });
-
-        if (firestoreAvailable) {
-          try {
-            const firestore = getTenantFirestore();
-            if (firestore) {
-              await firestore.collection('tenants').doc(job.data.tenantId).set(
-                {
-                  status: 'ACTIVE',
-                  provisionedAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-                { merge: true }
-              );
+          if (firestoreAvailable) {
+            try {
+              const firestore = getTenantFirestore();
+              if (firestore) {
+                await firestore
+                  .collection('tenants')
+                  .doc(job.data.tenantId)
+                  .set(
+                    {
+                      status: 'PROVISIONING',
+                      provisioningJobId: String(job.id),
+                      updatedAt: new Date().toISOString(),
+                    },
+                    { merge: true }
+                  );
+              }
+            } catch (firestoreError) {
+              logger.warn('Firestore status update failed (PROVISIONING)', {
+                error: (firestoreError as Error).message,
+                tenantId: job.data.tenantId,
+              });
             }
-          } catch (firestoreError) {
-            logger.warn('Firestore status update failed (ACTIVE in-memory)', {
-              error: (firestoreError as Error).message,
+          }
+
+          if (!dbAvailable) {
+            const tenant = inMemoryTenants.get(job.data.tenantId);
+            if (tenant) {
+              tenant.status = 'PROVISIONING';
+              tenant.provisioningJobId = job.id;
+              tenant.updatedAt = new Date();
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            if (tenant) {
+              tenant.status = 'ACTIVE';
+              tenant.provisionedAt = new Date();
+              tenant.updatedAt = new Date();
+            }
+
+            logger.info('Provisioning job completed (in-memory)', {
+              jobId: job.id,
               tenantId: job.data.tenantId,
             });
-          }
-        }
 
-        return { success: true, tenantId: job.data.tenantId };
-      }
-      // Update tenant status to PROVISIONING in database
-      const db = getDatabase();
-      const tenantRepository = db.getRepository(Tenant);
-      await tenantRepository.update(
-        { id: job.data.tenantId },
-        { status: 'PROVISIONING', provisioningJobId: job.id }
-      );
-      
-      // Simulate provisioning work
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      // Update tenant status to ACTIVE upon completion
-      await tenantRepository.update(
-        { id: job.data.tenantId },
-        { status: 'ACTIVE', provisionedAt: new Date() }
-      );
-      
-      logger.info('Provisioning job completed', { jobId: job.id, tenantId: job.data.tenantId });
+            if (firestoreAvailable) {
+              try {
+                const firestore = getTenantFirestore();
+                if (firestore) {
+                  await firestore.collection('tenants').doc(job.data.tenantId).set(
+                    {
+                      status: 'ACTIVE',
+                      provisionedAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString(),
+                    },
+                    { merge: true }
+                  );
+                }
+              } catch (firestoreError) {
+                logger.warn('Firestore status update failed (ACTIVE in-memory)', {
+                  error: (firestoreError as Error).message,
+                  tenantId: job.data.tenantId,
+                });
+              }
+            }
 
-      if (firestoreAvailable) {
-        try {
-          const firestore = getTenantFirestore();
-          if (firestore) {
-            await firestore.collection('tenants').doc(job.data.tenantId).set(
-              {
-                status: 'ACTIVE',
-                provisionedAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              },
-              { merge: true }
-            );
+            return { success: true, tenantId: job.data.tenantId };
           }
-        } catch (firestoreError) {
-          logger.warn('Firestore status update failed (ACTIVE db)', {
-            error: (firestoreError as Error).message,
+          // Update tenant status to PROVISIONING in database
+          const db = getDatabase();
+          const tenantRepository = db.getRepository(Tenant);
+          await tenantRepository.update(
+            { id: job.data.tenantId },
+            { status: 'PROVISIONING', provisioningJobId: job.id }
+          );
+
+          // Simulate provisioning work
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          // Update tenant status to ACTIVE upon completion
+          await tenantRepository.update(
+            { id: job.data.tenantId },
+            { status: 'ACTIVE', provisionedAt: new Date() }
+          );
+
+          logger.info('Provisioning job completed', { jobId: job.id, tenantId: job.data.tenantId });
+
+          if (firestoreAvailable) {
+            try {
+              const firestore = getTenantFirestore();
+              if (firestore) {
+                await firestore.collection('tenants').doc(job.data.tenantId).set(
+                  {
+                    status: 'ACTIVE',
+                    provisionedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                  { merge: true }
+                );
+              }
+            } catch (firestoreError) {
+              logger.warn('Firestore status update failed (ACTIVE db)', {
+                error: (firestoreError as Error).message,
+                tenantId: job.data.tenantId,
+              });
+            }
+          }
+
+          return { success: true, tenantId: job.data.tenantId };
+        } catch (error) {
+          logger.error('Provisioning job failed', {
+            jobId: job.id,
             tenantId: job.data.tenantId,
+            error,
           });
-        }
-      }
-
-      return { success: true, tenantId: job.data.tenantId };
-    } catch (error) {
-      logger.error('Provisioning job failed', { jobId: job.id, tenantId: job.data.tenantId, error });
-      if (!dbAvailable) {
-        const tenant = inMemoryTenants.get(job.data.tenantId);
-        if (tenant) {
-          tenant.status = 'SUSPENDED';
-          tenant.updatedAt = new Date();
-        }
-        throw error;
-      }
-      // Update tenant status to SUSPENDED on error
-      const db = getDatabase();
-      const tenantRepository = db.getRepository(Tenant);
-      await tenantRepository.update(
-        { id: job.data.tenantId },
-        { status: 'SUSPENDED' }
-      );
-
-      if (firestoreAvailable) {
-        try {
-          const firestore = getTenantFirestore();
-          if (firestore) {
-            await firestore.collection('tenants').doc(job.data.tenantId).set(
-              {
-                status: 'SUSPENDED',
-                updatedAt: new Date().toISOString(),
-              },
-              { merge: true }
-            );
+          if (!dbAvailable) {
+            const tenant = inMemoryTenants.get(job.data.tenantId);
+            if (tenant) {
+              tenant.status = 'SUSPENDED';
+              tenant.updatedAt = new Date();
+            }
+            throw error;
           }
-        } catch (firestoreError) {
-          logger.warn('Firestore status update failed (SUSPENDED)', {
-            error: (firestoreError as Error).message,
-            tenantId: job.data.tenantId,
-          });
-        }
-      }
+          // Update tenant status to SUSPENDED on error
+          const db = getDatabase();
+          const tenantRepository = db.getRepository(Tenant);
+          await tenantRepository.update({ id: job.data.tenantId }, { status: 'SUSPENDED' });
 
-      throw error;
-    }
-  },
-  2 // Process 2 jobs concurrently
+          if (firestoreAvailable) {
+            try {
+              const firestore = getTenantFirestore();
+              if (firestore) {
+                await firestore.collection('tenants').doc(job.data.tenantId).set(
+                  {
+                    status: 'SUSPENDED',
+                    updatedAt: new Date().toISOString(),
+                  },
+                  { merge: true }
+                );
+              }
+            } catch (firestoreError) {
+              logger.warn('Firestore status update failed (SUSPENDED)', {
+                error: (firestoreError as Error).message,
+                tenantId: job.data.tenantId,
+              });
+            }
+          }
+
+          throw error;
+        }
+      },
+      2 // Process 2 jobs concurrently
     );
     queueAvailable = true;
   } catch (error) {
@@ -294,7 +325,10 @@ setupHealthChecks(app);
 import { getServiceRegistry } from './service-registry';
 app.get('/internal/registry', (_req, res) => {
   const registry = getServiceRegistry();
-  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({ service: k, instance: v }));
+  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({
+    service: k,
+    instance: v,
+  }));
   res.json({ registered: entries });
 });
 
@@ -379,222 +413,230 @@ const provisioningLimiter = redisEnabled ? createTenantAwareRateLimiter(10) : pa
  *       500:
  *         description: Internal server error
  */
-app.post('/provisioning/submit', provisioningLimiter, validateRequest(ProvisioningSubmitSchema), async (req: Request, res: Response) => {
-  try {
-    const form = {
-      ...req.body,
-      contactEmail: req.body.contactEmail || req.body.adminEmail,
-    };
-
-    // Validar formulário
-    provisioningService.validateForm(form);
-
-    // Criar tenant com status PENDING
-    const tenantData = provisioningService.createTenant(form);
-
-    if (firestoreAvailable) {
-      try {
-        const firestore = getTenantFirestore();
-        if (firestore) {
-          const existingById = await firestore.collection('tenants').doc(tenantData.id).get();
-          if (existingById.exists) {
-            return res.status(409).json({
-              success: false,
-              error: `Tenant ${tenantData.id} already exists`,
-            });
-          }
-
-          const existingByDomain = await firestore
-            .collection('tenants')
-            .where('domain', '==', form.domain)
-            .limit(1)
-            .get();
-
-          if (!existingByDomain.empty) {
-            return res.status(409).json({
-              success: false,
-              error: `Domain ${form.domain} already exists`,
-            });
-          }
-        }
-      } catch (firestoreError) {
-        logger.warn('Firestore duplicate check failed, continuing with fallback persistence', {
-          error: (firestoreError as Error).message,
-          tenantId: tenantData.id,
-        });
-      }
-    }
-    
-    // Salvar tenant no banco de dados (ou fallback em memória)
-    let savedTenant: any;
-    let tenantRepository: any = null;
-    if (dbAvailable) {
-      const db = getDatabase();
-      tenantRepository = db.getRepository(Tenant);
-      const tenant = tenantRepository.create({
-        id: tenantData.id,
-        domain: form.domain,
-        companyName: form.companyName,
-        contactEmail: form.contactEmail,
-        numberOfSeats: form.numberOfSeats || 50,
-        status: 'PENDING',
-        billingAddress: form.billingAddress,
-        billingCountry: form.billingCountry,
-        billingZipCode: form.billingZipCode,
-        monthlyBudget: form.monthlyBudget || 0,
-        billingStatus: 'ACTIVE',
-      });
-      savedTenant = await tenantRepository.save(tenant);
-    } else {
-      savedTenant = {
-        id: tenantData.id,
-        domain: form.domain,
-        companyName: form.companyName,
-        contactEmail: form.contactEmail,
-        numberOfSeats: form.numberOfSeats || 50,
-        status: 'PENDING',
-        billingAddress: form.billingAddress,
-        billingCountry: form.billingCountry,
-        billingZipCode: form.billingZipCode,
-        monthlyBudget: form.monthlyBudget || 0,
-        billingStatus: 'ACTIVE',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+app.post(
+  '/provisioning/submit',
+  provisioningLimiter,
+  validateRequest(ProvisioningSubmitSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const form = {
+        ...req.body,
+        contactEmail: req.body.contactEmail || req.body.adminEmail,
       };
-      inMemoryTenants.set(savedTenant.id, savedTenant);
-      logger.info('Tenant saved in memory', { 
-        tenantId: savedTenant.id, 
-        totalTenants: inMemoryTenants.size,
-        allIds: Array.from(inMemoryTenants.keys())
-      });
-    }
 
-    if (firestoreAvailable) {
-      try {
-        const firestore = getTenantFirestore();
-        if (firestore) {
-          const firestoreTenant = {
-            id: savedTenant.id,
-            domain: form.domain,
-            companyName: form.companyName,
-            contactEmail: form.contactEmail,
-            contactName: form.contactName,
-            adminEmail: form.adminEmail || null,
-            numberOfSeats: form.numberOfSeats || 50,
-            status: 'PENDING',
-            billingAddress: form.billingAddress || null,
-            billingCountry: form.billingCountry || null,
-            billingZipCode: form.billingZipCode || null,
-            monthlyBudget: form.monthlyBudget || 0,
-            billingStatus: 'ACTIVE',
-            plan: form.plan,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
+      // Validar formulário
+      provisioningService.validateForm(form);
 
-          await firestore.collection('tenants').doc(savedTenant.id).set(firestoreTenant, { merge: true });
+      // Criar tenant com status PENDING
+      const tenantData = provisioningService.createTenant(form);
+
+      if (firestoreAvailable) {
+        try {
+          const firestore = getTenantFirestore();
+          if (firestore) {
+            const existingById = await firestore.collection('tenants').doc(tenantData.id).get();
+            if (existingById.exists) {
+              return res.status(409).json({
+                success: false,
+                error: `Tenant ${tenantData.id} already exists`,
+              });
+            }
+
+            const existingByDomain = await firestore
+              .collection('tenants')
+              .where('domain', '==', form.domain)
+              .limit(1)
+              .get();
+
+            if (!existingByDomain.empty) {
+              return res.status(409).json({
+                success: false,
+                error: `Domain ${form.domain} already exists`,
+              });
+            }
+          }
+        } catch (firestoreError) {
+          logger.warn('Firestore duplicate check failed, continuing with fallback persistence', {
+            error: (firestoreError as Error).message,
+            tenantId: tenantData.id,
+          });
         }
-      } catch (firestoreError) {
-        logger.warn('Firestore tenant write failed, continuing with fallback persistence', {
-          error: (firestoreError as Error).message,
-          tenantId: savedTenant.id,
-        });
       }
-    }
 
-    let jobId = `local-${Date.now()}`;
-
-    if (queueAvailable) {
-      // Enqueue provisioning job instead of synchronous execution
-      jobId = await enqueueJob('provisioning', 'provision-tenant', {
-        tenantId: savedTenant.id,
-        domain: form.domain,
-        companyName: form.companyName,
-        contactEmail: form.contactEmail,
-      });
-
-      logger.info('Provisioning job enqueued', {
-        tenantId: savedTenant.id,
-        jobId,
-        domain: form.domain,
-      });
-    } else {
-      // Fallback: provision synchronously when Redis is not available
-      if (dbAvailable && tenantRepository) {
-        await tenantRepository.update(
-          { id: savedTenant.id },
-          { status: 'ACTIVE', provisioningJobId: jobId, provisionedAt: new Date() }
-        );
+      // Salvar tenant no banco de dados (ou fallback em memória)
+      let savedTenant: any;
+      let tenantRepository: any = null;
+      if (dbAvailable) {
+        const db = getDatabase();
+        tenantRepository = db.getRepository(Tenant);
+        const tenant = tenantRepository.create({
+          id: tenantData.id,
+          domain: form.domain,
+          companyName: form.companyName,
+          contactEmail: form.contactEmail,
+          numberOfSeats: form.numberOfSeats || 50,
+          status: 'PENDING',
+          billingAddress: form.billingAddress,
+          billingCountry: form.billingCountry,
+          billingZipCode: form.billingZipCode,
+          monthlyBudget: form.monthlyBudget || 0,
+          billingStatus: 'ACTIVE',
+        });
+        savedTenant = await tenantRepository.save(tenant);
       } else {
-        savedTenant.status = 'ACTIVE';
-        savedTenant.provisioningJobId = jobId;
-        savedTenant.provisionedAt = new Date();
-        savedTenant.updatedAt = new Date();
+        savedTenant = {
+          id: tenantData.id,
+          domain: form.domain,
+          companyName: form.companyName,
+          contactEmail: form.contactEmail,
+          numberOfSeats: form.numberOfSeats || 50,
+          status: 'PENDING',
+          billingAddress: form.billingAddress,
+          billingCountry: form.billingCountry,
+          billingZipCode: form.billingZipCode,
+          monthlyBudget: form.monthlyBudget || 0,
+          billingStatus: 'ACTIVE',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
         inMemoryTenants.set(savedTenant.id, savedTenant);
+        logger.info('Tenant saved in memory', {
+          tenantId: savedTenant.id,
+          totalTenants: inMemoryTenants.size,
+          allIds: Array.from(inMemoryTenants.keys()),
+        });
       }
 
       if (firestoreAvailable) {
         try {
           const firestore = getTenantFirestore();
           if (firestore) {
-            await firestore.collection('tenants').doc(savedTenant.id).set(
-              {
-                status: 'ACTIVE',
-                provisioningJobId: jobId,
-                provisionedAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              },
-              { merge: true }
-            );
+            const firestoreTenant = {
+              id: savedTenant.id,
+              domain: form.domain,
+              companyName: form.companyName,
+              contactEmail: form.contactEmail,
+              contactName: form.contactName,
+              adminEmail: form.adminEmail || null,
+              numberOfSeats: form.numberOfSeats || 50,
+              status: 'PENDING',
+              billingAddress: form.billingAddress || null,
+              billingCountry: form.billingCountry || null,
+              billingZipCode: form.billingZipCode || null,
+              monthlyBudget: form.monthlyBudget || 0,
+              billingStatus: 'ACTIVE',
+              plan: form.plan,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+
+            await firestore
+              .collection('tenants')
+              .doc(savedTenant.id)
+              .set(firestoreTenant, { merge: true });
           }
         } catch (firestoreError) {
-          logger.warn('Firestore status update failed (sync fallback path)', {
+          logger.warn('Firestore tenant write failed, continuing with fallback persistence', {
             error: (firestoreError as Error).message,
             tenantId: savedTenant.id,
           });
         }
       }
 
-      logger.warn('Provisioning completed synchronously (queue disabled)', {
-        tenantId: savedTenant.id,
+      let jobId = `local-${Date.now()}`;
+
+      if (queueAvailable) {
+        // Enqueue provisioning job instead of synchronous execution
+        jobId = await enqueueJob('provisioning', 'provision-tenant', {
+          tenantId: savedTenant.id,
+          domain: form.domain,
+          companyName: form.companyName,
+          contactEmail: form.contactEmail,
+        });
+
+        logger.info('Provisioning job enqueued', {
+          tenantId: savedTenant.id,
+          jobId,
+          domain: form.domain,
+        });
+      } else {
+        // Fallback: provision synchronously when Redis is not available
+        if (dbAvailable && tenantRepository) {
+          await tenantRepository.update(
+            { id: savedTenant.id },
+            { status: 'ACTIVE', provisioningJobId: jobId, provisionedAt: new Date() }
+          );
+        } else {
+          savedTenant.status = 'ACTIVE';
+          savedTenant.provisioningJobId = jobId;
+          savedTenant.provisionedAt = new Date();
+          savedTenant.updatedAt = new Date();
+          inMemoryTenants.set(savedTenant.id, savedTenant);
+        }
+
+        if (firestoreAvailable) {
+          try {
+            const firestore = getTenantFirestore();
+            if (firestore) {
+              await firestore.collection('tenants').doc(savedTenant.id).set(
+                {
+                  status: 'ACTIVE',
+                  provisioningJobId: jobId,
+                  provisionedAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                },
+                { merge: true }
+              );
+            }
+          } catch (firestoreError) {
+            logger.warn('Firestore status update failed (sync fallback path)', {
+              error: (firestoreError as Error).message,
+              tenantId: savedTenant.id,
+            });
+          }
+        }
+
+        logger.warn('Provisioning completed synchronously (queue disabled)', {
+          tenantId: savedTenant.id,
+          jobId,
+          domain: form.domain,
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        data: savedTenant,
         jobId,
-        domain: form.domain,
+        message: 'Form submitted successfully. Provisioning will begin shortly.',
       });
-    }
+    } catch (error) {
+      logger.error('Failed to submit provisioning form', { error });
 
-    return res.status(201).json({
-      success: true,
-      data: savedTenant,
-      jobId,
-      message: 'Form submitted successfully. Provisioning will begin shortly.',
-    });
-  } catch (error) {
-    logger.error('Failed to submit provisioning form', { error });
-    
-    // Capturar erros de validação
-    if (error instanceof ValidationError) {
-      return res.status(400).json({
-        success: false,
-        error: error.message,
-        details: error.details || null,
-      });
-    }
+      // Capturar erros de validação
+      if (error instanceof ValidationError) {
+        return res.status(400).json({
+          success: false,
+          error: error.message,
+          details: error.details || null,
+        });
+      }
 
-    // Outros erros da aplicação
-    if (error instanceof Error) {
+      // Outros erros da aplicação
+      if (error instanceof Error) {
+        return res.status(500).json({
+          success: false,
+          error: error.message,
+        });
+      }
+
+      // Erro desconhecido
       return res.status(500).json({
         success: false,
-        error: error.message,
+        error: 'Failed to submit provisioning form',
       });
     }
-
-    // Erro desconhecido
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to submit provisioning form',
-    });
   }
-});
+);
 
 // Obter status do provisionamento
 /**
@@ -617,74 +659,78 @@ app.post('/provisioning/submit', provisioningLimiter, validateRequest(Provisioni
  *       500:
  *         description: Internal server error
  */
-app.get('/provisioning/:tenantId/status', validateRequest(ProvisioningStatusParamSchema), async (req: Request, res: Response) => {
-  try {
-    const { tenantId } = req.params;
+app.get(
+  '/provisioning/:tenantId/status',
+  validateRequest(ProvisioningStatusParamSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { tenantId } = req.params;
 
-    // Buscar tenant do banco de dados (ou memória)
-    let tenant: any = null;
-    if (firestoreAvailable) {
-      try {
-        const firestore = getTenantFirestore();
-        if (firestore) {
-          const snapshot = await firestore.collection('tenants').doc(tenantId).get();
-          tenant = snapshot.exists ? snapshot.data() : null;
+      // Buscar tenant do banco de dados (ou memória)
+      let tenant: any = null;
+      if (firestoreAvailable) {
+        try {
+          const firestore = getTenantFirestore();
+          if (firestore) {
+            const snapshot = await firestore.collection('tenants').doc(tenantId).get();
+            tenant = snapshot.exists ? snapshot.data() : null;
+          }
+        } catch (firestoreError) {
+          logger.warn('Firestore status read failed, using fallback', {
+            error: (firestoreError as Error).message,
+            tenantId,
+          });
         }
-      } catch (firestoreError) {
-        logger.warn('Firestore status read failed, using fallback', {
-          error: (firestoreError as Error).message,
-          tenantId,
+      }
+
+      if (!tenant && dbAvailable) {
+        const db = getDatabase();
+        const tenantRepository = db.getRepository(Tenant);
+        tenant = await tenantRepository.findOne({
+          where: { id: tenantId },
+        });
+      } else {
+        tenant = inMemoryTenants.get(tenantId) || null;
+      }
+
+      if (!tenant) {
+        return res.status(404).json({
+          success: false,
+          error: 'Tenant not found',
         });
       }
-    }
 
-    if (!tenant && dbAvailable) {
-      const db = getDatabase();
-      const tenantRepository = db.getRepository(Tenant);
-      tenant = await tenantRepository.findOne({
-        where: { id: tenantId },
+      // Mapear status para mensagem legível
+      const statusMessages: Record<string, string> = {
+        PENDING: 'Waiting to start provisioning',
+        PROVISIONING: 'Provisioning infrastructure and services',
+        ACTIVE: 'Provisioning completed successfully',
+        SUSPENDED: 'Provisioning failed or suspended',
+        DELETED: 'Tenant has been deleted',
+      };
+
+      return res.json({
+        success: true,
+        data: {
+          tenantId: tenant.id,
+          domain: tenant.domain,
+          companyName: tenant.companyName,
+          status: tenant.status,
+          message: statusMessages[tenant.status] || 'Unknown status',
+          provisioningJobId: tenant.provisioningJobId || null,
+          provisionedAt: tenant.provisionedAt || null,
+          createdAt: tenant.createdAt,
+          updatedAt: tenant.updatedAt,
+        },
       });
-    } else {
-      tenant = inMemoryTenants.get(tenantId) || null;
+    } catch (error) {
+      logger.error('Failed to get provisioning status', { error });
+      const tenantId = req.params.tenantId || 'unknown';
+      captureException(error, { operation: 'get-provisioning-status', tenantId });
+      return res.status(500).json({ success: false, error: 'Failed to get provisioning status' });
     }
-    
-    if (!tenant) {
-      return res.status(404).json({
-        success: false,
-        error: 'Tenant not found',
-      });
-    }
-    
-    // Mapear status para mensagem legível
-    const statusMessages: Record<string, string> = {
-      'PENDING': 'Waiting to start provisioning',
-      'PROVISIONING': 'Provisioning infrastructure and services',
-      'ACTIVE': 'Provisioning completed successfully',
-      'SUSPENDED': 'Provisioning failed or suspended',
-      'DELETED': 'Tenant has been deleted',
-    };
-    
-    return res.json({
-      success: true,
-      data: {
-        tenantId: tenant.id,
-        domain: tenant.domain,
-        companyName: tenant.companyName,
-        status: tenant.status,
-        message: statusMessages[tenant.status] || 'Unknown status',
-        provisioningJobId: tenant.provisioningJobId || null,
-        provisionedAt: tenant.provisionedAt || null,
-        createdAt: tenant.createdAt,
-        updatedAt: tenant.updatedAt,
-      },
-    });
-  } catch (error) {
-    logger.error('Failed to get provisioning status', { error });
-    const tenantId = req.params.tenantId || 'unknown';
-    captureException(error, { operation: 'get-provisioning-status', tenantId });
-    return res.status(500).json({ success: false, error: 'Failed to get provisioning status' });
   }
-});
+);
 
 // Queue statistics endpoint
 /**
@@ -741,7 +787,11 @@ app.get('/provisioning/tenants', async (_req, res) => {
       try {
         const firestore = getTenantFirestore();
         if (firestore) {
-          const snapshot = await firestore.collection('tenants').orderBy('createdAt', 'desc').limit(100).get();
+          const snapshot = await firestore
+            .collection('tenants')
+            .orderBy('createdAt', 'desc')
+            .limit(100)
+            .get();
           tenants = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         }
       } catch (firestoreError) {
@@ -763,7 +813,7 @@ app.get('/provisioning/tenants', async (_req, res) => {
       tenants = Array.from(inMemoryTenants.values());
       tenants.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
-    
+
     return res.json({
       success: true,
       data: tenants,
@@ -771,8 +821,8 @@ app.get('/provisioning/tenants', async (_req, res) => {
     });
   } catch (error) {
     logger.error('Failed to list tenants', { error });
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       error: 'Failed to list tenants',
       data: [],
       count: 0,

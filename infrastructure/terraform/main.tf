@@ -1,9 +1,9 @@
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
+    google = {
+      source  = "hashicorp/google"
       version = "~> 5.0"
     }
     random = {
@@ -12,15 +12,15 @@ terraform {
     }
   }
 
-  backend "s3" {
+  backend "gcs" {
     bucket = "t3ck-terraform-state"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
+    prefix = "terraform/state"
   }
 }
 
-provider "aws" {
-  region = var.aws_region
+provider "google" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
 }
 
 resource "random_password" "db_password" {
@@ -37,96 +37,154 @@ locals {
   )
 }
 
-# Módulos
+# ===================================
+# GCP CLOUD STORAGE - Terraform State Bucket
+# ===================================
+resource "google_storage_bucket" "terraform_state" {
+  name          = "${var.gcp_project_id}-terraform-state"
+  location      = var.gcp_region
+  force_destroy = false
+
+  versioning {
+    enabled = true
+  }
+
+  encryption {
+    default_kms_key_name = google_kms_crypto_key.terraform_state_key.id
+  }
+
+  uniform_bucket_level_access = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  labels = {
+    env     = var.environment
+    project = var.project_name
+  }
+}
+
+# ===================================
+# KMS KEY FOR TERRAFORM STATE ENCRYPTION
+# ===================================
+resource "google_kms_key_ring" "terraform" {
+  name     = "${var.project_name}-terraform-keyring"
+  location = var.gcp_region
+}
+
+resource "google_kms_crypto_key" "terraform_state_key" {
+  name            = "${var.project_name}-terraform-state-key"
+  key_ring        = google_kms_key_ring.terraform.id
+  rotation_period = "7776000s" # 90 days
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# ===================================
+# Módulos (GCP-based)
+# ===================================
 module "networking" {
   source = "./modules/networking"
-  
-  project_name = var.project_name
-  environment  = var.environment
-  aws_region   = var.aws_region
+
+  project_name  = var.project_name
+  environment   = var.environment
+  gcp_project_id = var.gcp_project_id
+  gcp_region    = var.gcp_region
 }
 
 module "security" {
   source = "./modules/security"
-  
-  vpc_id = module.networking.vpc_id
+
+  project_name = var.project_name
+  environment  = var.environment
+  gcp_project_id = var.gcp_project_id
 }
 
 module "iam" {
   source = "./modules/iam"
-  
-  project_name = var.project_name
-  environment  = var.environment
+
+  project_name   = var.project_name
+  environment    = var.environment
+  gcp_project_id = var.gcp_project_id
 }
 
 module "storage" {
   source = "./modules/storage"
-  
-  project_name = var.project_name
-  environment  = var.environment
+
+  project_name   = var.project_name
+  environment    = var.environment
+  gcp_project_id = var.gcp_project_id
+  gcp_region     = var.gcp_region
 }
 
-module "route53" {
-  source = "./modules/route53"
-  
-  project_name = var.project_name
+module "cloud_dns" {
+  source = "./modules/cloud_dns"
+
+  project_name   = var.project_name
+  gcp_project_id = var.gcp_project_id
 }
 
 module "secrets" {
   source = "./modules/secrets"
-  
-  project_name = var.project_name
-  environment  = var.environment
+
+  project_name   = var.project_name
+  environment    = var.environment
+  gcp_project_id = var.gcp_project_id
+  gcp_region     = var.gcp_region
 }
 
-resource "aws_secretsmanager_secret_version" "database" {
-  secret_id = module.secrets.database_secret_arn
+module "cloud_sql" {
+  source = "./modules/cloud_sql"
 
-  secret_string = jsonencode({
-    host     = module.database.db_endpoint
-    port     = module.database.db_port
-    name     = module.database.db_name
-    username = var.db_username
-    password = local.db_password_effective
-  })
+  project_name          = var.project_name
+  environment           = var.environment
+  gcp_project_id        = var.gcp_project_id
+  gcp_region            = var.gcp_region
+  network_id            = module.networking.network_id
+  db_name               = var.db_name
+  db_username           = var.db_username
+  db_password           = local.db_password_effective
+  db_instance_tier      = var.db_instance_tier
+  db_machine_type       = var.db_machine_type
+  db_backup_retention   = var.db_backup_retention
+  db_deletion_protection = var.db_deletion_protection
+  db_availability_type  = var.db_availability_type
 }
 
-module "database" {
-  source = "./modules/database"
+module "memorystore" {
+  source = "./modules/memorystore"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  vpc_id             = module.networking.vpc_id
-  subnet_ids         = module.networking.private_subnet_ids
-  security_group_id  = module.security.database_security_group_id
-  db_name            = var.db_name
-  db_username        = var.db_username
-  db_password        = local.db_password_effective
-  db_instance_class  = var.db_instance_class
-  db_allocated_storage     = var.db_allocated_storage
-  db_max_allocated_storage = var.db_max_allocated_storage
-  db_engine_version        = var.db_engine_version
-  db_multi_az              = var.db_multi_az
-  db_backup_retention      = var.db_backup_retention
-  db_deletion_protection   = var.db_deletion_protection
-  db_publicly_accessible   = var.db_publicly_accessible
-  db_skip_final_snapshot   = var.db_skip_final_snapshot
-  db_storage_encrypted     = var.db_storage_encrypted
+  project_name           = var.project_name
+  environment            = var.environment
+  gcp_project_id         = var.gcp_project_id
+  gcp_region             = var.gcp_region
+  network_id             = module.networking.network_id
+  redis_tier             = var.redis_tier
+  redis_size_gb          = var.redis_size_gb
+  redis_memory_size_gb   = var.redis_memory_size_gb
+  redis_connect_mode     = var.redis_connect_mode
 }
 
-module "cache" {
-  source = "./modules/cache"
+module "cloud_run" {
+  source = "./modules/cloud_run"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  vpc_id             = module.networking.vpc_id
-  subnet_ids         = module.networking.private_subnet_ids
-  security_group_id  = module.security.redis_security_group_id
-  cache_node_type    = var.cache_node_type
-  cache_engine_version      = var.cache_engine_version
-  cache_num_nodes            = var.cache_num_nodes
-  cache_multi_az             = var.cache_multi_az
-  cache_automatic_failover   = var.cache_automatic_failover
-  cache_at_rest_encryption   = var.cache_at_rest_encryption
-  cache_transit_encryption   = var.cache_transit_encryption
+  project_name          = var.project_name
+  environment           = var.environment
+  gcp_project_id        = var.gcp_project_id
+  gcp_region            = var.gcp_region
+  services              = var.cloud_run_services
+  image_registry        = var.image_registry
+  vpc_connector_id      = module.networking.vpc_connector_id
+  service_account_email = module.iam.cloud_run_sa_email
+}
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  project_name   = var.project_name
+  environment    = var.environment
+  gcp_project_id = var.gcp_project_id
 }

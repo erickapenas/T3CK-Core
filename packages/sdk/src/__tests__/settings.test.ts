@@ -1,5 +1,5 @@
-import { SettingsModule } from '../settings';
 import { T3CKClient } from '../client';
+import { SettingsModule } from '../settings';
 
 describe('SettingsModule', () => {
   const client = {
@@ -22,7 +22,7 @@ describe('SettingsModule', () => {
 
   it('update validates currency type', async () => {
     const settings = new SettingsModule(client);
-    await expect(settings.update({ currency: 123 as any })).rejects.toThrow(
+    await expect(settings.update({ currency: 123 as unknown as string })).rejects.toThrow(
       'Currency must be a string'
     );
   });
@@ -36,9 +36,9 @@ describe('SettingsModule', () => {
 
   it('update validates payment methods', async () => {
     const settings = new SettingsModule(client);
-    await expect(settings.update({ paymentMethods: ['card', 123 as any] })).rejects.toThrow(
-      'Payment methods must be an array of strings'
-    );
+    await expect(
+      settings.update({ paymentMethods: ['card', 123 as unknown as string] })
+    ).rejects.toThrow('Payment methods must be an array of strings');
   });
 
   it('update calls API', async () => {
@@ -61,7 +61,7 @@ describe('SettingsModule', () => {
 
   it('updatePaymentMethods validates array', async () => {
     const settings = new SettingsModule(client);
-    await expect(settings.updatePaymentMethods('card' as any)).rejects.toThrow(
+    await expect(settings.updatePaymentMethods('card' as unknown as string[])).rejects.toThrow(
       'Payment methods must be an array'
     );
   });
@@ -72,6 +72,8 @@ describe('SettingsModule', () => {
 
     await settings.updatePaymentMethods(['card', 'pix']);
 
-    expect(client.put).toHaveBeenCalledWith('/settings/payment-methods', { methods: ['card', 'pix'] });
+    expect(client.put).toHaveBeenCalledWith('/settings/payment-methods', {
+      methods: ['card', 'pix'],
+    });
   });
 });

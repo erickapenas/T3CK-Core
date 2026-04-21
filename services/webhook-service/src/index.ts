@@ -1,6 +1,14 @@
+import 'dotenv/config';
+
 import express from 'express';
 import routes from './api/routes';
-import { Logger, getApiLimiter, getWebhookLimiter, closeRateLimiter, initializeTracing } from '@t3ck/shared';
+import {
+  Logger,
+  getApiLimiter,
+  getWebhookLimiter,
+  closeRateLimiter,
+  initializeTracing,
+} from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
@@ -40,7 +48,7 @@ if (redisEnabled) {
 initializeConfig({ parameterPrefix: '/t3ck-core' });
 
 // Initialize Service Registry (Cloud Map)
-const SERVICE_PORT = parseInt(String(process.env.PORT || 3002));
+const SERVICE_PORT = parseInt(String(process.env.PORT || process.env.WEBHOOK_SERVICE_PORT || 3002));
 initializeServiceRegistry('t3ck-webhook', SERVICE_PORT, {
   service_type: 'webhooks',
 });
@@ -63,7 +71,10 @@ setupHealthChecks(app);
 import { getServiceRegistry } from './service-registry';
 app.get('/internal/registry', (_req, res) => {
   const registry = getServiceRegistry();
-  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({ service: k, instance: v }));
+  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({
+    service: k,
+    instance: v,
+  }));
   res.json({ registered: entries });
 });
 

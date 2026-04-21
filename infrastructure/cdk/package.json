@@ -1,7 +1,7 @@
 {
   "name": "@t3ck/cdk",
   "version": "1.0.0",
-  "description": "AWS CDK infrastructure for T3CK platform",
+  "description": "Legacy AWS CDK infrastructure for T3CK platform (deprecated; Cloud Run/GCP is the primary platform)",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",

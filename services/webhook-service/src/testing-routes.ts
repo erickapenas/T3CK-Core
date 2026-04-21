@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Logger } from '@t3ck/shared/logger';
+import { Logger } from '@t3ck/shared';
 import { WebhookTestingService, WebhookTestRequest } from './testing-service';
 import { EventVersioningService, EventVersion } from './event-versioning';
 
@@ -35,12 +35,12 @@ export function createWebhookTestingRouter(
         webhookId,
         eventType,
         testData: testData || testingService.generateSampleData(eventType),
-        includeHeaders: includeHeaders || true,
+        includeHeaders: includeHeaders ?? true,
       };
 
       const result = await testingService.testWebhook(testRequest);
 
-      res.json({
+      return res.json({
         success: result.success,
         testResult: result,
       });
@@ -48,7 +48,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Test request failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Webhook test failed',
       });
     }
@@ -65,7 +65,7 @@ export function createWebhookTestingRouter(
 
       const history = testingService.getTestHistory(webhookId, parseInt(limit as string) || 10);
 
-      res.json({
+      return res.json({
         webhookId,
         testHistory: history,
       });
@@ -73,7 +73,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Get history failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to retrieve test history',
       });
     }
@@ -89,7 +89,7 @@ export function createWebhookTestingRouter(
 
       testingService.clearTestHistory(webhookId);
 
-      res.json({
+      return res.json({
         success: true,
         message: `Test history cleared for webhook: ${webhookId}`,
       });
@@ -97,7 +97,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Clear history failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to clear test history',
       });
     }
@@ -113,7 +113,7 @@ export function createWebhookTestingRouter(
 
       const sampleData = testingService.generateSampleData(eventType);
 
-      res.json({
+      return res.json({
         eventType,
         sampleData,
       });
@@ -121,7 +121,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Generate sample failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to generate sample data',
       });
     }
@@ -143,7 +143,7 @@ export function createWebhookTestingRouter(
 
       const validation = testingService.validateWebhookUrl(url);
 
-      res.json({
+      return res.json({
         url,
         valid: validation.valid,
         error: validation.error,
@@ -152,7 +152,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] URL validation failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'URL validation failed',
       });
     }
@@ -168,7 +168,7 @@ export function createWebhookTestingRouter(
 
       const versions = versioningService.getAvailableVersions(eventType as string);
 
-      res.json({
+      return res.json({
         eventType,
         availableVersions: versions,
         latestVersion: versions[versions.length - 1] || null,
@@ -177,7 +177,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Get versions failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to retrieve event versions',
       });
     }
@@ -191,10 +191,7 @@ export function createWebhookTestingRouter(
     try {
       const { eventType, version } = req.params;
 
-      const schema = versioningService.getSchemaDocumentation(
-        eventType,
-        version as EventVersion
-      );
+      const schema = versioningService.getSchemaDocumentation(eventType, version as EventVersion);
 
       if (!schema) {
         return res.status(404).json({
@@ -202,7 +199,7 @@ export function createWebhookTestingRouter(
         });
       }
 
-      res.json({
+      return res.json({
         eventType,
         version,
         schema,
@@ -211,7 +208,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Get schema failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Failed to retrieve event schema',
       });
     }
@@ -245,7 +242,7 @@ export function createWebhookTestingRouter(
 
       const validation = versioningService.validateEvent(event);
 
-      res.json({
+      return res.json({
         valid: validation.valid,
         errors: validation.errors,
       });
@@ -253,7 +250,7 @@ export function createWebhookTestingRouter(
       logger.error('[WebhookTesting] Event validation failed', {
         error: error instanceof Error ? error.message : String(error),
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Event validation failed',
       });
     }

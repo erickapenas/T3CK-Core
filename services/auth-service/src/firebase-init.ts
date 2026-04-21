@@ -14,20 +14,14 @@ export function initializeFirebase(): void {
     // Tentar usar service account se disponível
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH) {
       const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       // JSON string na variável de ambiente
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     } else {
       // Usar Application Default Credentials (GCP)
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
+      admin.initializeApp({ credential: admin.credential.applicationDefault() });
     }
 
     initialized = true;

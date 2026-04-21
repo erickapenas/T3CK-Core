@@ -1,0 +1,124 @@
+/* System Tree Component Styles */
+
+.system-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tree-search {
+  position: relative;
+}
+
+.tree-search-input {
+  width: 100%;
+  background: rgba(45, 53, 72, 0.4);
+  border: 1px solid #4a5568;
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 12px;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tree-search-input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.05);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.tree-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(45, 53, 72, 0.3);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 12px;
+}
+
+.tree-item:hover {
+  background: rgba(0, 255, 65, 0.05);
+  border-color: #00ff41;
+  box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+}
+
+.tree-item.active {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: #00ff41;
+  box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+}
+
+.tree-icon {
+  font-size: 16px;
+  min-width: 20px;
+}
+
+.tree-label {
+  flex: 1;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.tree-badge {
+  background: rgba(0, 212, 255, 0.2);
+  border: 1px solid #00d4ff;
+  color: #00d4ff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tree-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.loading-spinner {
+  display: inline-block;
+  font-size: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.tree-loading span:last-child {
+  color: #4a5568;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tree-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: #4a5568;
+  font-size: 12px;
+  text-align: center;
+  background: rgba(45, 53, 72, 0.2);
+  border: 1px dashed #2d3548;
+  border-radius: 4px;
+}

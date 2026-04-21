@@ -21,6 +21,7 @@ GET /transform?url=https://example.com/image.jpg&w=640&format=webp&quality=85
 ```
 
 **Query Parameters**:
+
 - `url` (required): Source image URL
 - `w`: Target width
 - `h`: Target height
@@ -38,6 +39,7 @@ GET /preset/medium?url=https://example.com/image.jpg
 ```
 
 **Built-in Presets**:
+
 - `thumbnail`: 150x150 WebP Q80
 - `small`: 320px WebP Q85
 - `medium`: 640px WebP Q85
@@ -94,11 +96,11 @@ POST /cache/clear
 ### Responsive Images (srcset)
 
 ```html
-<img 
+<img
   src="/transform?url=IMAGE_URL&w=640&format=webp"
   srcset="
-    /transform?url=IMAGE_URL&w=320&format=webp 320w,
-    /transform?url=IMAGE_URL&w=640&format=webp 640w,
+    /transform?url=IMAGE_URL&w=320&format=webp   320w,
+    /transform?url=IMAGE_URL&w=640&format=webp   640w,
     /transform?url=IMAGE_URL&w=1024&format=webp 1024w
   "
   sizes="(max-width: 640px) 320px, (max-width: 1024px) 640px, 1024px"
@@ -110,16 +112,16 @@ POST /cache/clear
 
 ```html
 <picture>
-  <source srcset="/preset/avif-medium?url=IMAGE_URL" type="image/avif">
-  <source srcset="/preset/medium?url=IMAGE_URL" type="image/webp">
-  <img src="/transform?url=IMAGE_URL&w=640" alt="Fallback">
+  <source srcset="/preset/avif-medium?url=IMAGE_URL" type="image/avif" />
+  <source srcset="/preset/medium?url=IMAGE_URL" type="image/webp" />
+  <img src="/transform?url=IMAGE_URL&w=640" alt="Fallback" />
 </picture>
 ```
 
 ## Environment Variables
 
 ```bash
-PORT=3007
+MEDIA_SERVICE_PORT=3007
 NODE_ENV=production
 ```
 
@@ -157,7 +159,7 @@ const product = {
       small: '/preset/small?url=https://cdn.example.com/product.jpg',
       medium: '/preset/medium?url=https://cdn.example.com/product.jpg',
       large: '/preset/large?url=https://cdn.example.com/product.jpg',
-    }
-  ]
+    },
+  ],
 };
 ```

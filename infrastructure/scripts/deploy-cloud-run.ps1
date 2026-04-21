@@ -169,23 +169,27 @@ $gatewayImage = New-ServiceImage -ServiceName 'api-gateway' -DockerfilePath 'ser
 $tenantUrl = Publish-Service -ServiceName 'tenant-service' -Image $tenantImage -EnvVars @{
     NODE_ENV = 'production'
     PORT = '8080'
-    REDIS_DISABLED = 'true'
-    DATABASE_DISABLED = 'true'
-    RATE_LIMIT_STORE = 'memory'
+    GCP_PROJECT_ID = $ProjectId
+    GCP_REGION = $Region
+    RATE_LIMIT_STORE = 'redis'
     SENTRY_DSN = ''
 }
 
 $adminUrl = Publish-Service -ServiceName 'admin-service' -Image $adminImage -EnvVars @{
     NODE_ENV = 'production'
     PORT = '8080'
-    RATE_LIMIT_STORE = 'memory'
+    GCP_PROJECT_ID = $ProjectId
+    GCP_REGION = $Region
+    RATE_LIMIT_STORE = 'redis'
 }
 
 $gatewayUrl = Publish-Service -ServiceName 'api-gateway' -Image $gatewayImage -EnvVars @{
     NODE_ENV = 'production'
     PORT = '8080'
+    GCP_PROJECT_ID = $ProjectId
+    GCP_REGION = $Region
     ENABLE_CSRF = 'false'
-    RATE_LIMIT_STORE = 'memory'
+    RATE_LIMIT_STORE = 'redis'
     CORS_ORIGINS = '*'
     TENANT_SERVICE_URL = $tenantUrl
     ADMIN_SERVICE_URL = $adminUrl

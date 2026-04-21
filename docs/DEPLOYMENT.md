@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O pipeline de CI/CD do T3CK implementa um processo robusto, seguro e rastreável para deployment em produção, com blue-green deployment, smoke tests automáticos e rollback inteligente.
+O pipeline de CI/CD do T3CK implementa um processo robusto, seguro e rastreável para deployment em produção no Google Cloud Run, com versionamento por revisão, smoke tests automáticos e rollback por revisão estável.
 
 ## 📊 Fluxo Simplificado
 
@@ -27,10 +27,10 @@ main branch → APPROVAL GATE → PRODUCTION (blue-green) → SMOKE TESTS → RO
 - ✅ Jest (unit tests, 80% coverage)
 - ✅ Snyk (security scanning)
 
-### 2. Blue-Green Deployment
-- Two versions running in parallel
-- Zero downtime switching
-- Instant rollback capability
+### 2. Cloud Run Revision Rollout
+- Revisões independentes por serviço
+- Zero downtime no redirecionamento de tráfego
+- Rollback rápido para revisão anterior estável
 
 ### 3. Smoke Tests (Automatic)
 - Health endpoints check
@@ -49,7 +49,14 @@ main branch → APPROVAL GATE → PRODUCTION (blue-green) → SMOKE TESTS → RO
 - Manual approval in GitHub Actions
 - Full audit trail
 
-### 6. Slack Notifications
+### 6. Google Cloud Runtime
+- Cloud Build para build reproducível
+- Artifact Registry para imagens
+- Cloud Run para execução gerenciada
+- Secret Manager para secrets de runtime
+- Cloud SQL e Memorystore para serviços gerenciados
+
+### 7. Slack Notifications
 - Deployment started
 - Deployment succeeded
 - Deployment failed
@@ -59,8 +66,10 @@ main branch → APPROVAL GATE → PRODUCTION (blue-green) → SMOKE TESTS → RO
 
 ### 1. Configure Secrets (see `.github/SECRETS.md`)
 ```
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
+GCP_PROJECT_ID
+GCP_REGION
+GCP_SERVICE_ACCOUNT_KEY
+ARTIFACT_REGISTRY_REPOSITORY
 STAGING_URL (environment: staging)
 PROD_URL (environment: production)
 SLACK_WEBHOOK (optional)
@@ -70,12 +79,13 @@ SLACK_WEBHOOK (optional)
 - `Settings → Environments → staging` (auto-deploy)
 - `Settings → Environments → production` (manual approval)
 
-### 3. Verify IAM Permissions
-- ECR: push/pull
-- ECS: describe/update
-- CloudWatch: logs access
+### 3. Verify GCP Permissions
+- Artifact Registry: push/pull
+- Cloud Run: deploy/update
+- Cloud Build: build execution
+- Secret Manager: access to runtime secrets
 
-See `.github/SECRETS.md` for complete IAM policy
+See `.github/SECRETS.md` for complete permission guidance
 
 ## 🔧 Operations
 
@@ -96,29 +106,28 @@ GitHub.com → Repository → Actions → [Workflow Run]
 → Review Deployments → Approve and deploy
 ```
 
-### Rollback Script
+### Rollback Strategy
 
-**Linux/macOS:**
+**Cloud Run revisions:**
 ```bash
-./scripts/rollback-production.sh auth-service           # Rollback to previous
-./scripts/rollback-production.sh auth-service abc123    # Rollback to commit
-./scripts/rollback-production.sh all                    # Rollback all
+# List revisions
+ gcloud run revisions list --service t3ck-api-gateway --region us-central1
+
+# Send traffic back to previous stable revision
+ gcloud run services update-traffic t3ck-api-gateway \
+   --region us-central1 \
+   --to-revisions REVISION_NAME=100
 ```
 
-**Windows:**
-```powershell
-.\scripts\rollback-production.ps1 -Service auth-service
-.\scripts\rollback-production.ps1 -Service auth-service -CommitSha abc123
-.\scripts\rollback-production.ps1 -Service all
-```
+Repita o procedimento para cada serviço afetado.
 
 ### Check Status
 ```bash
-# CloudWatch logs
-aws logs tail /aws/ecs/t3ck-cluster --follow
+# Cloud Run service status
+ gcloud run services describe t3ck-api-gateway --region us-central1
 
-# ECS service status
-aws ecs describe-services --cluster t3ck-cluster --services auth-service
+# Cloud Logging
+ gcloud logging read 'resource.type="cloud_run_revision"' --limit 50
 
 # GitHub Actions
 GitHub.com → Actions → View workflow run
@@ -169,10 +178,10 @@ GitHub.com → Actions → View workflow run
 
 ## 🔐 Security Features
 
-✅ Secrets encrypted at rest
+✅ Secrets encrypted at rest via Secret Manager / Cloud KMS
 ✅ Manual approval for production
-✅ Automatic rollback on failure
-✅ Blue-green deployment (zero downtime)
+✅ Rollback por revisão estável
+✅ Zero downtime com revisões do Cloud Run
 ✅ Health checks after deployment
 ✅ Audit trail of all deployments
 ✅ Credentials rotated every 90 days

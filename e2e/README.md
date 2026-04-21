@@ -2,7 +2,7 @@
 
 ## Environment Variables
 
-Create `.env.staging` and `.env.production` files in this directory:
+Create `.env.staging` and `.env.production` files in this directory, or copy from the `.example` files:
 
 ```bash
 # .env.staging
@@ -48,5 +48,6 @@ pnpm test:coverage
 ## GitHub Actions Integration
 
 The E2E tests run automatically:
+
 - After staging deployment (develop → staging)
 - Before production deployment (main → production)

@@ -1,7 +1,7 @@
-import { T3CKClient } from './client';
 import { CartModule } from './cart';
 import { CatalogModule } from './catalog';
 import { CheckoutModule } from './checkout';
+import { T3CKClient } from './client';
 import { SettingsModule } from './settings';
 import { ClientConfig } from './types';
 

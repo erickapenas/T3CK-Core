@@ -1,5 +1,6 @@
 import { CheckoutModule } from '../checkout';
 import { T3CKClient } from '../client';
+import type { OrderStatus } from '../types';
 
 describe('CheckoutModule', () => {
   const client = {
@@ -16,7 +17,9 @@ describe('CheckoutModule', () => {
     await expect(
       checkout.create({
         paymentMethod: 'card',
-        shippingAddress: null as any,
+        shippingAddress: null as unknown as Parameters<
+          CheckoutModule['create']
+        >[0]['shippingAddress'],
       })
     ).rejects.toThrow('Shipping address is required');
   });
@@ -106,7 +109,7 @@ describe('CheckoutModule', () => {
     (client.get as jest.Mock).mockResolvedValue({});
 
     await checkout.getOrders({
-      status: 'paid' as any,
+      status: 'completed' as OrderStatus,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       page: 2,

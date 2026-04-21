@@ -1,12 +1,12 @@
-# Config Management Implementation with AWS Parameter Store
+# Config Management Implementation with Google Secret Manager
 
 ## Overview
 
-This document describes the configuration management implementation using AWS Systems Manager Parameter Store and Secrets Manager for the T3CK Core platform. This provides centralized, encrypted configuration management across all microservices.
+This document describes the configuration management implementation using Google Secret Manager and environment-based runtime configuration for the T3CK Core platform. This provides centralized, encrypted configuration management across all microservices running on Cloud Run.
 
 **Status**: ✅ Complete and tested across all services
 **Services**: auth-service, webhook-service, tenant-service
-**Technology**: @aws-sdk/client-ssm, @aws-sdk/client-secrets-manager
+**Technology**: Google Secret Manager, Cloud Run environment variables, Cloud KMS
 
 ## Architecture
 

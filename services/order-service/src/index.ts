@@ -1,4 +1,5 @@
-import express, { Request, Response } from 'express';
+import 'dotenv/config';
+
 import {
   Logger,
   closeRateLimiter,
@@ -6,9 +7,11 @@ import {
   initializeTracing,
   validateRequest,
 } from '@t3ck/shared';
+import express, { Request, Response } from 'express';
+
 import { OrderService } from './order-service';
-import { OrderCancelSchema, OrderCreateSchema, OrderStatusUpdateSchema } from './validation';
 import { OrderStatus } from './types';
+import { OrderCancelSchema, OrderCreateSchema, OrderStatusUpdateSchema } from './validation';
 
 initializeTracing('order-service');
 
@@ -73,25 +76,38 @@ app.get('/orders/:id', (req: Request, res: Response) => {
   return res.json({ data: order });
 });
 
-app.patch('/orders/:id/status', validateRequest(OrderStatusUpdateSchema), (req: Request, res: Response) => {
-  try {
-    const updated = service.updateStatus(req.body.tenantId, req.params.id, req.body.status, req.body.reason);
-    return res.json({ data: updated });
-  } catch (error) {
-    const message = (error as Error).message;
-    return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+app.patch(
+  '/orders/:id/status',
+  validateRequest(OrderStatusUpdateSchema),
+  (req: Request, res: Response) => {
+    try {
+      const updated = service.updateStatus(
+        req.body.tenantId,
+        req.params.id,
+        req.body.status,
+        req.body.reason
+      );
+      return res.json({ data: updated });
+    } catch (error) {
+      const message = (error as Error).message;
+      return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+    }
   }
-});
+);
 
-app.post('/orders/:id/cancel', validateRequest(OrderCancelSchema), (req: Request, res: Response) => {
-  try {
-    const cancelled = service.cancelOrder(req.body.tenantId, req.params.id, req.body.reason);
-    return res.json({ data: cancelled });
-  } catch (error) {
-    const message = (error as Error).message;
-    return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+app.post(
+  '/orders/:id/cancel',
+  validateRequest(OrderCancelSchema),
+  (req: Request, res: Response) => {
+    try {
+      const cancelled = service.cancelOrder(req.body.tenantId, req.params.id, req.body.reason);
+      return res.json({ data: cancelled });
+    } catch (error) {
+      const message = (error as Error).message;
+      return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+    }
   }
-});
+);
 
 app.get('/orders/:id/history', (req: Request, res: Response) => {
   try {

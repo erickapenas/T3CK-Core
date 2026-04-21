@@ -1,64 +1,38 @@
 # GitHub Secrets Configuration
 
-Este documento descreve todos os secrets necessários para CI/CD funcionando corretamente.
+Este documento descreve os secrets necessários para CI/CD funcionando corretamente com **Google Cloud Run** e serviços gerenciados do GCP.
 
 ## 🔒 Secrets Obrigatórios
 
 Configure estes secrets em `Settings → Secrets and variables → Actions`:
 
-### AWS Credentials
+### GCP Deployment
 
 | Secret | Descrição | Exemplo |
 |--------|-----------|---------|
-| `AWS_ACCESS_KEY_ID` | AWS IAM User Access Key | `AKIAIOSFODNN7EXAMPLE` |
-| `AWS_SECRET_ACCESS_KEY` | AWS IAM User Secret Key | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
+| `GCP_PROJECT_ID` | ID do projeto GCP | `t3ck-core-prod` |
+| `GCP_REGION` | Região principal | `us-central1` |
+| `GCP_SERVICE_ACCOUNT_KEY` | JSON da service account para CI/CD | `{...}` |
+| `ARTIFACT_REGISTRY_REPOSITORY` | Repositório Docker no Artifact Registry | `t3ck-core` |
 
-**Permissões mínimas necessárias:**
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:PutImage",
-        "ecr:InitiateLayerUpload",
-        "ecr:UploadLayerPart",
-        "ecr:CompleteLayerUpload"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecs:UpdateService",
-        "ecs:DescribeServices",
-        "ecs:DescribeTaskDefinition",
-        "ecs:DescribeTaskDefinition"
-      ],
-      "Resource": [
-        "arn:aws:ecs:us-east-1:ACCOUNT_ID:service/t3ck-cluster/*",
-        "arn:aws:ecs:us-east-1:ACCOUNT_ID:task-definition/*"
-      ]
-    }
-  ]
-}
-```
+**Permissões mínimas recomendadas para a service account:**
+- Artifact Registry Writer
+- Cloud Run Admin
+- Cloud Build Editor
+- Service Account User
+- Secret Manager Secret Accessor (apenas se o workflow precisar ler segredos)
 
 ### Staging Environment
 
 | Secret | Descrição | Exemplo |
 |--------|-----------|---------|
-| `STAGING_URL` | URL do ambiente staging | `staging.t3ck.dev` |
+| `STAGING_URL` | URL do ambiente staging | `https://staging-gateway-xyz.run.app` |
 
 ### Production Environment
 
 | Secret | Descrição | Exemplo |
 |--------|-----------|---------|
-| `PROD_URL` | URL do ambiente production | `api.t3ck.com` |
+| `PROD_URL` | URL do ambiente production | `https://api.t3ck.com` |
 
 ### Notificações (Opcional)
 
@@ -72,67 +46,69 @@ Configure estes secrets em `Settings → Secrets and variables → Actions`:
 **Location:** `Settings → Environments → staging → Environment secrets`
 
 ```
-STAGING_URL=staging.t3ck.dev
+STAGING_URL=https://staging-gateway-xyz.run.app
 ```
 
 ### Production Environment
 **Location:** `Settings → Environments → production → Environment secrets`
 
 ```
-PROD_URL=api.t3ck.com
+PROD_URL=https://api.t3ck.com
 ```
 
 ## 📋 Checklist de Setup
 
-- [ ] AWS IAM User criado
-- [ ] `AWS_ACCESS_KEY_ID` adicionado a Secrets
-- [ ] `AWS_SECRET_ACCESS_KEY` adicionado a Secrets
+- [ ] Projeto GCP criado
+- [ ] Service account de deploy criada
+- [ ] `GCP_PROJECT_ID` adicionado a Secrets
+- [ ] `GCP_REGION` adicionado a Secrets
+- [ ] `GCP_SERVICE_ACCOUNT_KEY` adicionado a Secrets
+- [ ] `ARTIFACT_REGISTRY_REPOSITORY` adicionado a Secrets
 - [ ] Staging environment configurado
 - [ ] Production environment configurado
 - [ ] `STAGING_URL` adicionado
 - [ ] `PROD_URL` adicionado
 - [ ] `SLACK_WEBHOOK` adicionado (opcional mas recomendado)
-- [ ] Verificar permissões IAM
+- [ ] Verificar permissões IAM no GCP
 
 ## 🔄 Variáveis de Ambiente
 
 Estas variáveis são definidas no workflow e não precisam de secrets:
 
 ```yaml
-AWS_REGION: us-east-1
 NODE_VERSION: '20'
-ECR_REGISTRY: (obtido do login-ecr)
+SERVICE_PREFIX: t3ck
 ```
 
 ## 🚨 Troubleshooting
 
-### "Not authorized to perform: ecr:GetAuthorizationToken"
-- Verificar se IAM user tem permissão para ECR
-- Regenerar Access Key
-- Atualizar secrets
+### "Permission denied" no deploy
+- Verificar papéis da service account
+- Confirmar acesso a Cloud Run, Artifact Registry e Cloud Build
+- Atualizar `GCP_SERVICE_ACCOUNT_KEY`
 
-### "ECS service not found"
-- Verificar se cluster e services existem
-- Verificar se nome do cluster está correto (t3ck-cluster)
-- Verificar se nomes dos services estão corretos
+### "Artifact Registry repository not found"
+- Verificar se o repositório existe
+- Confirmar região e nome em `ARTIFACT_REGISTRY_REPOSITORY`
 
-### "Service deployment failed"
-- Verificar logs do ECS
-- Verificar CloudWatch logs
-- Verificar se task definition está válida
+### "Cloud Run deploy failed"
+- Verificar logs do GitHub Actions
+- Verificar revisões e logs no Cloud Run
+- Confirmar variáveis de ambiente e secrets de runtime
 
 ## 📝 Rotação de Secrets
 
 **Frequência recomendada:** A cada 90 dias
 
-1. Gerar novo AWS Access Key no IAM Console
-2. Atualizar `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY`
-3. Desativar chave antiga
-4. Deletar chave antiga após confirmação
+1. Gerar nova chave ou credencial da service account conforme política interna
+2. Atualizar `GCP_SERVICE_ACCOUNT_KEY`
+3. Validar o pipeline
+4. Revogar material antigo após confirmação
 
 ## 🔑 Suporte
 
 Para suporte ou dúvidas:
 1. Consulte a documentação do GitHub Actions
 2. Verifique os logs de workflow
-3. Contacte o time DevOps
+3. Consulte Cloud Run, Cloud Build e Artifact Registry no GCP
+4. Contacte o time DevOps

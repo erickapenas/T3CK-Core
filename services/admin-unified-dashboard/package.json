@@ -1,22 +1,25 @@
 {
   "name": "@t3ck/admin-unified-dashboard",
-  "version": "1.0.0",
-  "private": true,
+  "version": "2.0.0",
+  "description": "T3CK-Core Admin Dashboard 2026 - Atomic Control Grid v2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc -noEmit && vite build",
     "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "firebase": "^10.5.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
     "typescript": "^5.3.3",
-    "vite": "^5.4.11"
+    "vite": "^5.0.8"
   }
 }

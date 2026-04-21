@@ -1,9 +1,15 @@
 FROM google/cloud-sdk:slim
 
-# Install redis-tools and awscli
+# Install dependencies for backup operations
+# GCP Cloud SDK already includes gsutil for GCS operations
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends redis-tools curl unzip ca-certificates python3 python3-pip gnupg && \
-    pip3 install --no-cache-dir awscli && \
+    apt-get install -y --no-install-recommends \
+    redis-tools \
+    curl \
+    unzip \
+    ca-certificates \
+    ca-certificates \
+    jq && \
     rm -rf /var/lib/apt/lists/*
 
 # Create app dir

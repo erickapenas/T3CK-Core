@@ -26,12 +26,13 @@ pnpm dev
 
 ## Arquitetura
 
-- **Cloud**: AWS
-- **IaC**: Terraform + AWS CDK
-- **Runtime**: Node.js/TypeScript
-- **Database**: Firebase (Firestore + Auth + Storage)
-- **Containerização**: Docker + ECS Fargate
-- **CI/CD**: GitHub Actions
+- **Cloud**: Google Cloud Platform (GCP)
+- **Runtime**: Node.js/TypeScript em Google Cloud Run
+- **Database**: Firebase (Firestore + Auth + Storage) + Cloud SQL for MySQL
+- **Cache/Queue**: Memorystore for Redis
+- **Containerização**: Docker + Artifact Registry + Cloud Run
+- **CI/CD**: GitHub Actions + Cloud Build
+- **Segredos e criptografia**: Secret Manager + Cloud KMS
 
 ## Estrutura do Projeto
 
@@ -65,12 +66,18 @@ motor-t3ck/
 - [Arquitetura](docs/ARCHITECTURE.md) - Visão geral da arquitetura
 - [API Reference](docs/API.md) - Documentação da API
 - [Provisionamento](docs/PROVISIONING.md) - Guia de provisionamento
-- [Cloud Run Example](docs/CLOUD_RUN_EXAMPLE.md) - Deploy de exemplo no GCP Cloud Run
+- [Cloud Run Deployment](docs/CLOUD_RUN_EXAMPLE.md) - Deploy principal em Google Cloud Run
 - [Deploy](docs/DEPLOYMENT.md) - Guia de deploy
+- [Infraestrutura GCP](docs/INFRASTRUCTURE_IaC.md) - Referência de infraestrutura gerenciada
 - [API Gateway Implementation](API_GATEWAY_IMPLEMENTATION.md) - Implementação do API Gateway
 - [Performance Services](PERFORMANCE_SERVICES_IMPLEMENTATION.md) - Serviços de performance (Media + Edge)
 
 ## Desenvolvimento
+
+### Ambiente
+
+- Projeto Firebase padrão: `t3ck-core-78a6f`
+- Use `.env.example` como base para as variáveis do monorepo
 
 ### Pré-requisitos
 
@@ -130,12 +137,9 @@ pnpm type-check
 
 ## Provisionamento de Tenant
 
-```bash
-# Provisionar novo tenant (< 10 minutos)
-./infrastructure/scripts/provision-tenant.sh \
-  --tenant-id "cliente-123" \
-  --domain "cliente.t3ck.com" \
-  --region "us-east-1"
+```powershell
+# Provisionar stack principal no Cloud Run
+.\infrastructure\scripts\deploy-cloud-run.ps1 -ProjectId "SEU_PROJECT_ID" -Region "us-central1"
 ```
 
 ## Usando o SDK
@@ -156,7 +160,9 @@ const results = await t3ck.catalog.search({ query: 'notebook' });
 
 // Criar pedido
 const order = await t3ck.checkout.create({
-  shippingAddress: { /* ... */ },
+  shippingAddress: {
+    /* ... */
+  },
   paymentMethod: 'credit_card',
 });
 ```
@@ -165,9 +171,10 @@ Veja [exemplos](examples/) para mais detalhes.
 
 ## CI/CD
 
-- **Staging**: Deploy automático em push para `develop`
+- **Staging**: Build e deploy automático para Cloud Run em push para `develop`
 - **Production**: Deploy manual com aprovação em `main`
 - **Quality Gates**: Coverage mínimo 80%, security scanning
+- **Build/Registry**: Cloud Build + Artifact Registry
 
 ## Contribuindo
 
@@ -175,4 +182,4 @@ Veja [CONTRIBUTING.md](CONTRIBUTING.md) para diretrizes de contribuição.
 
 ## Licença
 
-MIT License - Veja [LICENSE](LICENSE) para detalhes.
+Software proprietário e confidencial. Uso, cópia, distribuição, modificação ou divulgação sem autorização são proibidos. Veja [LICENSE](LICENSE) para detalhes.

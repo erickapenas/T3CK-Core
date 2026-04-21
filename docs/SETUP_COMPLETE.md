@@ -10,8 +10,10 @@ Configure o arquivo `.env` com:
 
 - [ ] `AWS_REGION` - Região AWS (ex: us-east-1)
 - [ ] `AWS_ACCOUNT_ID` - Seu AWS Account ID
-- [ ] `FIREBASE_PROJECT_ID` - ID do projeto Firebase
-- [ ] `JWT_SECRET` - Chave secreta para JWT (gere uma aleatória)
+- [ ] `FIREBASE_PROJECT_ID` - `t3ck-core-78a6f`
+- [ ] `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` - Caminho do JSON do Firebase Admin
+- [ ] `JWT_PRIVATE_KEY` - Chave privada RS256
+- [ ] `JWT_PUBLIC_KEY` - Chave pública RS256
 - [ ] `COGNITO_CLIENT_ID` - Client ID do Cognito (se usar)
 - [ ] `KMS_KEY_ID` - ID da chave KMS para criptografia
 - [ ] `REDIS_URL` - URL do Redis (ou localhost para dev)
@@ -33,11 +35,11 @@ aws s3 mb s3://t3ck-terraform-state --region us-east-1
 # Login no Firebase
 firebase login
 
-# Criar projeto Firebase (se necessário)
-firebase projects:create t3ck-default
+# Usar o projeto Firebase da plataforma
+firebase use t3ck-core-78a6f
 
 # Configurar Firestore
-firebase firestore:databases:create --project t3ck-default
+firebase firestore:databases:create --project t3ck-core-78a6f
 ```
 
 ### 4. Terraform Backend
@@ -90,7 +92,7 @@ pnpm dev
 
 1. **Explorar o SDK**: Veja [examples/sdk-usage.ts](../examples/sdk-usage.ts)
 2. **Configurar Webhooks**: Veja [examples/webhook-setup.ts](../examples/webhook-setup.ts)
-3. **Ler Documentação**: 
+3. **Ler Documentação**:
    - [Quick Start](QUICKSTART.md)
    - [Architecture](ARCHITECTURE.md)
    - [API Reference](API.md)
@@ -121,20 +123,25 @@ pnpm dev
 ## 🔧 Troubleshooting
 
 ### Erro: "Module not found"
+
 ```bash
 pnpm install
 ```
 
 ### Erro: "AWS credentials not found"
+
 ```bash
 aws configure
 ```
 
 ### Erro: "Firebase not initialized"
+
 Verifique se `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` está configurado no `.env`
 
 ### Serviços não iniciam
+
 Verifique se as portas estão livres:
+
 ```bash
 # Linux/macOS
 lsof -i :3001

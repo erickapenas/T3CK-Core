@@ -11,6 +11,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:unit": "pnpm --filter @t3ck/shared test && pnpm --filter @t3ck/sdk test",
     "test:watch": "pnpm -r test --watch",
     "test:coverage": "jest --coverage",
     "test:integration": "pnpm --filter @t3ck/payment-service test && pnpm --filter @t3ck/order-service test && pnpm --filter @t3ck/shipping-service test",
@@ -87,6 +88,7 @@
     "@opentelemetry/resources": "^2.5.0",
     "@opentelemetry/sdk-node": "^0.211.0",
     "@opentelemetry/semantic-conventions": "^1.39.0",
+    "dotenv": "^16.4.5",
     "bullmq": "^5.67.2",
     "express-rate-limit": "^8.2.1",
     "mysql2": "^3.16.2",

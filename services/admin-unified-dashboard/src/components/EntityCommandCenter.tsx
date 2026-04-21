@@ -1,10 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/EntityCommandCenter.css';
-import { entityApi } from '../apiClient';
+import { DashboardEntity, getEntityService } from '../apiClient';
 
-export function EntityCommandCenter({ entity, systemStatus }) {
-  const [formData, setFormData] = useState({});
+type EntityCommandCenterProps = {
+  entity: DashboardEntity | null;
+  tenantId: string;
+  refreshKey: number;
+  systemStatus: {
+    dbConnected: boolean;
+    syncStatus: string;
+    apiResponseTime: number;
+    activeSessions: number;
+    lastSync: Date;
+  };
+};
+
+export function EntityCommandCenter({
+  entity,
+  tenantId,
+  refreshKey,
+  systemStatus,
+}: EntityCommandCenterProps) {
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [entityData, setEntityData] = useState<any>(null);
+  const [entityList, setEntityList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [responseTime, setResponseTime] = useState(0);
@@ -13,6 +32,7 @@ export function EntityCommandCenter({ entity, systemStatus }) {
   useEffect(() => {
     if (!entity) {
       setEntityData(null);
+      setEntityList([]);
       setFormData({});
       setError(null);
       return;
@@ -23,11 +43,13 @@ export function EntityCommandCenter({ entity, systemStatus }) {
       setError(null);
 
       try {
-        const result = await entityApi[entity as keyof typeof entityApi]?.list?.();
+        const service = getEntityService(entity as DashboardEntity) as any;
+        const result = await service?.list?.(tenantId);
 
         if (result?.success && Array.isArray(result.data)) {
           // Get first item as sample
           const firstItem = result.data[0];
+          setEntityList(result.data);
           setEntityData(firstItem);
           setFormData(firstItem || {});
           setResponseTime(result.responseTime || 0);
@@ -35,6 +57,7 @@ export function EntityCommandCenter({ entity, systemStatus }) {
           setError(result.error);
         } else {
           setEntityData(null);
+          setEntityList([]);
           setError('Nenhum dado encontrado');
         }
       } catch (err) {
@@ -45,7 +68,7 @@ export function EntityCommandCenter({ entity, systemStatus }) {
     };
 
     fetchEntityData();
-  }, [entity]);
+  }, [entity, tenantId, refreshKey]);
 
   if (!entity) {
     return (
@@ -60,7 +83,7 @@ export function EntityCommandCenter({ entity, systemStatus }) {
   }
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Determine entity icon based on type
@@ -98,15 +121,11 @@ export function EntityCommandCenter({ entity, systemStatus }) {
       <div className="entity-info">
         <div className="info-header">
           <h3 className="entity-name">
-            {getEntityIcon()} {entity.charAt(0).toUpperCase() + entity.slice(1)}
+            {getEntityIcon()} {getEntityTitle()}
           </h3>
           <div className="info-meta">
-            <span className="badge badge-primary">
-              {entityData ? '✓ Active' : '○ Empty'}
-            </span>
-            <span className="badge badge-secondary">
-              {responseTime}ms
-            </span>
+            <span className="badge badge-primary">{entityData ? '✓ Active' : '○ Empty'}</span>
+            <span className="badge badge-secondary">{responseTime}ms</span>
           </div>
         </div>
       </div>
@@ -253,12 +272,24 @@ export function EntityCommandCenter({ entity, systemStatus }) {
               </div>
               <div className="metadata-item">
                 <span className="meta-key">db_sync:</span>
-                <span className="meta-value sync-status">
-                  ✓ In Sync ({responseTime}ms)
-                </span>
+                <span className="meta-value sync-status">✓ In Sync ({responseTime}ms)</span>
               </div>
             </div>
           </div>
+
+          {entity === 'tenants' && entityList.length > 0 && (
+            <div className="metadata-section">
+              <h4 className="section-title">Tenants Loaded</h4>
+              <div className="history-list">
+                {entityList.slice(0, 10).map((tenant) => (
+                  <div key={tenant.id} className="history-item">
+                    <span className="history-action">{tenant.companyName || tenant.id}</span>
+                    <span className="history-time mono">{tenant.domain || '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

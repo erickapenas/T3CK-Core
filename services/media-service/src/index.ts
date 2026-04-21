@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import express, { Request, Response } from 'express';
 import multer from 'multer';
 import { MediaTransformer } from './media-transformer';
@@ -146,7 +148,7 @@ app.post('/cache/clear', (_req: Request, res: Response) => {
   res.json({ message: 'Cache cleared' });
 });
 
-const PORT = process.env.PORT || 3007;
+const PORT = process.env.PORT || process.env.MEDIA_SERVICE_PORT || 3007;
 
 app.listen(PORT, () => {
   logger.info(`Media Service running on port ${PORT}`);

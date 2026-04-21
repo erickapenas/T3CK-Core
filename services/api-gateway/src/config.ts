@@ -1,14 +1,18 @@
 import { GatewayConfig } from './types';
 
 export const config: GatewayConfig = {
-  port: parseInt(process.env.PORT || '3000', 10),
+  port: parseInt(String(process.env.API_GATEWAY_PORT || process.env.PORT || '3000'), 10),
   env: process.env.NODE_ENV || 'development',
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-key',
   jwtPublicKey: process.env.JWT_PUBLIC_KEY,
   enableMetrics: process.env.ENABLE_METRICS === 'true',
   enableCsrf: process.env.ENABLE_CSRF !== 'false', // enabled by default
-  corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5174', 'http://localhost:5175'],
-  
+  corsOrigins: process.env.CORS_ORIGINS?.split(',') || [
+    'http://localhost:3000',
+    'http://localhost:5174',
+    'http://localhost:5175',
+  ],
+
   services: [
     {
       prefix: '/api/v1/auth',

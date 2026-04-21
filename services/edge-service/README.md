@@ -17,11 +17,11 @@ Pre-rendering, Static Site Generation (SSG), Incremental Static Regeneration (IS
 
 ### When to Use Each Strategy
 
-| Strategy | Use Case | Cache Duration | Personalized | Performance |
-|----------|----------|----------------|--------------|-------------|
-| **SSG** | Static content, product catalog | Days/Weeks | ❌ No | ⚡ Fastest (5ms) |
-| **ISR** | Semi-dynamic content, prices | Hours | ❌ No | ⚡ Fast (5-50ms) |
-| **SSR** | User-specific content, dashboards | Seconds/Minutes | ✅ Yes | 🔄 Dynamic (50-200ms) |
+| Strategy | Use Case                          | Cache Duration  | Personalized | Performance           |
+| -------- | --------------------------------- | --------------- | ------------ | --------------------- |
+| **SSG**  | Static content, product catalog   | Days/Weeks      | ❌ No        | ⚡ Fastest (5ms)      |
+| **ISR**  | Semi-dynamic content, prices      | Hours           | ❌ No        | ⚡ Fast (5-50ms)      |
+| **SSR**  | User-specific content, dashboards | Seconds/Minutes | ✅ Yes       | 🔄 Dynamic (50-200ms) |
 
 ## API Endpoints
 
@@ -32,6 +32,7 @@ Pre-rendering, Static Site Generation (SSG), Incremental Static Regeneration (IS
 Server-side render with full context and personalization.
 
 **Request:**
+
 ```json
 {
   "tenantId": "tenant-1",
@@ -59,6 +60,7 @@ Server-side render with full context and personalization.
 **Response:** HTML with dynamic content, rendered in real-time
 
 **Headers:**
+
 - `X-Render-Mode: SSR`
 - `X-Render-Time: 150ms`
 - `X-Cache: HIT|MISS`
@@ -69,11 +71,13 @@ Server-side render with full context and personalization.
 Simplified SSR via GET request.
 
 **Example:**
+
 ```bash
 GET /ssr/tenant-1/product/prod-123?variant=premium&theme=dark
 ```
 
 Automatically extracts:
+
 - Query parameters → `request.query`
 - User-Agent, Accept-Language → `request.headers`
 - Client IP → `request.context.ip`
@@ -98,6 +102,7 @@ Content-Type: application/json
 ```
 
 **Config Options:**
+
 - `enabled`: Enable/disable SSR
 - `cacheEnabled`: Enable short-term caching (default: true)
 - `cacheTTL`: Cache duration in seconds (default: 60)
@@ -252,6 +257,7 @@ This gives **instant response** even for stale content, with automatic updates.
 7. Return dynamic HTML
 
 SSR is perfect for:
+
 - User dashboards
 - Shopping carts
 - Personalized recommendations
@@ -259,6 +265,7 @@ SSR is perfect for:
 - Real-time pricing
 
 **Caching Strategy:**
+
 - **Personalized caching ON**: Cache key includes userId → each user gets their own cache
 - **Personalized caching OFF**: Cache key is just the resource → faster but less personalized
 
@@ -278,16 +285,16 @@ const response = await axios.post('http://edge-service:3008/ssr', {
     userEmail: 'john@example.com',
     preferences: {
       theme: 'dark',
-      currency: 'USD'
-    }
+      currency: 'USD',
+    },
   },
   headers: {
     'Accept-Language': 'en-US',
-    'User-Agent': 'Mozilla/5.0...'
+    'User-Agent': 'Mozilla/5.0...',
   },
   query: {
-    view: 'compact'
-  }
+    view: 'compact',
+  },
 });
 
 // response.data = { html, statusCode, headers, renderTime, cached }
@@ -297,17 +304,14 @@ const response = await axios.post('http://edge-service:3008/ssr', {
 
 ```typescript
 // GET /ssr/:tenantId/:resourceType/:resourceId
-const response = await axios.get(
-  'http://edge-service:3008/ssr/tenant-1/cart/user-123',
-  {
-    headers: {
-      'X-User-ID': 'user-123',
-      'X-User-Name': 'John Doe',
-      'Accept-Language': 'en-US'
-    },
-    params: { discount: 'SUMMER20' }
-  }
-);
+const response = await axios.get('http://edge-service:3008/ssr/tenant-1/cart/user-123', {
+  headers: {
+    'X-User-ID': 'user-123',
+    'X-User-Name': 'John Doe',
+    'Accept-Language': 'en-US',
+  },
+  params: { discount: 'SUMMER20' },
+});
 
 // Returns HTML with shopping cart
 ```
@@ -321,7 +325,7 @@ await axios.put('http://edge-service:3008/ssr/config', {
   cacheEnabled: true,
   cacheTTL: 120, // 2 minutes
   maxCacheSize: 100 * 1024 * 1024, // 100MB
-  personalizedCaching: true // Separate cache per user
+  personalizedCaching: true, // Separate cache per user
 });
 ```
 
@@ -333,23 +337,26 @@ await axios.post('http://edge-service:3008/ssr/cache/clear');
 
 // Purge specific user's pages
 await axios.post('http://edge-service:3008/ssr/cache/purge', {
-  pattern: '*user-123*'
+  pattern: '*user-123*',
 });
 ```
 
 ### Pre-rendering Strategy
 
 **High-Priority Products** (new releases, trending):
+
 ```bash
 POST /prerender/batch with priority=10
 ```
 
 **Regular Products**:
+
 ```bash
 pre-render on-demand or with priority=5
 ```
 
 **Low-Priority** (old products):
+
 ```bash
 Let ISR handle on first request
 ```
@@ -386,9 +393,7 @@ await axios.post('http://edge-service:3008/prerender', {
 
 ```typescript
 // In product-service after updating product
-await axios.delete(
-  `http://edge-service:3008/cache/${tenantId}/product/${productId}`
-);
+await axios.delete(`http://edge-service:3008/cache/${tenantId}/product/${productId}`);
 ```
 
 ### Pre-render Top Products Daily
@@ -398,32 +403,34 @@ await axios.delete(
 const topProducts = await getTopProducts(100);
 
 await axios.post('http://edge-service:3008/prerender/batch', {
-  configs: topProducts.map(p => ({
+  configs: topProducts.map((p) => ({
     url: `https://store.example.com/products/${p.id}`,
     tenantId: p.tenantId,
     resourceType: 'product',
     resourceId: p.id,
     priority: p.salesRank, // Higher rank = higher priority
-  }))
+  })),
 });
 ```
 
 ## Environment Variables
 
 ```bash
-PORT=3008
+EDGE_SERVICE_PORT=3008
 NODE_ENV=production
-PRODUCT_SERVICE_URL=http://product-service:3001
+PRODUCT_SERVICE_URL=http://product-service:3004
 CONTENT_SERVICE_URL=http://content-service:3009
 ```
 
 ## Performance Benefits
 
 ### Without Edge Service
+
 - First request: **800ms** (fetch data + render)
 - Cache hit: **50ms**
 
 ### With Edge Service
+
 - Pre-rendered (SSG): **5ms** (serve from memory)
 - ISR stale-while-revalidate: **5ms** (serve stale + update background)
 - SSR cached: **10ms** (user-specific cache hit)
@@ -432,18 +439,19 @@ CONTENT_SERVICE_URL=http://content-service:3009
 
 ### Rendering Strategy Decision Matrix
 
-| Content Type | Strategy | Reason |
-|-------------|----------|---------|
-| Product catalog pages | SSG | Static, cacheable indefinitely |
-| Product details | ISR | Semi-dynamic, update background |
-| Product search results | ISR | Changes occasionally |
-| User dashboard | SSR | User-specific data |
-| Shopping cart | SSR | Real-time user data |
-| Personalized recommendations | SSR | User-specific + A/B tests |
-| Category pages | ISR | Semi-static with periodic updates |
-| Static content pages | SSG | No changes |
+| Content Type                 | Strategy | Reason                            |
+| ---------------------------- | -------- | --------------------------------- |
+| Product catalog pages        | SSG      | Static, cacheable indefinitely    |
+| Product details              | ISR      | Semi-dynamic, update background   |
+| Product search results       | ISR      | Changes occasionally              |
+| User dashboard               | SSR      | User-specific data                |
+| Shopping cart                | SSR      | Real-time user data               |
+| Personalized recommendations | SSR      | User-specific + A/B tests         |
+| Category pages               | ISR      | Semi-static with periodic updates |
+| Static content pages         | SSG      | No changes                        |
 
 ### PageSpeed Impact
+
 - **TTFB**: < 50ms (pre-rendered)
 - **FCP**: < 200ms (HTML ready)
 - **LCP**: < 500ms (with WebP images from media-service)
@@ -466,6 +474,7 @@ pnpm start
 ## Monitoring
 
 Check `/stats` for:
+
 - Cache hit rate (target: >80%)
 - Average generation time (target: <200ms)
 - Pre-rendered pages count

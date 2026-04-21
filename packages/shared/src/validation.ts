@@ -24,23 +24,28 @@ export const AuthLoginSchema = z.object({
 });
 
 export const ProvisioningSubmitSchema = z.object({
-  body: z.object({
-    tenantId: z.string().min(3),
-    domain: z.string().min(3),
-    companyName: z.string().min(1),
-    contactName: z.string().min(1),
-    plan: z.string().min(1),
-    contactEmail: z.string().email(),
-    numberOfSeats: z.number().int().min(1).optional(),
-    region: z.string().min(2).optional(),
-    // Campos opcionais adicionais
-    adminEmail: z.string().email().optional(),
-    contactPhone: z.string().optional(),
-    billingAddress: z.string().optional(),
-    billingCountry: z.string().optional(),
-    billingZipCode: z.string().optional(),
-    monthlyBudget: z.number().optional(),
-  }),
+  body: z
+    .object({
+      tenantId: z.string().min(3),
+      domain: z.string().min(3),
+      companyName: z.string().min(1),
+      contactName: z.string().min(1),
+      plan: z.string().min(1),
+      contactEmail: z.string().email().optional(),
+      numberOfSeats: z.number().int().min(1).optional(),
+      region: z.string().min(2).optional(),
+      // Campos opcionais adicionais
+      adminEmail: z.string().email().optional(),
+      contactPhone: z.string().optional(),
+      billingAddress: z.string().optional(),
+      billingCountry: z.string().optional(),
+      billingZipCode: z.string().optional(),
+      monthlyBudget: z.number().optional(),
+    })
+    .refine((data) => Boolean(data.contactEmail || data.adminEmail), {
+      message: 'contactEmail or adminEmail is required',
+      path: ['contactEmail'],
+    }),
 });
 
 export const AuthRefreshSchema = z.object({
@@ -109,13 +114,15 @@ export const SessionRevokeUserSchema = z.object({
 });
 
 export const OidcTokenSchema = z.object({
-  body: z.object({
-    code: z.string().optional(),
-    refreshToken: z.string().optional(),
-    redirectUri: z.string().url().optional(),
-  }).refine(data => Boolean(data.code || data.refreshToken), {
-    message: 'code or refreshToken is required',
-  }),
+  body: z
+    .object({
+      code: z.string().optional(),
+      refreshToken: z.string().optional(),
+      redirectUri: z.string().url().optional(),
+    })
+    .refine((data) => Boolean(data.code || data.refreshToken), {
+      message: 'code or refreshToken is required',
+    }),
 });
 
 export const MfaSetupSchema = z.object({
@@ -222,8 +229,7 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validateUUID(uuid: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 }
 

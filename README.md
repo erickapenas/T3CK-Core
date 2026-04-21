@@ -74,6 +74,11 @@ motor-t3ck/
 
 ## Desenvolvimento
 
+### Ambiente
+
+- Projeto Firebase padrão: `t3ck-core-78a6f`
+- Use `.env.example` como base para as variáveis do monorepo
+
 ### Pré-requisitos
 
 - Node.js >= 18
@@ -155,7 +160,9 @@ const results = await t3ck.catalog.search({ query: 'notebook' });
 
 // Criar pedido
 const order = await t3ck.checkout.create({
-  shippingAddress: { /* ... */ },
+  shippingAddress: {
+    /* ... */
+  },
   paymentMethod: 'credit_card',
 });
 ```

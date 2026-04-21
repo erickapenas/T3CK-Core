@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import '../styles/CRUDCluster.css';
-import { entityApi } from '../apiClient';
+import { DashboardEntity, getEntityService } from '../apiClient';
 
 const DEFAULT_TENANT_ID = 'tenant-demo';
 
@@ -48,6 +48,18 @@ function getDefaultPayload(entity: string): Record<string, any> {
         name: `Customer ${Date.now()}`,
         phone: '+55 11 999999999',
       };
+    case 'tenants':
+      return {
+        ...base,
+        tenantId: `tenant-${Date.now()}`,
+        companyName: `Tenant ${Date.now()}`,
+        domain: `tenant-${Date.now()}.example.com`,
+        contactName: 'Admin User',
+        contactEmail: `admin-${Date.now()}@example.com`,
+        plan: 'starter',
+        numberOfSeats: 10,
+        region: 'us-east-1',
+      };
     default:
       return {
         ...base,
@@ -56,10 +68,25 @@ function getDefaultPayload(entity: string): Record<string, any> {
   }
 }
 
-export function CRUDCluster({ entity }) {
+type CRUDClusterProps = {
+  entity: DashboardEntity | null;
+  tenantId: string;
+  onMutationComplete?: () => void;
+};
+
+export function CRUDCluster({ entity, tenantId, onMutationComplete }: CRUDClusterProps) {
   const [operationResult, setOperationResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [actionHistory, setActionHistory] = useState<any[]>([]);
+
+  const supportedOperations = (entityName: DashboardEntity | null) => {
+    if (!entityName) return [];
+
+    if (entityName === 'tenants') return ['create', 'read'];
+    if (entityName === 'logging') return ['read'];
+
+    return ['create', 'read', 'update', 'delete'];
+  };
 
   const handleCRUDOperation = async (operation: string) => {
     if (!entity) return;
@@ -67,33 +94,37 @@ export function CRUDCluster({ entity }) {
     setLoading(true);
 
     try {
-      const api = entityApi[entity as keyof typeof entityApi] as any;
+      const api = getEntityService(entity) as any;
       let result: any = null;
 
       switch (operation) {
         case 'create':
           const payload = getDefaultPayload(entity);
-          result = await api.create?.(payload);
+          result = await api.create?.(payload, tenantId);
           break;
 
         case 'read':
-          result = await api.list?.();
+          result = await api.list?.(tenantId);
           break;
 
         case 'update':
-          result = await api.list?.();
+          result = await api.list?.(tenantId);
           if (result?.success && result.data[0]) {
-            result = await api.update?.(result.data[0].id, {
-              updatedAt: new Date().toISOString(),
-              status: 'updated',
-            });
+            result = await api.update?.(
+              result.data[0].id,
+              {
+                updatedAt: new Date().toISOString(),
+                status: 'updated',
+              },
+              tenantId
+            );
           }
           break;
 
         case 'delete':
-          result = await api.list?.();
+          result = await api.list?.(tenantId);
           if (result?.success && result.data[0]) {
-            result = await api.delete?.(result.data[0].id);
+            result = await api.delete?.(result.data[0].id, tenantId);
           }
           break;
       }
@@ -104,12 +135,16 @@ export function CRUDCluster({ entity }) {
         timestamp: new Date().toISOString(),
         status,
         resultId: `result_${Math.random().toString(36).substr(2, 9)}`,
-        message: result?.error || 'Operation completed',
+        message: result?.raw?.message || result?.error || 'Operation completed',
         responseTime: result?.responseTime || 0,
       };
 
       setOperationResult(operationRecord);
-      setActionHistory(prev => [operationRecord, ...prev].slice(0, 10));
+      setActionHistory((prev) => [operationRecord, ...prev].slice(0, 10));
+
+      if (result?.success && ['create', 'update', 'delete'].includes(operation)) {
+        onMutationComplete?.();
+      }
 
       setTimeout(() => setOperationResult(null), 5000);
     } catch (error) {
@@ -123,7 +158,7 @@ export function CRUDCluster({ entity }) {
       };
 
       setOperationResult(errorResult);
-      setActionHistory(prev => [errorResult, ...prev].slice(0, 10));
+      setActionHistory((prev) => [errorResult, ...prev].slice(0, 10));
 
       setTimeout(() => setOperationResult(null), 5000);
     } finally {
@@ -165,15 +200,17 @@ export function CRUDCluster({ entity }) {
   return (
     <div className="crud-cluster">
       <div className="crud-buttons">
-        {crudOperations.map(op => (
+        {crudOperations.map((op) => (
           <button
             key={op.id}
-            className={`crud-btn crud-${op.color} ${!entity || loading ? 'disabled' : ''}`}
+            className={`crud-btn crud-${op.color} ${!entity || loading || !supportedOperations(entity).includes(op.id) ? 'disabled' : ''}`}
             onClick={() => handleCRUDOperation(op.id)}
-            disabled={!entity || loading}
+            disabled={!entity || loading || !supportedOperations(entity).includes(op.id)}
             title={op.description}
           >
-            <span className="crud-icon">{loading && op.id === operationResult?.op ? '⟳' : op.icon}</span>
+            <span className="crud-icon">
+              {loading && op.id === operationResult?.op ? '⟳' : op.icon}
+            </span>
             <span className="crud-label">{op.label}</span>
           </button>
         ))}

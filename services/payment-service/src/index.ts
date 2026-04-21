@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import express, { Request, Response } from 'express';
 import {
   Logger,
@@ -22,7 +24,7 @@ const app: express.Application = express();
 app.use(express.json());
 
 const logger = new Logger('payment-service');
-const port = Number(process.env.PORT || 3010);
+const port = Number(process.env.PORT || process.env.PAYMENT_SERVICE_PORT || 3010);
 
 const abacateClient = new AbacatePayClient(
   process.env.ABACATEPAY_BASE_URL || 'https://sandbox.api.abacatepay.com',
@@ -78,7 +80,9 @@ app.get('/payments/:paymentId/pix-timer', (req: Request, res: Response) => {
     const result = paymentService.checkPixExpiration(req.params.paymentId);
     return res.json(result);
   } catch (error) {
-    return res.status(404).json({ error: error instanceof Error ? error.message : 'Pagamento não encontrado.' });
+    return res
+      .status(404)
+      .json({ error: error instanceof Error ? error.message : 'Pagamento não encontrado.' });
   }
 });
 
@@ -98,14 +102,20 @@ app.get('/payments/:paymentId/pix-copy-paste', (req: Request, res: Response) => 
   });
 });
 
-app.post('/payments/refund', validateRequest(PaymentRefundSchema), async (req: Request, res: Response) => {
-  try {
-    const result = await paymentService.refund(req.body);
-    return res.json(result);
-  } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Falha no estorno.' });
+app.post(
+  '/payments/refund',
+  validateRequest(PaymentRefundSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const result = await paymentService.refund(req.body);
+      return res.json(result);
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Falha no estorno.' });
+    }
   }
-});
+);
 
 app.post('/payments/invoice', (req: Request, res: Response) => {
   try {
@@ -116,51 +126,65 @@ app.post('/payments/invoice', (req: Request, res: Response) => {
     const invoice = paymentService.createInvoice(paymentId);
     return res.status(201).json(invoice);
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Falha ao gerar invoice.' });
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : 'Falha ao gerar invoice.' });
   }
 });
 
-app.post('/payments/receipt', validateRequest(PaymentReceiptSchema), (req: Request, res: Response) => {
-  try {
-    const result = paymentService.sendReceipt(req.body.paymentId, req.body.email);
-    return res.json(result);
-  } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Falha ao enviar recibo.' });
+app.post(
+  '/payments/receipt',
+  validateRequest(PaymentReceiptSchema),
+  (req: Request, res: Response) => {
+    try {
+      const result = paymentService.sendReceipt(req.body.paymentId, req.body.email);
+      return res.json(result);
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Falha ao enviar recibo.' });
+    }
   }
-});
+);
 
-app.post('/payments/webhook', validateRequest(PaymentWebhookSchema), (req: Request, res: Response) => {
-  const signature = String(req.headers['x-abacatepay-signature'] || '');
-  const raw = JSON.stringify(req.body);
+app.post(
+  '/payments/webhook',
+  validateRequest(PaymentWebhookSchema),
+  (req: Request, res: Response) => {
+    const signature = String(req.headers['x-abacatepay-signature'] || '');
+    const raw = JSON.stringify(req.body);
 
-  if (!webhookVerifier.verify(raw, signature)) {
-    return res.status(401).json({ error: 'Assinatura de webhook inválida.' });
-  }
-
-  try {
-    const mapped = paymentService.processWebhookUpdate({
-      tenantId: req.body.tenantId,
-      paymentId: req.body.paymentId,
-      providerStatus: req.body.providerStatus,
-      rawPayload: req.body,
-    });
-
-    if (req.body.providerStatus === 'chargeback') {
-      paymentService.handleChargeback({
-        tenantId: req.body.tenantId,
-        paymentId: req.body.paymentId,
-        providerDisputeId: String(req.body.providerDisputeId || 'unknown'),
-        reason: String(req.body.reason || 'not_provided'),
-        amount: Number(req.body.amount || 0),
-        receivedAt: new Date().toISOString(),
-      });
+    if (!webhookVerifier.verify(raw, signature)) {
+      return res.status(401).json({ error: 'Assinatura de webhook inválida.' });
     }
 
-    return res.json({ status: mapped });
-  } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Falha ao processar webhook.' });
+    try {
+      const mapped = paymentService.processWebhookUpdate({
+        tenantId: req.body.tenantId,
+        paymentId: req.body.paymentId,
+        providerStatus: req.body.providerStatus,
+        rawPayload: req.body,
+      });
+
+      if (req.body.providerStatus === 'chargeback') {
+        paymentService.handleChargeback({
+          tenantId: req.body.tenantId,
+          paymentId: req.body.paymentId,
+          providerDisputeId: String(req.body.providerDisputeId || 'unknown'),
+          reason: String(req.body.reason || 'not_provided'),
+          amount: Number(req.body.amount || 0),
+          receivedAt: new Date().toISOString(),
+        });
+      }
+
+      return res.json({ status: mapped });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Falha ao processar webhook.' });
+    }
   }
-});
+);
 
 app.get('/payments/logs', (req: Request, res: Response) => {
   const tenantId = String(req.query.tenantId || '');
@@ -174,12 +198,16 @@ app.get('/payments/logs', (req: Request, res: Response) => {
   });
 });
 
-app.get('/payments/reports/summary', validateRequest(PaymentSummaryQuerySchema), (req: Request, res: Response) => {
-  const tenantId = String(req.query.tenantId);
-  const period = String(req.query.period) as 'daily' | 'monthly';
-  const summary = paymentService.getFinancialSummary(tenantId, period);
-  return res.json(summary);
-});
+app.get(
+  '/payments/reports/summary',
+  validateRequest(PaymentSummaryQuerySchema),
+  (req: Request, res: Response) => {
+    const tenantId = String(req.query.tenantId);
+    const period = String(req.query.period) as 'daily' | 'monthly';
+    const summary = paymentService.getFinancialSummary(tenantId, period);
+    return res.json(summary);
+  }
+);
 
 let server: ReturnType<typeof app.listen> | undefined;
 

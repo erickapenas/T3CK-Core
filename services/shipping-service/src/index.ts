@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import express, { Request, Response } from 'express';
 import {
   Logger,
@@ -39,10 +41,14 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
-app.post('/shipping/calculate', validateRequest(ShippingCalculationSchema), (req: Request, res: Response) => {
-  const options = service.calculateOptions(req.body);
-  return res.json({ data: options });
-});
+app.post(
+  '/shipping/calculate',
+  validateRequest(ShippingCalculationSchema),
+  (req: Request, res: Response) => {
+    const options = service.calculateOptions(req.body);
+    return res.json({ data: options });
+  }
+);
 
 app.post('/shipping/integrate-carrier', (req: Request, res: Response) => {
   const tenantId = String(req.body.tenantId || '');
@@ -57,18 +63,24 @@ app.post('/shipping/integrate-carrier', (req: Request, res: Response) => {
   return res.json({ data: result });
 });
 
-app.post('/shipping/shipments', validateRequest(ShipmentCreateSchema), (req: Request, res: Response) => {
-  try {
-    const shipment = service.createShipment(req.body);
-    return res.status(201).json({ data: shipment });
-  } catch (error) {
-    return res.status(400).json({ error: (error as Error).message });
+app.post(
+  '/shipping/shipments',
+  validateRequest(ShipmentCreateSchema),
+  (req: Request, res: Response) => {
+    try {
+      const shipment = service.createShipment(req.body);
+      return res.status(201).json({ data: shipment });
+    } catch (error) {
+      return res.status(400).json({ error: (error as Error).message });
+    }
   }
-});
+);
 
 app.post('/shipping/shipments/:id/label', (req: Request, res: Response) => {
   try {
-    const tenantId = String(req.body.tenantId || req.query.tenantId || req.headers['x-tenant-id'] || '');
+    const tenantId = String(
+      req.body.tenantId || req.query.tenantId || req.headers['x-tenant-id'] || ''
+    );
     if (!tenantId) {
       return res.status(400).json({ error: 'tenantId é obrigatório' });
     }
@@ -81,21 +93,25 @@ app.post('/shipping/shipments/:id/label', (req: Request, res: Response) => {
   }
 });
 
-app.patch('/shipping/shipments/:id/tracking', validateRequest(StatusUpdateSchema), (req: Request, res: Response) => {
-  try {
-    const shipment = service.updateTracking(
-      req.body.tenantId,
-      req.params.id,
-      req.body.status,
-      req.body.location,
-      req.body.message
-    );
-    return res.json({ data: shipment });
-  } catch (error) {
-    const message = (error as Error).message;
-    return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+app.patch(
+  '/shipping/shipments/:id/tracking',
+  validateRequest(StatusUpdateSchema),
+  (req: Request, res: Response) => {
+    try {
+      const shipment = service.updateTracking(
+        req.body.tenantId,
+        req.params.id,
+        req.body.status,
+        req.body.location,
+        req.body.message
+      );
+      return res.json({ data: shipment });
+    } catch (error) {
+      const message = (error as Error).message;
+      return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+    }
   }
-});
+);
 
 app.get('/shipping/shipments/:id/tracking', (req: Request, res: Response) => {
   try {
@@ -111,15 +127,19 @@ app.get('/shipping/shipments/:id/tracking', (req: Request, res: Response) => {
   }
 });
 
-app.post('/shipping/notifications', validateRequest(NotificationSchema), (req: Request, res: Response) => {
-  try {
-    const notification = service.sendNotification(req.body);
-    return res.status(201).json({ data: notification });
-  } catch (error) {
-    const message = (error as Error).message;
-    return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+app.post(
+  '/shipping/notifications',
+  validateRequest(NotificationSchema),
+  (req: Request, res: Response) => {
+    try {
+      const notification = service.sendNotification(req.body);
+      return res.status(201).json({ data: notification });
+    } catch (error) {
+      const message = (error as Error).message;
+      return res.status(message.includes('não encontrado') ? 404 : 400).json({ error: message });
+    }
   }
-});
+);
 
 const port = Number(process.env.PORT || process.env.SHIPPING_SERVICE_PORT || 3012);
 

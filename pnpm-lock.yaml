@@ -39,6 +39,9 @@ importers:
       bullmq:
         specifier: ^5.67.2
         version: 5.67.2
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express-rate-limit:
         specifier: ^8.2.1
         version: 8.2.1(express@4.22.1)
@@ -226,6 +229,9 @@ importers:
       '@t3ck/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -306,6 +312,9 @@ importers:
       csrf-csrf:
         specifier: ^3.0.0
         version: 3.2.2
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -430,6 +439,9 @@ importers:
       axios:
         specifier: ^1.13.5
         version: 1.13.5
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -562,6 +574,9 @@ importers:
       '@t3ck/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -602,6 +617,9 @@ importers:
       axios:
         specifier: ^1.13.5
         version: 1.13.5
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -636,6 +654,9 @@ importers:
       '@t3ck/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -667,6 +688,9 @@ importers:
       '@t3ck/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -731,6 +755,9 @@ importers:
       cors:
         specifier: ^2.8.6
         version: 2.8.6
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1
@@ -801,6 +828,9 @@ importers:
       axios:
         specifier: ^1.13.5
         version: 1.13.5
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       express:
         specifier: ^4.18.2
         version: 4.22.1

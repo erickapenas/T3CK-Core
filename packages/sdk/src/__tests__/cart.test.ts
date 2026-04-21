@@ -1,7 +1,8 @@
 import { CartModule } from '../cart';
 import { T3CKClient } from '../client';
+import type { Product } from '../types';
 
-const product = { id: 'prod-1', name: 'Test Product' } as any;
+const product: Product = { id: 'prod-1', name: 'Test Product' };
 
 describe('CartModule', () => {
   const client = {
@@ -22,7 +23,9 @@ describe('CartModule', () => {
 
   it('add throws when product id missing', async () => {
     const cart = new CartModule(client);
-    await expect(cart.add({} as any, 1)).rejects.toThrow('Product ID is required');
+    await expect(cart.add({ id: '', name: 'Invalid' }, 1)).rejects.toThrow(
+      'Product ID is required'
+    );
   });
 
   it('add posts item', async () => {

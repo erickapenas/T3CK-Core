@@ -15,7 +15,9 @@ describe('T3CKClient', () => {
     const client = new T3CKClient({
       ...mockConfig,
       tenantId: 'tenant-123',
-    }) as any;
+    }) as T3CKClient & {
+      client: { defaults: { headers: Record<string, string> } };
+    };
 
     expect(client.client.defaults.headers['X-Tenant-ID']).toBe('tenant-123');
   });

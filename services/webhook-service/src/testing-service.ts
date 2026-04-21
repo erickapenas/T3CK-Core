@@ -202,14 +202,11 @@ export class WebhookTestingService {
   private async sendTestRequest(
     webhookId: string,
     payload: WebhookTestPayload,
-    headers: Record<string, string>
+    _headers: Record<string, string>
   ): Promise<{ statusCode: number; body: string; headers: Record<string, string> }> {
     // This would use fetch or axios to send the request
     // Placeholder implementation
-    console.log(
-      `[WebhookTesting] Sending test request for webhook ${webhookId}:`,
-      payload
-    );
+    console.log(`[WebhookTesting] Sending test request for webhook ${webhookId}:`, payload);
 
     return {
       statusCode: 200,
@@ -218,5 +215,3 @@ export class WebhookTestingService {
     };
   }
 }
-
-export { WebhookTestingService };

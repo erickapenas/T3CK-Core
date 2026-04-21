@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/SystemTree.css';
-import { getEntityCounts } from '../apiClient';
+import { DashboardEntity, getEntityCounts } from '../apiClient';
 
-export function SystemTree({ onSelectEntity, selected }) {
+type SystemTreeProps = {
+  tenantId: string;
+  onSelectEntity: (entity: DashboardEntity) => void;
+  selected: DashboardEntity | null;
+};
+
+export function SystemTree({ tenantId, onSelectEntity, selected }: SystemTreeProps) {
   const [entityCounts, setEntityCounts] = useState<Record<string, number>>({
-    tenants: 1,
+    tenants: 0,
     users: 0,
     products: 0,
     orders: 0,
@@ -25,7 +31,7 @@ export function SystemTree({ onSelectEntity, selected }) {
   useEffect(() => {
     const fetchCounts = async () => {
       setLoading(true);
-      const counts = await getEntityCounts();
+      const counts = await getEntityCounts(tenantId);
       setEntityCounts(counts);
       setLoading(false);
     };
@@ -33,12 +39,13 @@ export function SystemTree({ onSelectEntity, selected }) {
     fetchCounts();
     const interval = setInterval(fetchCounts, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [tenantId]);
 
   // Filter entities by search
-  const filteredEntities = entities.filter(entity =>
-    entity.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    entity.id.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEntities = entities.filter(
+    (entity) =>
+      entity.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entity.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -61,11 +68,11 @@ export function SystemTree({ onSelectEntity, selected }) {
       )}
 
       <ul className="tree-list">
-        {filteredEntities.map(entity => (
+        {filteredEntities.map((entity) => (
           <li
             key={entity.id}
             className={`tree-item ${selected === entity.id ? 'active' : ''}`}
-            onClick={() => onSelectEntity(entity.id)}
+            onClick={() => onSelectEntity(entity.id as DashboardEntity)}
           >
             <span className="tree-icon">{entity.icon}</span>
             <span className="tree-label">{entity.label}</span>

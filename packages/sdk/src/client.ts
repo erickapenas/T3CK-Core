@@ -1,4 +1,6 @@
-import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+
 import { ClientConfig, ApiError } from './types';
 
 export class T3CKClient {
@@ -39,7 +41,7 @@ export class T3CKClient {
       (response) => response,
       async (error: AxiosError) => {
         const apiError = this.handleError(error);
-        
+
         // Retry logic com exponential backoff
         if (this.shouldRetry(error) && this.retries > 0) {
           this.retries--;

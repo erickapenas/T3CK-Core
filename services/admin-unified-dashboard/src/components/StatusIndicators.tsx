@@ -1,7 +1,16 @@
-import React from 'react';
 import '../styles/StatusIndicators.css';
 
-export function StatusIndicators({ status }) {
+type StatusIndicatorsProps = {
+  status: {
+    dbConnected: boolean;
+    syncStatus: string;
+    apiResponseTime: number;
+    activeSessions: number;
+    lastSync: Date;
+  };
+};
+
+export function StatusIndicators({ status }: StatusIndicatorsProps) {
   return (
     <div className="status-indicators">
       {/* Database Connection */}
@@ -13,7 +22,9 @@ export function StatusIndicators({ status }) {
 
       {/* Sync Status */}
       <div className={`indicator ${status.syncStatus === 'in-sync' ? 'synced' : 'syncing'}`}>
-        <div className={`indicator-dot ${status.syncStatus === 'in-sync' ? 'pulse' : 'spinning'}`}></div>
+        <div
+          className={`indicator-dot ${status.syncStatus === 'in-sync' ? 'pulse' : 'spinning'}`}
+        ></div>
         <span className="indicator-label">Sync</span>
         <span className="indicator-value">{status.syncStatus}</span>
       </div>
@@ -33,9 +44,7 @@ export function StatusIndicators({ status }) {
       {/* Last Sync */}
       <div className="indicator last-sync">
         <span className="indicator-label">Last Sync</span>
-        <span className="indicator-value mono">
-          {status.lastSync.toLocaleTimeString()}
-        </span>
+        <span className="indicator-value mono">{status.lastSync.toLocaleTimeString()}</span>
       </div>
     </div>
   );

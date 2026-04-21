@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import express, { Request, Response } from 'express';
 import {
   Logger,
@@ -24,15 +26,41 @@ initializeTracing('admin-service');
 
 const app: express.Application = express();
 app.use(express.json());
+
+// Allow direct dashboard access when the gateway is unavailable.
+app.use((req: Request, res: Response, next) => {
+  const origin = req.headers.origin;
+
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-Tenant-ID, X-CSRF-Token'
+    );
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  }
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+
+  return next();
+});
+
 const passThroughLimiter = (_req: Request, _res: Response, next: () => void) => next();
-const apiLimiterEnabled = process.env.RATE_LIMIT_DISABLED !== 'true' && process.env.NODE_ENV === 'production';
+const apiLimiterEnabled =
+  process.env.RATE_LIMIT_DISABLED !== 'true' && process.env.NODE_ENV === 'production';
 app.use(apiLimiterEnabled ? getApiLimiter() : passThroughLimiter);
 
 const logger = new Logger('admin-service');
 const adminService = new AdminService();
 
 const requireTenantId = (req: Request): string => {
-  const tenantId = String(req.headers['x-tenant-id'] || req.query.tenantId || req.body?.tenantId || '');
+  const tenantId = String(
+    req.headers['x-tenant-id'] || req.query.tenantId || req.body?.tenantId || ''
+  );
   if (!tenantId) {
     throw new Error('tenantId is required (x-tenant-id header, query or body)');
   }
@@ -70,15 +98,23 @@ app.get('/api/admin/dashboard', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/admin/products', validateRequest(ProductCreateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.createProduct({ ...req.body, tenantId, status: req.body.status || 'active' });
-    res.status(201).json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.post(
+  '/api/admin/products',
+  validateRequest(ProductCreateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.createProduct({
+        ...req.body,
+        tenantId,
+        status: req.body.status || 'active',
+      });
+      res.status(201).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.get('/api/admin/products', async (req: Request, res: Response) => {
   try {
@@ -90,15 +126,19 @@ app.get('/api/admin/products', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/admin/products/:id', validateRequest(ProductUpdateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.updateProduct(tenantId, req.params.id, req.body);
-    res.json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.put(
+  '/api/admin/products/:id',
+  validateRequest(ProductUpdateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.updateProduct(tenantId, req.params.id, req.body);
+      res.json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.delete('/api/admin/products/:id', async (req: Request, res: Response) => {
   try {
@@ -113,15 +153,23 @@ app.delete('/api/admin/products/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/api/admin/orders', validateRequest(OrderCreateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.createOrder({ ...req.body, tenantId, status: req.body.status || 'pending' });
-    res.status(201).json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.post(
+  '/api/admin/orders',
+  validateRequest(OrderCreateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.createOrder({
+        ...req.body,
+        tenantId,
+        status: req.body.status || 'pending',
+      });
+      res.status(201).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.get('/api/admin/orders', async (req: Request, res: Response) => {
   try {
@@ -133,25 +181,33 @@ app.get('/api/admin/orders', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/admin/orders/:id', validateRequest(OrderUpdateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.updateOrder(tenantId, req.params.id, req.body);
-    res.json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.put(
+  '/api/admin/orders/:id',
+  validateRequest(OrderUpdateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.updateOrder(tenantId, req.params.id, req.body);
+      res.json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
-app.post('/api/admin/customers', validateRequest(CustomerCreateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.createCustomer({ ...req.body, tenantId });
-    res.status(201).json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.post(
+  '/api/admin/customers',
+  validateRequest(CustomerCreateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.createCustomer({ ...req.body, tenantId });
+      res.status(201).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.get('/api/admin/customers', async (req: Request, res: Response) => {
   try {
@@ -163,15 +219,19 @@ app.get('/api/admin/customers', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/admin/customers/:id', validateRequest(CustomerUpdateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.updateCustomer(tenantId, req.params.id, req.body);
-    res.json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.put(
+  '/api/admin/customers/:id',
+  validateRequest(CustomerUpdateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.updateCustomer(tenantId, req.params.id, req.body);
+      res.json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.get('/api/admin/analytics', async (req: Request, res: Response) => {
   try {
@@ -206,15 +266,19 @@ app.get('/api/admin/settings', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/admin/settings', validateRequest(SettingsUpdateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.updateSettings(tenantId, req.body);
-    res.json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.put(
+  '/api/admin/settings',
+  validateRequest(SettingsUpdateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.updateSettings(tenantId, req.body);
+      res.json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.get('/api/admin/tenant-config', async (req: Request, res: Response) => {
   try {
@@ -226,25 +290,37 @@ app.get('/api/admin/tenant-config', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/admin/tenant-config', validateRequest(TenantConfigurationUpdateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.updateTenantConfiguration(tenantId, req.body);
-    res.json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.put(
+  '/api/admin/tenant-config',
+  validateRequest(TenantConfigurationUpdateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.updateTenantConfiguration(tenantId, req.body);
+      res.json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
-app.post('/api/admin/users', validateRequest(UserCreateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.createUser({ ...req.body, tenantId, active: req.body.active ?? true });
-    res.status(201).json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.post(
+  '/api/admin/users',
+  validateRequest(UserCreateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.createUser({
+        ...req.body,
+        tenantId,
+        active: req.body.active ?? true,
+      });
+      res.status(201).json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.get('/api/admin/users', async (req: Request, res: Response) => {
   try {
@@ -256,15 +332,19 @@ app.get('/api/admin/users', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/admin/users/:id', validateRequest(UserUpdateSchema), async (req: Request, res: Response) => {
-  try {
-    const tenantId = requireTenantId(req);
-    const data = await adminService.updateUser(tenantId, req.params.id, req.body);
-    res.json({ data });
-  } catch (error) {
-    handleError(res, error);
+app.put(
+  '/api/admin/users/:id',
+  validateRequest(UserUpdateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = requireTenantId(req);
+      const data = await adminService.updateUser(tenantId, req.params.id, req.body);
+      res.json({ data });
+    } catch (error) {
+      handleError(res, error);
+    }
   }
-});
+);
 
 app.delete('/api/admin/users/:id', async (req: Request, res: Response) => {
   try {

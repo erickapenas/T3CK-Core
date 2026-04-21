@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimitMiddleware from 'express-rate-limit';
 import { RateLimitConfig } from '../types';
 
 const isRateLimitDisabled = () => {
   const explicitDisable = String(process.env.RATE_LIMIT_DISABLED || '').toLowerCase() === 'true';
-  return explicitDisable || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  return (
+    explicitDisable || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+  );
 };
 
 const isLocalRequest = (req: Request): boolean => {
@@ -25,7 +27,7 @@ const shouldSkipRateLimit = (req: Request): boolean => {
  * Global Rate Limiter
  * Applies to all requests if no specific limit is set
  */
-export const globalRateLimit = rateLimit({
+export const globalRateLimit = rateLimitMiddleware({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // 1000 requests per window
   message: 'Too many requests from this IP, please try again later',
@@ -45,7 +47,7 @@ export const globalRateLimit = rateLimit({
  * Strict Rate Limiter for Authentication Endpoints
  * Prevents brute force attacks
  */
-export const authRateLimit = rateLimit({
+export const authRateLimit = rateLimitMiddleware({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // 10 login attempts per window
   skipSuccessfulRequests: true, // Don't count successful logins
@@ -65,7 +67,7 @@ export const authRateLimit = rateLimit({
 /**
  * API Rate Limiter for General Endpoints
  */
-export const apiRateLimit = rateLimit({
+export const apiRateLimit = rateLimitMiddleware({
   windowMs: 60 * 1000, // 1 minute
   max: 100, // 100 requests per minute
   message: 'API rate limit exceeded',
@@ -78,7 +80,7 @@ export const apiRateLimit = rateLimit({
  * Create Custom Rate Limiter
  */
 export const createRateLimiter = (options: Partial<RateLimitConfig>) => {
-  return rateLimit({
+  return rateLimitMiddleware({
     windowMs: options.windowMs || 60 * 1000,
     max: options.max || 100,
     message: options.message || 'Rate limit exceeded',
@@ -101,7 +103,7 @@ export const createRateLimiter = (options: Partial<RateLimitConfig>) => {
  */
 export const tenantRateLimit = (req: Request, res: Response, next: any) => {
   const tenantId = req.headers['x-tenant-id'] as string;
-  
+
   if (!tenantId) {
     return next();
   }
@@ -130,7 +132,6 @@ export const createRedisRateLimiter = () => {
 
   try {
     // Import dynamically to avoid hard dependency if Redis unavailable
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const RedisStore = require('rate-limit-redis');
     const Redis = require('ioredis').default;
 
@@ -151,7 +152,7 @@ export const createRedisRateLimiter = () => {
       console.info('Redis rate limiter connected');
     });
 
-    return rateLimit({
+    return rateLimitMiddleware({
       store: new RedisStore({
         client: redis,
         prefix: 'rl:ip:', // Rate limit per IP
@@ -189,7 +190,6 @@ export const createTenantRedisRateLimiter = (tierName: string = 'standard') => {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const RedisStore = require('rate-limit-redis');
     const Redis = require('ioredis').default;
 
@@ -203,7 +203,7 @@ export const createTenantRedisRateLimiter = (tierName: string = 'standard') => {
     });
 
     // Tier-based limits
-    const tierLimits: Record<string, {max: number; windowMs: number}> = {
+    const tierLimits: Record<string, { max: number; windowMs: number }> = {
       free: { max: 50, windowMs: 60 * 1000 }, // 50 req/min
       standard: { max: 200, windowMs: 60 * 1000 }, // 200 req/min
       premium: { max: 500, windowMs: 60 * 1000 }, // 500 req/min
@@ -217,7 +217,7 @@ export const createTenantRedisRateLimiter = (tierName: string = 'standard') => {
       return (_req: Request, _res: Response, next: any) => next();
     }
 
-    return rateLimit({
+    return rateLimitMiddleware({
       store: new RedisStore({
         client: redis,
         prefix: `rl:tenant:${tierName}:`,

@@ -2,7 +2,10 @@ import { Express } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
-export function setupSwagger(app: Express, opts?: { title?: string; version?: string; basePath?: string }) {
+export function setupSwagger(
+  app: Express,
+  opts?: { title?: string; version?: string; basePath?: string }
+) {
   const title = opts?.title ?? 'Auth Service API';
   const version = opts?.version ?? process.env.SERVICE_VERSION ?? '1.0.0';
   opts?.basePath; // Reserved for future use

@@ -137,11 +137,7 @@ export class ConfigManager {
   /**
    * Get config value with fallback to environment variable
    */
-  async getConfig(
-    key: string,
-    defaultValue?: string,
-    decrypt: boolean = false,
-  ): Promise<string> {
+  async getConfig(key: string, defaultValue?: string, decrypt: boolean = false): Promise<string> {
     // Try Parameter Store first
     const paramValue = await this.getParameter(key, decrypt);
     if (paramValue) {

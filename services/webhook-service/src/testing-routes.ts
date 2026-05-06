@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Logger } from '@t3ck/shared/logger';
+import { Logger } from '@t3ck/shared';
 import { WebhookTestingService, WebhookTestRequest } from './testing-service';
 import { EventVersioningService, EventVersion } from './event-versioning';
 
@@ -26,9 +26,10 @@ export function createWebhookTestingRouter(
       const { webhookId, eventType, testData, includeHeaders } = req.body;
 
       if (!webhookId || !eventType) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Missing required fields: webhookId, eventType',
         });
+        return;
       }
 
       const testRequest: WebhookTestRequest = {
@@ -136,9 +137,10 @@ export function createWebhookTestingRouter(
       const { url } = req.body;
 
       if (!url) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Missing required field: url',
         });
+        return;
       }
 
       const validation = testingService.validateWebhookUrl(url);
@@ -191,15 +193,13 @@ export function createWebhookTestingRouter(
     try {
       const { eventType, version } = req.params;
 
-      const schema = versioningService.getSchemaDocumentation(
-        eventType,
-        version as EventVersion
-      );
+      const schema = versioningService.getSchemaDocumentation(eventType, version as EventVersion);
 
       if (!schema) {
-        return res.status(404).json({
+        res.status(404).json({
           error: `Schema not found for ${eventType} version ${version}`,
         });
+        return;
       }
 
       res.json({
@@ -226,9 +226,10 @@ export function createWebhookTestingRouter(
       const { eventType, version, data } = req.body;
 
       if (!eventType || !version || !data) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Missing required fields: eventType, version, data',
         });
+        return;
       }
 
       const event = {

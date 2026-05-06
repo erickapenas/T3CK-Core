@@ -1,6 +1,15 @@
 import { AbacatePayStatus, InternalPaymentStatus, PaymentMethod } from './types';
 
-const STATUS_MAP: Record<AbacatePayStatus, InternalPaymentStatus> = {
+const STATUS_MAP: Record<string, InternalPaymentStatus> = {
+  PENDING: 'AWAITING_PAYMENT',
+  EXPIRED: 'FAILED',
+  CANCELLED: 'FAILED',
+  PAID: 'PAID',
+  UNDER_DISPUTE: 'CHARGEBACK',
+  REFUNDED: 'REFUNDED',
+  REDEEMED: 'PAID',
+  APPROVED: 'PAID',
+  FAILED: 'FAILED',
   pending: 'AWAITING_PAYMENT',
   paid: 'PAID',
   refunded: 'REFUNDED',
@@ -23,6 +32,10 @@ export function buildFriendlyMessage(status: InternalPaymentStatus, method: Paym
 
   if (status === 'AWAITING_PAYMENT' && method === 'boleto') {
     return 'Boleto gerado. Efetue o pagamento até o vencimento para concluir o pedido.';
+  }
+
+  if (status === 'AWAITING_PAYMENT' && (method === 'card' || method === 'checkout')) {
+    return 'Checkout criado. Redirecione o cliente para concluir o pagamento com seguranca.';
   }
 
   if (status === 'REFUNDED') {

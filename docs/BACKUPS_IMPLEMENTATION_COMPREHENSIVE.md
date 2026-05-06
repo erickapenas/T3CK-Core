@@ -48,6 +48,7 @@ Service Startup
 **Location**: `packages/shared/src/backup.ts` (371 lines)
 
 **Responsibilities**:
+
 - Manage backup execution
 - Handle Firestore exports
 - Handle Redis snapshots
@@ -56,15 +57,16 @@ Service Startup
 - Graceful error handling
 
 **Key Methods**:
+
 ```typescript
 class BackupManager {
-  async runBackupNow(): Promise<BackupResult>
-  scheduleBackups(cronExpression?: string): void
-  getStatus(): BackupStatus
-  async close(): Promise<void>
-  
-  private async backupFirestore(timestamp: Date): Promise<void>
-  private async backupRedis(timestamp: Date): Promise<void>
+  async runBackupNow(): Promise<BackupResult>;
+  scheduleBackups(cronExpression?: string): void;
+  getStatus(): BackupStatus;
+  async close(): Promise<void>;
+
+  private async backupFirestore(timestamp: Date): Promise<void>;
+  private async backupRedis(timestamp: Date): Promise<void>;
 }
 ```
 
@@ -72,15 +74,15 @@ class BackupManager {
 
 ```typescript
 interface BackupConfig {
-  enabled: boolean;                    // Enable/disable backups
-  gcpProject?: string;                 // GCP project ID
-  gcsBucket?: string;                  // GCS bucket name
-  s3Bucket?: string;                   // S3 bucket name
-  redisHost?: string;                  // Redis host
-  redisPort?: number;                  // Redis port
-  redisDumpPath?: string;              // Path to dump.rdb
-  firebaseProjectId?: string;          // Firebase project
-  environment: string;                 // dev/staging/prod
+  enabled: boolean; // Enable/disable backups
+  gcpProject?: string; // GCP project ID
+  gcsBucket?: string; // GCS bucket name
+  s3Bucket?: string; // S3 bucket name
+  redisHost?: string; // Redis host
+  redisPort?: number; // Redis port
+  redisDumpPath?: string; // Path to dump.rdb
+  firebaseProjectId?: string; // Firebase project
+  environment: string; // dev/staging/prod
 }
 ```
 
@@ -90,7 +92,7 @@ interface BackupConfig {
 interface BackupResult {
   success: boolean;
   timestamp: Date;
-  duration: number;                    // Duration in ms
+  duration: number; // Duration in ms
   firestore?: {
     success: boolean;
     path?: string;
@@ -141,10 +143,15 @@ services/tenant-service/src/backup.ts  (updated wrapper)
 Each service has a wrapper that imports from shared:
 
 **auth-service/src/backup.ts**:
+
 ```typescript
 export { BackupManager, initializeBackups, getBackupManager } from '@t3ck/shared';
-export async function runBackupNow() { /* delegates to shared */ }
-export function getBackupStatus() { /* delegates to shared */ }
+export async function runBackupNow() {
+  /* delegates to shared */
+}
+export function getBackupStatus() {
+  /* delegates to shared */
+}
 ```
 
 **Same pattern for**: webhook-service, tenant-service
@@ -159,12 +166,14 @@ gcloud firestore export gs://<bucket>/firestore-backups/<project>/<timestamp> \
 ```
 
 **Flow**:
+
 1. Create timestamped GCS path: `gs://<bucket>/firestore-<YYYYMMDD-HHMM>/`
 2. Execute `gcloud firestore export` command with timeout
 3. Verify command success (exit code 0)
 4. Log result with timestamp and path
 
 **Requirements**:
+
 - `gcloud` CLI installed in container
 - GCP service account with `roles/datastore.importExportAdmin`
 - `roles/storage.objectCreator` on GCS bucket
@@ -183,6 +192,7 @@ aws s3 cp <dump-path> s3://<bucket>/redis-backups/<timestamp>/dump.rdb
 ```
 
 **Flow**:
+
 1. Connect to Redis via redis-cli
 2. Execute SAVE command (blocking until snapshot complete)
 3. Verify dump.rdb exists at configured path
@@ -190,6 +200,7 @@ aws s3 cp <dump-path> s3://<bucket>/redis-backups/<timestamp>/dump.rdb
 5. Log results
 
 **Requirements**:
+
 - `redis-cli` installed in container
 - `aws` CLI installed in container
 - IAM role with S3 PutObject permissions
@@ -224,14 +235,14 @@ import { initializeBackups, getBackupManager } from '@t3ck/shared';
 
 async function startService() {
   // ... other initialization ...
-  
+
   // Initialize backup manager
   await initializeBackups();
-  
+
   // Schedule automatic backups (daily at 2 AM UTC)
   const manager = getBackupManager();
   manager.scheduleBackups('0 2 * * *');
-  
+
   // Log backup status
   const status = manager.getStatus();
   logger.info('Backup initialized', {
@@ -254,7 +265,7 @@ async function triggerBackup() {
   console.log(`Duration: ${result.duration}ms`);
   console.log(`Firestore: ${result.firestore?.path || 'skipped'}`);
   console.log(`Redis: ${result.redis?.path || 'skipped'}`);
-  
+
   // Example result:
   // {
   //   success: true,
@@ -285,11 +296,13 @@ function checkBackupHealth() {
     enabled: status.enabled,
     running: status.isRunning,
     environment: status.environment,
-    lastBackup: status.lastBackup ? {
-      timestamp: status.lastBackup.timestamp,
-      success: status.lastBackup.success,
-      duration: status.lastBackup.duration + 'ms',
-    } : 'never',
+    lastBackup: status.lastBackup
+      ? {
+          timestamp: status.lastBackup.timestamp,
+          success: status.lastBackup.success,
+          duration: status.lastBackup.duration + 'ms',
+        }
+      : 'never',
     capabilities: {
       firestore: status.capabilities.firestore,
       redis: status.capabilities.redis,
@@ -375,13 +388,13 @@ services:
       REDIS_DUMP_PATH: /data/dump.rdb
       AWS_REGION: us-east-1
     volumes:
-      - /data:/data  # For Redis dump
-      - /root/.config/gcloud:/root/.config/gcloud  # For gcloud auth
+      - /data:/data # For Redis dump
+      - /root/.config/gcloud:/root/.config/gcloud # For gcloud auth
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - /data:/data
 ```
@@ -391,12 +404,14 @@ services:
 ### Available Metrics
 
 **Counters**:
+
 ```
 backup_attempts_total              # Total backup attempts
 backup_failures_total              # Total backup failures
 ```
 
 **Gauges**:
+
 ```
 backup_last_timestamp_seconds      # Unix timestamp of last successful backup
 backup_duration_seconds            # Duration of last backup in seconds
@@ -437,6 +452,7 @@ time() - backup_last_timestamp_seconds > 90000
 ### Grafana Dashboard
 
 Create dashboard with:
+
 - Success/failure rate gauge
 - Last backup timestamp
 - Backup duration histogram
@@ -447,10 +463,12 @@ Create dashboard with:
 ### GCP (Firestore Export)
 
 Service account requires:
+
 - `roles/datastore.importExportAdmin` - For export/import operations
 - `roles/storage.objectCreator` on target GCS bucket
 
 **Setup**:
+
 ```bash
 # Create service account
 gcloud iam service-accounts create backup-sa \
@@ -468,25 +486,23 @@ gsutil iam ch \
 ```
 
 **JSON Policy**:
+
 ```json
 {
-  "members": [
-    "serviceAccount:backup-sa@my-gcp-project.iam.gserviceaccount.com"
-  ],
-  "roles": [
-    "roles/datastore.importExportAdmin",
-    "roles/storage.objectCreator"
-  ]
+  "members": ["serviceAccount:backup-sa@my-gcp-project.iam.gserviceaccount.com"],
+  "roles": ["roles/datastore.importExportAdmin", "roles/storage.objectCreator"]
 }
 ```
 
 ### AWS (S3 Upload)
 
 IAM role requires:
+
 - `s3:PutObject` - Upload backup files
 - `s3:ListBucket` - List bucket contents (optional)
 
 **Setup**:
+
 ```bash
 # Create IAM policy
 aws iam create-policy --policy-name backup-s3-policy \
@@ -499,6 +515,7 @@ aws iam attach-role-policy \
 ```
 
 **IAM Policy Document** (backup-policy.json):
+
 ```json
 {
   "Version": "2012-10-17",
@@ -649,52 +666,52 @@ metadata:
   name: backup-job
   namespace: default
 spec:
-  schedule: "0 2 * * *"  # 2 AM UTC daily
+  schedule: '0 2 * * *' # 2 AM UTC daily
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
-      activeDeadlineSeconds: 3600  # 1 hour timeout
+      activeDeadlineSeconds: 3600 # 1 hour timeout
       template:
         spec:
           serviceAccountName: backup-sa
           restartPolicy: OnFailure
           containers:
-          - name: backup
-            image: my-registry/auth-service:latest
-            imagePullPolicy: IfNotPresent
-            command: ["/bin/sh"]
-            args:
-            - -c
-            - |
-              curl -X POST http://auth-service:3000/admin/backup/now \
-                -H "Content-Type: application/json" \
-                || exit 1
-            env:
-            - name: GCP_PROJECT
-              valueFrom:
-                configMapKeyRef:
-                  name: backup-config
-                  key: gcp-project
-            - name: BACKUP_GCS_BUCKET
-              valueFrom:
-                configMapKeyRef:
-                  name: backup-config
-                  key: gcs-bucket
-            - name: BACKUP_S3_BUCKET
-              valueFrom:
-                secretKeyRef:
-                  name: backup-secrets
-                  key: s3-bucket
-            - name: AWS_REGION
-              value: "us-east-1"
-            resources:
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
-              limits:
-                memory: "512Mi"
-                cpu: "500m"
+            - name: backup
+              image: my-registry/auth-service:latest
+              imagePullPolicy: IfNotPresent
+              command: ['/bin/sh']
+              args:
+                - -c
+                - |
+                  curl -X POST http://auth-service:3000/admin/backup/now \
+                    -H "Content-Type: application/json" \
+                    || exit 1
+              env:
+                - name: GCP_PROJECT
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: gcp-project
+                - name: BACKUP_GCS_BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: gcs-bucket
+                - name: BACKUP_S3_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-secrets
+                      key: s3-bucket
+                - name: AWS_REGION
+                  value: 'us-east-1'
+              resources:
+                requests:
+                  memory: '256Mi'
+                  cpu: '250m'
+                limits:
+                  memory: '512Mi'
+                  cpu: '500m'
 ```
 
 ## Monitoring & Alerting
@@ -726,6 +743,7 @@ jsonPayload.logger="backup-manager"
 ### Winston Logging
 
 All backup operations logged with:
+
 - Timestamp (ISO 8601)
 - Service name
 - Operation type
@@ -735,6 +753,7 @@ All backup operations logged with:
 - Custom context fields
 
 **Example logs**:
+
 ```
 [2026-02-02T14:30:00.123Z] [auth-service] backup-start: Firestore backup starting
 [2026-02-02T14:30:45.456Z] [auth-service] backup-complete: Firestore export succeeded in 45333ms
@@ -747,11 +766,13 @@ All backup operations logged with:
 ### Firestore Backup Fails
 
 **Problem**: `gcloud` permission error
+
 ```
 ERROR: (gcloud.firestore.export) User does not have permission
 ```
 
 **Solution**:
+
 1. Verify GCP_PROJECT environment variable is set
 2. Check service account has `roles/datastore.importExportAdmin`
 3. Verify GCS bucket exists and service account has `roles/storage.objectCreator`
@@ -761,11 +782,13 @@ ERROR: (gcloud.firestore.export) User does not have permission
 ### Redis Backup Fails
 
 **Problem**: `redis-cli SAVE` fails
+
 ```
 ERROR: Could not connect to Redis at 127.0.0.1:6379
 ```
 
 **Solution**:
+
 1. Verify REDIS_HOST and REDIS_PORT are correct
 2. Check Redis is running: `redis-cli -h <host> -p <port> ping`
 3. Verify redis-cli is installed in container: `which redis-cli`
@@ -775,11 +798,13 @@ ERROR: Could not connect to Redis at 127.0.0.1:6379
 ### S3 Upload Fails
 
 **Problem**: IAM permission error
+
 ```
 An error occurred (AccessDenied) when calling the PutObject operation
 ```
 
 **Solution**:
+
 1. Verify BACKUP_S3_BUCKET environment variable is set
 2. Check IAM role/user has `s3:PutObject` permission on bucket
 3. Verify AWS credentials configured: `aws sts get-caller-identity`
@@ -789,11 +814,13 @@ An error occurred (AccessDenied) when calling the PutObject operation
 ### Node-cron Not Available
 
 **Problem**: Scheduling fails if node-cron not installed
+
 ```
 ERROR: node-cron not available for scheduling
 ```
 
 **Solution**:
+
 1. Install node-cron: `npm install node-cron` or `pnpm add node-cron`
 2. Or use external scheduler (Cloud Scheduler, EventBridge, K8s CronJob)
 3. Manual triggers via `runBackupNow()` still work without node-cron
@@ -801,23 +828,27 @@ ERROR: node-cron not available for scheduling
 ## Best Practices
 
 ### 1. Schedule Backups During Off-Peak Hours
+
 - Backup operations are I/O intensive
 - Schedule during low traffic periods (e.g., 2 AM UTC)
 - Avoid peak business hours
 
 ### 2. Implement Restore Testing
+
 - Regularly test backup restoration
 - Validate data integrity after restore
 - Document recovery procedure
 - Perform quarterly disaster recovery drills
 
 ### 3. Monitor Backup Success
+
 - Setup alerts for backup failures
 - Track backup duration and size
 - Monitor Prometheus metrics
 - Keep retention policies updated
 
 ### 4. Secure Backup Storage
+
 - Enable encryption at rest (GCS/S3)
 - Use bucket versioning
 - Limit access via IAM policies
@@ -825,12 +856,14 @@ ERROR: node-cron not available for scheduling
 - Rotate credentials regularly
 
 ### 5. Document Recovery Procedure
+
 - Write runbook for disaster recovery
 - Test recovery procedure quarterly
 - Keep backup manifests with metadata
 - Document restore time objectives (RTO) and recovery point objectives (RPO)
 
 ### 6. Backup Size Management
+
 - Monitor backup sizes
 - Implement retention policies (e.g., keep 30 days)
 - Archive to Glacier/deep-archive for older backups
@@ -846,12 +879,12 @@ Automated Backups implementation provides:
 ✅ **Monitoring** with Prometheus metrics  
 ✅ **Logging** with Winston and full context  
 ✅ **Graceful Degradation** when dependencies unavailable  
-✅ **Multi-service Integration** via shared module pattern  
+✅ **Multi-service Integration** via shared module pattern
 
 **Build Status**: ✅ All services compile successfully  
 **Test Status**: ✅ Ready for production deployment  
 **Performance**: Firestore export (1-5 min), Redis snapshot (seconds)  
-**Git Commit**: `6a28ff3` - feat: implement automated backups with firestore and redis support  
+**Git Commit**: `6a28ff3` - feat: implement automated backups with firestore and redis support
 
 ---
 

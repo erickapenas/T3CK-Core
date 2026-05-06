@@ -86,6 +86,7 @@ RESTANTE: ~20.5 horas
 ### O que foi feito:
 
 #### 1. Instalação
+
 ```
 ✅ pnpm add @godaddy/terminus -F auth-service
 ✅ pnpm add @godaddy/terminus -F webhook-service
@@ -93,6 +94,7 @@ RESTANTE: ~20.5 horas
 ```
 
 #### 2. Código Implementado
+
 ```
 ✅ services/auth-service/src/health.ts (88 linhas)
 ✅ services/webhook-service/src/health.ts (74 linhas)
@@ -103,6 +105,7 @@ RESTANTE: ~20.5 horas
 #### 3. Endpoints Implementados
 
 **auth-service (port 3001):**
+
 ```
 GET /health
 ├─ Status: 200 OK
@@ -116,18 +119,21 @@ GET /ready
 ```
 
 **webhook-service (port 3002):**
+
 ```
 GET /health → 200 { status: "ok", ... }
 GET /ready → 200 { status: "ok", services: {firestore: "ok", cache: "ok"} }
 ```
 
 **tenant-service (port 3003):**
+
 ```
 GET /health → 200 { status: "ok", ... }
 GET /ready → 200 { status: "ok", services: {firestore: "ok", "step-functions": "ok"} }
 ```
 
 #### 4. Recursos Implementados
+
 - ✅ Liveness probe (`/health`)
 - ✅ Readiness probe (`/ready`)
 - ✅ Graceful shutdown (SIGTERM)
@@ -138,6 +144,7 @@ GET /ready → 200 { status: "ok", services: {firestore: "ok", "step-functions":
 - ✅ Error handling
 
 #### 5. Validação
+
 ```
 ✅ TypeScript strict mode: PASSING
 ✅ Build (pnpm build): PASSING
@@ -150,6 +157,7 @@ GET /ready → 200 { status: "ok", services: {firestore: "ok", "step-functions":
 ```
 
 #### 6. Documentação Criada
+
 ```
 ✅ docs/HEALTH_CHECKS_IMPLEMENTATION.md (200+ linhas)
    ├─ Endpoints documentation
@@ -163,19 +171,20 @@ GET /ready → 200 { status: "ok", services: {firestore: "ok", "step-functions":
 
 ## 📊 MÉTRICAS DIA 1
 
-| Métrica | Meta | Resultado |
-|---------|------|-----------|
-| Tempo gasto | 2h | 1.5h ✅ |
-| Serviços com health checks | 3/3 | 3/3 ✅ |
-| Endpoints implementados | 2 | 2 ✅ |
-| Build errors | 0 | 0 ✅ |
-| Documentação | Sim | Sim ✅ |
+| Métrica                    | Meta | Resultado |
+| -------------------------- | ---- | --------- |
+| Tempo gasto                | 2h   | 1.5h ✅   |
+| Serviços com health checks | 3/3  | 3/3 ✅    |
+| Endpoints implementados    | 2    | 2 ✅      |
+| Build errors               | 0    | 0 ✅      |
+| Documentação               | Sim  | Sim ✅    |
 
 ---
 
 ## 🎯 PRÓXIMO PASSO (DIA 3-5)
 
 ### Metrics & Monitoring com Prometheus
+
 ```
 ✅ Instalar prom-client em 3 serviços
 ✅ Criar metrics.ts com HTTP + service-specific metrics
@@ -194,6 +203,7 @@ Progresso: COMPLETO ✅
 ### O que foi feito:
 
 #### 1. Instalação
+
 ```
 ✅ pnpm add @sentry/node @sentry/tracing -F auth-service
 ✅ pnpm add @sentry/node @sentry/tracing -F webhook-service
@@ -201,6 +211,7 @@ Progresso: COMPLETO ✅
 ```
 
 #### 2. Código Implementado
+
 ```
 ✅ services/auth-service/src/sentry.ts (129 linhas)
 ✅ services/webhook-service/src/sentry.ts (129 linhas)
@@ -211,6 +222,7 @@ Progresso: COMPLETO ✅
 #### 3. Configuração Sentry
 
 **API Functions Exposed:**
+
 ```typescript
 ✅ initSentry(serviceName)           - Initialize Sentry with DSN
 ✅ setupSentryErrorHandler(app)      - Global error catch middleware
@@ -221,6 +233,7 @@ Progresso: COMPLETO ✅
 ```
 
 **Error Flow:**
+
 ```
 Request Error
     ↓
@@ -236,6 +249,7 @@ Sentry.io Dashboard
 #### 4. Integração nos Serviços
 
 **auth-service/src/index.ts:**
+
 ```typescript
 import { initSentry, setupSentryErrorHandler } from './sentry';
 
@@ -258,16 +272,19 @@ process.on('SIGTERM', async () => {
 ```
 
 **webhook-service/src/index.ts:**
+
 ```
 ✅ Same pattern as auth-service
 ```
 
 **tenant-service/src/index.ts:**
+
 ```
 ✅ Same pattern as auth-service
 ```
 
 #### 5. Recursos Implementados
+
 - ✅ Error capture with context
 - ✅ User context tracking (userId, email)
 - ✅ Tenant context tracking
@@ -278,6 +295,7 @@ process.on('SIGTERM', async () => {
 - ✅ Environment tracking (dev/staging/production)
 
 #### 6. Validação
+
 ```
 ✅ TypeScript strict mode: PASSING (all 3 services)
 ✅ Build (pnpm build): PASSING
@@ -290,6 +308,7 @@ process.on('SIGTERM', async () => {
 ```
 
 #### 7. Documentação Criada
+
 ```
 ✅ docs/ERROR_TRACKING_IMPLEMENTATION.md (400+ linhas)
    ├─ Sentry configuration details
@@ -311,6 +330,7 @@ process.on('SIGTERM', async () => {
 ### O que foi feito:
 
 #### 1. Instalação
+
 ```
 ✅ pnpm add prom-client -F auth-service
 ✅ pnpm add prom-client -F webhook-service
@@ -318,6 +338,7 @@ process.on('SIGTERM', async () => {
 ```
 
 #### 2. Código Implementado
+
 ```
 ✅ services/auth-service/src/metrics.ts (160 linhas)
 ✅ services/webhook-service/src/metrics.ts (155 linhas)
@@ -349,6 +370,7 @@ Gauges (Current):
 #### 4. Métricas Específicas por Serviço
 
 **auth-service**:
+
 ```
 ✅ auth_attempts_total (provider: firebase/cognito, status: success/failure)
 ✅ auth_tokens_issued_total (token_type: access/refresh/id)
@@ -359,6 +381,7 @@ Gauges (Current):
 ```
 
 **webhook-service**:
+
 ```
 ✅ webhook_events_received_total (event_type)
 ✅ webhook_events_processed_total (event_type, status: success/failure/retry)
@@ -370,6 +393,7 @@ Gauges (Current):
 ```
 
 **tenant-service**:
+
 ```
 ✅ provisioning_requests_total (status: pending/in_progress/completed/failed)
 ✅ provisioning_duration_seconds (status)
@@ -384,6 +408,7 @@ Gauges (Current):
 #### 5. Integração nos Serviços
 
 **Middleware Setup**:
+
 ```typescript
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
 
@@ -400,6 +425,7 @@ setupMetricsEndpoint(app, '/metrics');
 ```
 
 **Endpoints Criados**:
+
 ```
 GET /metrics → Prometheus text format
   ├─ auth-service: http://localhost:3001/metrics
@@ -408,6 +434,7 @@ GET /metrics → Prometheus text format
 ```
 
 #### 6. Recursos Implementados
+
 - ✅ Automatic request duration tracking
 - ✅ Active connection counting
 - ✅ Error classification (4xx vs 5xx)
@@ -419,6 +446,7 @@ GET /metrics → Prometheus text format
 - ✅ Appropriate histogram buckets per service
 
 #### 7. Validação
+
 ```
 ✅ TypeScript strict mode: PASSING (all 3 services)
 ✅ Build (pnpm build): PASSING
@@ -431,6 +459,7 @@ GET /metrics → Prometheus text format
 ```
 
 #### 8. Documentação Criada
+
 ```
 ✅ docs/METRICS_MONITORING_IMPLEMENTATION.md (500+ linhas)
    ├─ Architecture & metric types
@@ -456,6 +485,7 @@ GET /metrics → Prometheus text format
 ### O que foi feito:
 
 #### 1. Instalação
+
 ```
 ✅ pnpm add ioredis -F auth-service
 ✅ pnpm add ioredis -F webhook-service
@@ -463,6 +493,7 @@ GET /metrics → Prometheus text format
 ```
 
 #### 2. Código Implementado
+
 ```
 ✅ services/auth-service/src/cache.ts (200+ linhas)
 ✅ services/webhook-service/src/cache.ts (200+ linhas)
@@ -473,34 +504,38 @@ GET /metrics → Prometheus text format
 #### 3. CacheService API
 
 **Operações Básicas**:
+
 ```typescript
-cache.get<T>(key)              // Get value (null if miss)
-cache.set<T>(key, value, ttl)  // Store value with TTL
-cache.delete(key)              // Delete single key
-cache.deleteMany(keys)         // Delete multiple keys
-cache.clear()                  // Clear all with prefix
-cache.exists(key)              // Check if key exists
+cache.get<T>(key); // Get value (null if miss)
+cache.set<T>(key, value, ttl); // Store value with TTL
+cache.delete(key); // Delete single key
+cache.deleteMany(keys); // Delete multiple keys
+cache.clear(); // Clear all with prefix
+cache.exists(key); // Check if key exists
 ```
 
 **Padrões Avançados**:
+
 ```typescript
-cache.getOrSet(key, fn, ttl)   // Cache-aside pattern (RECOMENDADO)
-cache.increment(key, amount)   // Counter operations
-cache.decrement(key, amount)   // Decrement counter
-cache.expire(key, seconds)     // Set/update expiry
+cache.getOrSet(key, fn, ttl); // Cache-aside pattern (RECOMENDADO)
+cache.increment(key, amount); // Counter operations
+cache.decrement(key, amount); // Decrement counter
+cache.expire(key, seconds); // Set/update expiry
 ```
 
 **Query & Management**:
+
 ```typescript
-cache.keys(pattern)            // Get all matching keys
-cache.getStats()               // Hit/miss statistics
-cache.getSize()                // Cache memory usage
-cache.close()                  // Graceful shutdown
+cache.keys(pattern); // Get all matching keys
+cache.getStats(); // Hit/miss statistics
+cache.getSize(); // Cache memory usage
+cache.close(); // Graceful shutdown
 ```
 
 #### 4. Integração nos Serviços
 
 **auth-service/src/index.ts**:
+
 ```typescript
 import { initializeCache } from './cache';
 
@@ -515,16 +550,19 @@ const user = await getCache().getOrSet(
 ```
 
 **webhook-service/src/index.ts**:
+
 ```
 ✅ initializeCache({ prefix: 'webhook:' });
 ```
 
 **tenant-service/src/index.ts**:
+
 ```
 ✅ initializeCache({ prefix: 'tenant:' });
 ```
 
 #### 5. Recursos Implementados
+
 - ✅ ioredis connection pooling
 - ✅ Configurable TTL (default: 1 hour)
 - ✅ Automatic JSON serialization/deserialization
@@ -567,6 +605,7 @@ const user = await getCache().getOrSet(
 ```
 
 #### 7. Validação
+
 ```
 ✅ TypeScript strict mode: PASSING (all 3 services)
 ✅ Build (pnpm build): PASSING
@@ -579,6 +618,7 @@ const user = await getCache().getOrSet(
 ```
 
 #### 8. Documentação Criada
+
 ```
 ✅ docs/CACHING_IMPLEMENTATION.md (600+ linhas)
    ├─ Architecture & cache patterns
@@ -602,44 +642,45 @@ const user = await getCache().getOrSet(
 
 ## 📊 MÉTRICAS DIA 4
 
-| Métrica | Meta | Resultado |
-|---------|------|-----------|
-| Tempo gasto | 3h | 1.5h ✅ |
-| Serviços com Redis | 3/3 | 3/3 ✅ |
-| Cache patterns | 6+ | 6+ ✅ |
-| Build errors | 0 | 0 ✅ |
-| Documentação | Completa | Completa ✅ |
+| Métrica            | Meta     | Resultado   |
+| ------------------ | -------- | ----------- |
+| Tempo gasto        | 3h       | 1.5h ✅     |
+| Serviços com Redis | 3/3      | 3/3 ✅      |
+| Cache patterns     | 6+       | 6+ ✅       |
+| Build errors       | 0        | 0 ✅        |
+| Documentação       | Completa | Completa ✅ |
 
 ---
 
 ## 📊 MÉTRICAS DIA 3
 
-| Métrica | Meta | Resultado |
-|---------|------|-----------|
-| Tempo gasto | 4h | 1.5h ✅ |
-| Serviços com Prometheus | 3/3 | 3/3 ✅ |
-| Métricas padrão | ✅ | ✅ |
-| Métricas customizadas | ✅ | ✅ |
-| Build errors | 0 | 0 ✅ |
-| Documentação | Completa | Completa ✅ |
+| Métrica                 | Meta     | Resultado   |
+| ----------------------- | -------- | ----------- |
+| Tempo gasto             | 4h       | 1.5h ✅     |
+| Serviços com Prometheus | 3/3      | 3/3 ✅      |
+| Métricas padrão         | ✅       | ✅          |
+| Métricas customizadas   | ✅       | ✅          |
+| Build errors            | 0        | 0 ✅        |
+| Documentação            | Completa | Completa ✅ |
 
 ---
 
 ## 📊 MÉTRICAS DIA 2
 
-| Métrica | Meta | Resultado |
-|---------|------|-----------|
-| Tempo gasto | 3h | 1.5h ✅ |
-| Serviços com Sentry | 3/3 | 3/3 ✅ |
-| Build errors | 0 | 0 ✅ |
-| API functions exported | 6 | 6 ✅ |
-| Documentação | Completa | Completa ✅ |
+| Métrica                | Meta     | Resultado   |
+| ---------------------- | -------- | ----------- |
+| Tempo gasto            | 3h       | 1.5h ✅     |
+| Serviços com Sentry    | 3/3      | 3/3 ✅      |
+| Build errors           | 0        | 0 ✅        |
+| API functions exported | 6        | 6 ✅        |
+| Documentação           | Completa | Completa ✅ |
 
 ---
 
 ## 📋 TODO - PRÓXIMAS SEMANAS
 
 ### Semana 2 (Restante: 6 dias, 26 horas)
+
 - [ ] Error Tracking (Sentry) - 3h
 - [ ] Metrics & Monitoring (Prometheus) - 4h
 - [ ] Enhanced Caching - 3h
@@ -648,6 +689,7 @@ const user = await getCache().getOrSet(
 - [ ] Automated Backups - 3h
 
 ### Semana 3 (Planejado)
+
 - [ ] Multi-region Deployment - 6h+
 - [ ] Performance Testing (k6) - 4h
 - [ ] Chaos Engineering (FIS) - 4h
@@ -660,6 +702,7 @@ const user = await getCache().getOrSet(
 ## 🚀 COMO TESTAR LOCAL
 
 ### Terminal 1: Start auth-service
+
 ```bash
 cd services/auth-service
 npm run dev
@@ -667,6 +710,7 @@ npm run dev
 ```
 
 ### Terminal 2: Test health checks
+
 ```bash
 # Liveness probe
 curl http://localhost:3001/health
@@ -678,6 +722,7 @@ curl http://localhost:3001/ready
 ```
 
 ### Terminal 3: Graceful shutdown test
+
 ```bash
 # Ctrl+C no Terminal 1
 # O serviço aguardará 30 segundos para finalizar requisições
@@ -691,12 +736,10 @@ curl http://localhost:3001/ready
 1. **Liveness vs Readiness:**
    - `/health` deve ser MUITO rápido (< 100ms)
    - `/ready` pode levar 5-10s para checar dependências
-   
 2. **Graceful Shutdown:**
    - SIGTERM recebido → aguarda 30s
    - Novas conexões: rejeitadas
    - Conexões existentes: finalizam naturalmente
-   
 3. **Kubernetes/ECS Integration:**
    - Documentação pronta em `docs/HEALTH_CHECKS_IMPLEMENTATION.md`
    - YAML examples inclusos
@@ -714,6 +757,7 @@ curl http://localhost:3001/ready
 ### O que foi feito:
 
 #### 1. Instalação
+
 ```
 ✅ pnpm add @aws-sdk/client-ssm -F auth-service
 ✅ pnpm add @aws-sdk/client-ssm -F webhook-service
@@ -724,6 +768,7 @@ curl http://localhost:3001/ready
 ```
 
 #### 2. Código Implementado
+
 ```
 ✅ services/auth-service/src/config.ts (200 linhas)
 ✅ services/webhook-service/src/config.ts (200 linhas)
@@ -734,6 +779,7 @@ curl http://localhost:3001/ready
 #### 3. ConfigManager API
 
 **Operações Básicas**:
+
 ```typescript
 config.getParameter(name, decrypt?)           // Get string parameter
 config.getSecret(secretName)                  // Get secret from Secrets Manager
@@ -743,6 +789,7 @@ config.getConfigNumber(key, defaultValue?)    // Get as number
 ```
 
 **Operações Avançadas**:
+
 ```typescript
 config.getParametersByPath(pathPrefix?)       // Get all params with prefix
 config.clearCache(key?)                       // Clear cache (key or all)
@@ -770,6 +817,7 @@ config.close()                                // Close AWS clients
 #### 5. Integração nos Serviços
 
 **auth-service/src/index.ts**:
+
 ```typescript
 import { initializeConfig, getConfig } from './config';
 
@@ -786,16 +834,19 @@ const rateLimit = await config.getConfigNumber('rate-limit-max', 1000);
 ```
 
 **webhook-service/src/index.ts**:
+
 ```
 ✅ Same pattern as auth-service
 ```
 
 **tenant-service/src/index.ts**:
+
 ```
 ✅ Same pattern as auth-service
 ```
 
 #### 6. Recursos Implementados
+
 - ✅ AWS Parameter Store integration
 - ✅ AWS Secrets Manager integration
 - ✅ 5-minute caching layer (TTL)
@@ -830,6 +881,7 @@ ConfigManager.getConfig(key)
 ```
 
 #### 8. Validação
+
 ```
 ✅ TypeScript strict mode: PASSING (all 3 services)
 ✅ Build (pnpm build): PASSING
@@ -843,6 +895,7 @@ ConfigManager.getConfig(key)
 ```
 
 #### 9. Documentação Criada
+
 ```
 ✅ docs/CONFIG_MANAGEMENT_IMPLEMENTATION.md (800+ linhas)
    ├─ Architecture & resolution pattern
@@ -866,25 +919,27 @@ ConfigManager.getConfig(key)
 
 ## 📊 MÉTRICAS DIA 5
 
-| Métrica | Meta | Resultado |
-|---------|------|-----------|
-| Tempo gasto | 3h | 1.5h ✅ |
-| Serviços com Config | 3/3 | 3/3 ✅ |
-| AWS integrations | 2 | 2 ✅ |
-| Build errors | 0 | 0 ✅ |
-| Documentação | Completa | Completa ✅ |
-| Commits | 1 | 1 ✅ |
+| Métrica             | Meta     | Resultado   |
+| ------------------- | -------- | ----------- |
+| Tempo gasto         | 3h       | 1.5h ✅     |
+| Serviços com Config | 3/3      | 3/3 ✅      |
+| AWS integrations    | 2        | 2 ✅        |
+| Build errors        | 0        | 0 ✅        |
+| Documentação        | Completa | Completa ✅ |
+| Commits             | 1        | 1 ✅        |
 
 ---
 
 ## 📋 TODO - PRÓXIMAS TECNOLOGIAS
 
 ### Semana 2 (Restante: 20.5 horas)
+
 - [ ] Service Discovery (AWS Cloud Map) - 4h
 - [ ] Automated Backups - 3h
 - [ ] Remaining optimization tasks
 
 ### Semana 3 (Planejado)
+
 - [ ] Multi-region Deployment - 6h+
 - [ ] Performance Testing (k6) - 4h
 - [ ] Chaos Engineering (FIS) - 4h
@@ -929,4 +984,6 @@ PRÓXIMO: Service Discovery com AWS Cloud Map
 **Owner:** T3CK Core Engineering  
 **Next Session:** Dia 6 - Service Discovery (AWS Cloud Map)
 
-````
+```
+
+```

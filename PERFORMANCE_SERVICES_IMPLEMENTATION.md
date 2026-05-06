@@ -7,6 +7,7 @@
 **Porta**: 3007
 
 **Funcionalidades**:
+
 - ✅ Transformação de imagens por URL ou upload
 - ✅ Conversão para WebP/AVIF com alta compressão (70-90% economia)
 - ✅ Redimensionamento responsivo com 5 modos de fit
@@ -18,6 +19,7 @@
 - ✅ Integração com Sharp (biblioteca de alto desempenho)
 
 **Endpoints**:
+
 - `GET /transform?url=...&w=...&format=...` - Transformar por parâmetros
 - `GET /preset/:preset?url=...` - Transformar com preset
 - `POST /upload` - Upload e transformação
@@ -27,12 +29,14 @@
 - `POST /cache/clear` - Limpar cache
 
 **Performance**:
+
 - Cache hit rate: ~80%
 - Compressão: 70-90% redução de tamanho
 - Processamento: 50-200ms por imagem
 - Throughput: >100 imagens/s (cached)
 
 **Dependências**:
+
 - `sharp@0.33.2` - Processamento de imagens nativo (C++)
 - `axios` - Download de imagens remotas
 - `multer` - Upload de arquivos
@@ -44,6 +48,7 @@
 **Porta**: 3008
 
 **Funcionalidades**:
+
 - ✅ Pre-rendering (SSG - Static Site Generation)
 - ✅ ISR (Incremental Static Regeneration)
 - ✅ SSR (Server-Side Rendering) **NOVO!**
@@ -60,13 +65,14 @@
 
 **Estratégias de Renderização**:
 
-| Estratégia | Quando Usar | Performance | Cache TTL |
-|------------|-------------|-------------|-----------|
-| **SSG** | Conteúdo estático (catálogo, páginas de produto) | ~5ms | Dias/Indefinido |
-| **ISR** | Conteúdo semi-dinâmico (buscas, categorias) | ~5ms stale + background | Horas |
-| **SSR** | Conteúdo personalizado (dashboard, carrinho) | ~150ms | Segundos/Minutos |
+| Estratégia | Quando Usar                                      | Performance             | Cache TTL        |
+| ---------- | ------------------------------------------------ | ----------------------- | ---------------- |
+| **SSG**    | Conteúdo estático (catálogo, páginas de produto) | ~5ms                    | Dias/Indefinido  |
+| **ISR**    | Conteúdo semi-dinâmico (buscas, categorias)      | ~5ms stale + background | Horas            |
+| **SSR**    | Conteúdo personalizado (dashboard, carrinho)     | ~150ms                  | Segundos/Minutos |
 
 **Endpoints**:
+
 - `GET /render/:tenantId/:resourceType/:resourceId` - Renderizar página (SSG/ISR)
 - `POST /prerender` - Iniciar job de pre-rendering
 - `POST /prerender/batch` - Batch pre-render (até 100 páginas)
@@ -85,6 +91,7 @@
 - `GET /stats` - Estatísticas (incluindo SSR stats)
 
 **Performance**:
+
 - TTFB (SSG): <50ms (página pré-renderizada)
 - TTFB (ISR): <50ms (stale content + background revalidate)
 - TTFB (SSR cached): <10ms (hit em cache personalizado)
@@ -94,6 +101,7 @@
 - Revalidação: background (não bloqueia request)
 
 **SSR Features**:
+
 - **User Context**: userId, userName, userEmail, preferences
 - **Personalized Caching**: Cache separado por usuário quando `personalizedCaching=true`
 - **Query Parameters**: Passados para o template (ex: discount code, filters)
@@ -103,6 +111,7 @@
 - **Pattern-based Purging**: Limpar cache de usuário específico ou recursos
 
 **SSR Use Cases**:
+
 - Dashboards de usuário
 - Carrinho de compras
 - Listas de desejos personalizadas
@@ -112,12 +121,14 @@
 - Conteúdo baseado em localização
 
 **ISR Strategy**:
+
 - Serve página em cache instantaneamente
 - Revalida em background após TTL
 - Próximo request recebe versão atualizada
 - Zero downtime nas atualizações
 
 **Dependências**:
+
 - `axios` - Fetch de dados dos serviços backend
 - Template engine: Plain JavaScript (pode integrar Handlebars/EJS)
 
@@ -128,6 +139,7 @@
 ### package.json (root)
 
 **Novos scripts**:
+
 ```json
 {
   "dev": "Inicia TODOS os serviços (8 serviços + frontend)",
@@ -162,12 +174,12 @@ services/
 ```typescript
 // Frontend: Imagens otimizadas automaticamente
 <picture>
-  <source 
-    srcset="/preset/avif-medium?url=https://cdn.store.com/product.jpg" 
+  <source
+    srcset="/preset/avif-medium?url=https://cdn.store.com/product.jpg"
     type="image/avif"
   >
-  <source 
-    srcset="/preset/medium?url=https://cdn.store.com/product.jpg" 
+  <source
+    srcset="/preset/medium?url=https://cdn.store.com/product.jpg"
     type="image/webp"
   >
   <img src="/transform?url=https://cdn.store.com/product.jpg&w=640" />
@@ -191,18 +203,18 @@ await fetch('http://edge-service:3008/prerender', {
 ```typescript
 // No product-service após update
 await fetch(`http://edge-service:3008/cache/${tenantId}/product/${productId}`, {
-  method: 'DELETE'
+  method: 'DELETE',
 });
 
 // Pre-render nova versão
 await fetch('http://edge-service:3008/prerender', {
   method: 'POST',
-  body: JSON.stringify({ 
-    url: productUrl, 
-    tenantId, 
-    resourceType: 'product', 
-    resourceId: productId 
-  })
+  body: JSON.stringify({
+    url: productUrl,
+    tenantId,
+    resourceType: 'product',
+    resourceId: productId,
+  }),
 });
 ```
 
@@ -215,14 +227,14 @@ const topProducts = await getTopProducts(100);
 await fetch('http://edge-service:3008/prerender/batch', {
   method: 'POST',
   body: JSON.stringify({
-    configs: topProducts.map(p => ({
+    configs: topProducts.map((p) => ({
       url: `https://store.com/products/${p.id}`,
       tenantId: p.tenantId,
       resourceType: 'product',
       resourceId: p.id,
-      priority: p.salesRank
-    }))
-  })
+      priority: p.salesRank,
+    })),
+  }),
 });
 ```
 
@@ -231,12 +243,14 @@ await fetch('http://edge-service:3008/prerender/batch', {
 ## 📊 Impacto no Performance
 
 ### Antes (sem otimização)
+
 - **TTFB**: 500-800ms (fetch data + render)
 - **LCP**: 2-3s (imagens pesadas)
 - **PageSpeed Score**: 60-70
 - **Cache Hit**: 0% (sem cache)
 
 ### Depois (com Media + Edge)
+
 - **TTFB**: <50ms (página pré-renderizada)
 - **LCP**: <500ms (WebP/AVIF otimizado)
 - **PageSpeed Score**: 95-100 ✅
@@ -281,6 +295,7 @@ await fetch('http://edge-service:3008/prerender/batch', {
 **Total de itens implementados**: 19 novos itens ✅
 
 ### Media Service (9 itens)
+
 - [x] Image Optimization (Sharp)
 - [x] WebP Conversion
 - [x] AVIF Conversion
@@ -292,6 +307,7 @@ await fetch('http://edge-service:3008/prerender/batch', {
 - [x] Unit Tests
 
 ### Edge Service (10 itens)
+
 - [x] Pre-rendering (SSG)
 - [x] Incremental Static Regeneration (ISR)
 - [x] Stale-While-Revalidate
@@ -330,7 +346,8 @@ Criar arquivo `smoke-test-performance.js`:
 const http = require('http');
 
 async function testMedia() {
-  const url = 'http://localhost:3007/transform?url=https://picsum.photos/1920/1080&w=640&format=webp';
+  const url =
+    'http://localhost:3007/transform?url=https://picsum.photos/1920/1080&w=640&format=webp';
   // ... fazer request e validar
 }
 
@@ -341,7 +358,7 @@ async function testEdge() {
 
 Promise.all([testMedia(), testEdge()])
   .then(() => console.log('✅ Performance services OK'))
-  .catch(err => console.error('❌ Failed:', err));
+  .catch((err) => console.error('❌ Failed:', err));
 ```
 
 ### Production

@@ -1,6 +1,6 @@
 import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
 import { Request, Response } from 'express';
-import { ServiceRoute } from './types';
+import { AuthPayload, ServiceRoute } from './types';
 import { Logger } from '@t3ck/shared';
 
 const logger = new Logger('ProxyMiddleware');
@@ -28,9 +28,10 @@ export const createServiceProxy = (service: ServiceRoute): RequestHandler => {
       });
       return rewritten || '/';
     },
-    
+
     // Forward headers
     onProxyReq: (proxyReq, req: Request) => {
+      const authenticatedRequest = req as Request & { user?: AuthPayload };
       // Forward all custom headers
       if (req.headers['x-request-id']) {
         proxyReq.setHeader('X-Request-ID', req.headers['x-request-id']);
@@ -41,10 +42,19 @@ export const createServiceProxy = (service: ServiceRoute): RequestHandler => {
       if (req.headers.authorization) {
         proxyReq.setHeader('Authorization', req.headers.authorization);
       }
+      if (process.env.INTERNAL_SERVICE_TOKEN) {
+        proxyReq.setHeader('X-Internal-Service-Token', process.env.INTERNAL_SERVICE_TOKEN);
+      }
+      if (authenticatedRequest.user) {
+        proxyReq.setHeader('X-User-ID', authenticatedRequest.user.userId);
+        proxyReq.setHeader('X-User-Email', authenticatedRequest.user.email);
+        proxyReq.setHeader('X-User-Roles', authenticatedRequest.user.roles.join(','));
+      }
 
       const requestWithBody = req as Request & { body?: unknown };
       const method = req.method.toUpperCase();
-      const hasBodyMethod = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+      const hasBodyMethod =
+        method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
       if (hasBodyMethod && requestWithBody.body && typeof requestWithBody.body === 'object') {
         const bodyData = JSON.stringify(requestWithBody.body);
         proxyReq.setHeader('Content-Type', 'application/json');

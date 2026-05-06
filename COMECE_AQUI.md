@@ -86,6 +86,7 @@
 ## 📚 DOCUMENTOS DE REFERÊNCIA
 
 ### Durante Implementação
+
 ```
 CORRECAO_JWT_CRITICA.md        ← Guia passo a passo
 ANALISE_COMPLETA_READINESS.md  ← Detalhes técnicos
@@ -93,11 +94,13 @@ ANALISE_COMPLETA_READINESS.md  ← Detalhes técnicos
 ```
 
 ### Para Checklist
+
 ```
 CHECKLIST_PRODUCTION_READINESS.md  ← Marcar conforme avança
 ```
 
 ### Para Roadmap
+
 ```
 RESUMO_EXECUTIVO.md            ← Ver roadmap 4 semanas
 ```
@@ -109,6 +112,7 @@ RESUMO_EXECUTIVO.md            ← Ver roadmap 4 semanas
 Sem esperar tudo pronto, já começa:
 
 ### DIA 2: Payment Service
+
 ```
 [ ] Criar diretório services/payment-service/
 [ ] Setup base (package.json, tsconfig)
@@ -118,6 +122,7 @@ Sem esperar tudo pronto, já começa:
 ```
 
 ### DIA 3: API Gateway
+
 ```
 [ ] Criar diretório services/api-gateway/
 [ ] Setup Express BFF
@@ -128,6 +133,7 @@ Sem esperar tudo pronto, já começa:
 ```
 
 ### DIA 4: Database Schema
+
 ```
 [ ] pnpm add prisma @prisma/client
 [ ] Criar schema.prisma
@@ -159,11 +165,13 @@ Sem isso, não consegue nem fazer login com segurança!
 ## ✨ SE SOBRAR TEMPO
 
 ### Hoje
+
 - [ ] Ler documentação extra
 - [ ] Revisar checklist completo
 - [ ] Planejar semanas 2-4
 
 ### Amanhã
+
 - [ ] Criar estrutura de diretórios
 - [ ] Preparar docker-compose para dev
 - [ ] Preparar scripts de setup
@@ -202,15 +210,18 @@ PRÓXIMA SEMANA
 ## 🔗 LINKS RÁPIDOS
 
 ### ESSENCIAL
+
 - [RESUMO_EXECUTIVO.md](RESUMO_EXECUTIVO.md) ← Começa aqui
 - [CORRECAO_JWT_CRITICA.md](CORRECAO_JWT_CRITICA.md) ← Amanhã
 
 ### REFERÊNCIA
+
 - [ANALISE_COMPLETA_READINESS.md](ANALISE_COMPLETA_READINESS.md) ← Detalhes
 - [CHECKLIST_PRODUCTION_READINESS.md](CHECKLIST_PRODUCTION_READINESS.md) ← Checklist
 - [.env.example](.env.example) ← Config
 
 ### VISUAL
+
 - [STATUS_VISUAL.md](STATUS_VISUAL.md) ← Quick look
 - [INDICE_ANALISE.md](INDICE_ANALISE.md) ← Índice
 
@@ -219,12 +230,14 @@ PRÓXIMA SEMANA
 ## 🆘 PRECISA DE AJUDA?
 
 ### Se algo não funciona
+
 1. Procura em ANALISE_COMPLETA_READINESS.md
 2. Procura em CORRECAO_JWT_CRITICA.md
 3. Consulta docs/ original
 4. Abra issue no GitHub
 
 ### Se está na dúvida
+
 1. Consulta RESUMO_EXECUTIVO.md
 2. Consulta INDICE_ANALISE.md
 3. Volta ao checklist
@@ -234,6 +247,7 @@ PRÓXIMA SEMANA
 ## ✅ DEFINIÇÃO DE PRONTO
 
 **Hoje está pronto quando:**
+
 - [ ] Leu RESUMO_EXECUTIVO.md
 - [ ] Entendeu roadmap 4 semanas
 - [ ] Gerou RSA keys
@@ -241,6 +255,7 @@ PRÓXIMA SEMANA
 - [ ] Projeto roda localmente
 
 **Amanhã está pronto quando:**
+
 - [ ] JWT corrigido
 - [ ] Testes passando
 - [ ] Commit feito
@@ -285,6 +300,7 @@ PRÓXIMA SEMANA
 ## 🚀 VAMOS LÁ!
 
 **Comece agora:**
+
 ```bash
 # 1. Ler análise
 open RESUMO_EXECUTIVO.md

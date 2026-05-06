@@ -21,29 +21,36 @@ export class BackupScheduleStack extends cdk.Stack {
 
     // Create IAM role for EventBridge to run tasks
     const eventRole = new iam.Role(this, 'EventBridgeInvokeEcsRole', {
-      assumedBy: new iam.ServicePrincipal('events.amazonaws.com')
+      assumedBy: new iam.ServicePrincipal('events.amazonaws.com'),
     });
 
     // Allow running ECS tasks
-    eventRole.addToPolicy(new iam.PolicyStatement({
-      actions: [
-        'ecs:RunTask',
-        'iam:PassRole'
-      ],
-      resources: ['*']
-    }));
+    eventRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['ecs:RunTask', 'iam:PassRole'],
+        resources: ['*'],
+      })
+    );
 
     // If the user provided cluster and task definitions, use them as targets
     if (props.clusterArn && props.taskDefinitionArn) {
       const rule = new events.Rule(this, 'BackupScheduleRule', {
-        schedule: events.Schedule.expression(schedule)
+        schedule: events.Schedule.expression(schedule),
       });
 
       const ecsTarget = new targets.EcsTask({
-        cluster: ecs.Cluster.fromClusterAttributes(this, 'ImportedCluster', { clusterArn: props.clusterArn, securityGroups: [] as any[], vpc: undefined as any }),
-        taskDefinition: ecs.TaskDefinition.fromTaskDefinitionArn(this, 'ImportedTaskDef', props.taskDefinitionArn),
+        cluster: ecs.Cluster.fromClusterAttributes(this, 'ImportedCluster', {
+          clusterArn: props.clusterArn,
+          securityGroups: [] as any[],
+          vpc: undefined as any,
+        }),
+        taskDefinition: ecs.TaskDefinition.fromTaskDefinitionArn(
+          this,
+          'ImportedTaskDef',
+          props.taskDefinitionArn
+        ),
         taskCount: 1,
-        role: eventRole
+        role: eventRole,
       });
 
       rule.addTarget(ecsTarget);

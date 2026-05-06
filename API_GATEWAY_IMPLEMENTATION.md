@@ -12,6 +12,7 @@
 ### 🔒 Segurança (Security)
 
 #### 1. **Helmet.js - XSS Protection**
+
 - Content Security Policy (CSP)
 - XSS Filter
 - HSTS (HTTP Strict Transport Security)
@@ -20,6 +21,7 @@
 - Powered-By header removal
 
 #### 2. **CORS (Cross-Origin Resource Sharing)**
+
 - Whitelist configurável de origens
 - Credentials support
 - Métodos permitidos: GET, POST, PUT, DELETE, PATCH, OPTIONS
@@ -27,34 +29,40 @@
 - Preflight caching (24 horas)
 
 #### 3. **CSRF Protection**
+
 - Double submit cookie pattern
 - Token generation endpoint: `/api/csrf-token`
 - Proteção em métodos POST, PUT, DELETE, PATCH
 - Secure cookies em produção
 
 #### 4. **SQL Injection Detection**
+
 - Pattern-based detection
 - Bloqueio de queries maliciosas (UNION, DROP, DELETE, etc.)
 - Input sanitization automática
 - Validação em query parameters e body
 
 #### 5. **Input Validation**
+
 - Zod schemas para validação
 - Sanitização automática de strings
 - Remoção de caracteres perigosos (< > ' " `)
 - Content-Type validation
 
 #### 6. **Input Sanitization**
+
 - Recursive object sanitization
 - XSS prevention
 - SQL character escaping
 - Trim whitespace
 
 #### 7. **HPP Protection**
+
 - HTTP Parameter Pollution prevention
 - Duplicate parameter handling
 
 #### 8. **Compression**
+
 - Gzip/Deflate response compression
 - Threshold: 1KB
 - Level 6 compression
@@ -64,16 +72,19 @@
 ### 🚦 Rate Limiting
 
 #### 1. **Global Rate Limit**
+
 - 1000 requests por 15 minutos
 - Headers: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`
 - Status 429 quando excedido
 
 #### 2. **Auth Rate Limit**
+
 - 10 tentativas de login por 15 minutos
 - Prevent brute force attacks
 - Skip successful requests
 
 #### 3. **Service-Specific Rate Limits**
+
 ```typescript
 {
   '/api/v1/tenants': { windowMs: 15min, max: 100 },
@@ -84,6 +95,7 @@
 ```
 
 #### 4. **Tenant-Based Rate Limiting**
+
 - Different limits per tenant tier (preparado)
 - Redis support for distributed rate limiting (preparado)
 
@@ -92,6 +104,7 @@
 ### 🔑 Autenticação e Autorização
 
 #### 1. **JWT Authentication**
+
 - Suporte RS256 (RSA) e HS256
 - Token verification
 - Payload extraction
@@ -99,17 +112,20 @@
 - User role extraction
 
 #### 2. **Tenant Isolation**
+
 - X-Tenant-ID header validation
 - Prevent cross-tenant access
 - Automatic tenant ID injection
 
 #### 3. **Role-Based Access Control (RBAC)**
+
 ```typescript
-requireRole('admin') // Apenas admins
-requireRole('admin', 'manager') // Admin OU manager
+requireRole('admin'); // Apenas admins
+requireRole('admin', 'manager'); // Admin OU manager
 ```
 
 #### 4. **Optional Authentication**
+
 - Routes que aceitam token mas não exigem
 - Useful para content público com features premium
 
@@ -118,32 +134,36 @@ requireRole('admin', 'manager') // Admin OU manager
 ### 🔀 Routing & Proxy
 
 #### 1. **API Versioning**
+
 - `/api/v1/` - Version 1
 - `/api/v2/` - Version 2 (preparado)
 - Backward compatibility support
 
 #### 2. **Service Routing**
 
-| Prefix | Target | Auth Required | Rate Limit |
-|--------|--------|---------------|------------|
-| `/api/v1/auth` | auth-service:3002 | ❌ | 10/15min |
-| `/api/v1/webhooks` | webhook-service:3003 | ✅ | Default |
-| `/api/v1/tenants` | tenant-service:3004 | ✅ | 100/15min |
-| `/api/v1/products` | product-service:3005 | ✅ | Default |
-| `/api/v1/admin` | admin-service:3006 | ✅ | 1000/15min |
-| `/api/v1/media` | media-service:3007 | ❌ | 100/1min |
-| `/api/v1/edge` | edge-service:3008 | ❌ | 200/1min |
+| Prefix             | Target               | Auth Required | Rate Limit |
+| ------------------ | -------------------- | ------------- | ---------- |
+| `/api/v1/auth`     | auth-service:3002    | ❌            | 10/15min   |
+| `/api/v1/webhooks` | webhook-service:3003 | ✅            | Default    |
+| `/api/v1/tenants`  | tenant-service:3004  | ✅            | 100/15min  |
+| `/api/v1/products` | product-service:3005 | ✅            | Default    |
+| `/api/v1/admin`    | admin-service:3006   | ✅            | 1000/15min |
+| `/api/v1/media`    | media-service:3007   | ❌            | 100/1min   |
+| `/api/v1/edge`     | edge-service:3008    | ❌            | 200/1min   |
 
 #### 3. **Path Rewriting**
+
 - Remove version prefix antes de proxy
 - Exemplo: `/api/v1/products/123` → `/products/123`
 
 #### 4. **Header Forwarding**
+
 - X-Request-ID (tracing)
 - X-Tenant-ID (multi-tenancy)
 - Authorization (JWT token)
 
 #### 5. **Error Handling**
+
 - 502 Bad Gateway quando service indisponível
 - Timeout configuration (30 segundos)
 - Graceful error responses
@@ -153,6 +173,7 @@ requireRole('admin', 'manager') // Admin OU manager
 ### 📊 Logging & Monitoring
 
 #### 1. **Request Logging**
+
 - Morgan HTTP logger
 - Custom request logger
 - Request ID generation (UUID)
@@ -161,22 +182,26 @@ requireRole('admin', 'manager') // Admin OU manager
 - Tenant tracking
 
 #### 2. **Performance Monitoring**
+
 - Response time tracking
 - Slow request detection (> 1 segundo)
 - X-Response-Time header
 
 #### 3. **Error Logging**
+
 - Stack traces em development
 - Generic errors em production
 - Request context preservation
 
 #### 4. **Body Logging**
+
 - Debug mode apenas
 - Disabled em production (sensitive data)
 
 #### 5. **Prometheus Metrics**
 
 **Métricas disponíveis:**
+
 - `http_requests_total` - Total de requests
 - `http_request_duration_seconds` - Histogram de duração
 - `http_requests_in_progress` - Requests ativos
@@ -185,6 +210,7 @@ requireRole('admin', 'manager') // Admin OU manager
 - `proxy_errors_total` - Erros de proxy
 
 **Labels:**
+
 - method (GET, POST, PUT, DELETE)
 - route
 - status_code
@@ -195,23 +221,27 @@ requireRole('admin', 'manager') // Admin OU manager
 ### 🏥 Health & Monitoring
 
 #### 1. **Health Check**
+
 ```
 GET /health
 ```
 
 Returns:
+
 - Service status
 - Uptime
 - Timestamp
 - Version
 
 #### 2. **Graceful Shutdown**
+
 - @godaddy/terminus integration
 - SIGINT/SIGTERM handling
 - Connection draining
 - Cleanup hooks
 
 #### 3. **Metrics Endpoint**
+
 ```
 GET /metrics
 ```
@@ -219,11 +249,13 @@ GET /metrics
 Prometheus scraping endpoint.
 
 #### 4. **Statistics Endpoint**
+
 ```
 GET /api/stats
 ```
 
 Summary de métricas:
+
 - Total requests
 - Total errors
 - Average response time
@@ -401,6 +433,7 @@ pnpm build
 ## 📚 Dependencies
 
 **Runtime:**
+
 - express - Web framework
 - helmet - Security headers
 - cors - CORS middleware
@@ -417,9 +450,10 @@ pnpm build
 - @godaddy/terminus - Graceful shutdown
 
 **Dev:**
+
 - typescript
 - jest, supertest - Testing
-- @types/* - Type definitions
+- @types/\* - Type definitions
 
 ---
 

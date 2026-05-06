@@ -133,11 +133,7 @@ export class CacheService {
   /**
    * Get or set value (cache-aside pattern)
    */
-  async getOrSet<T>(
-    key: string,
-    fn: () => Promise<T>,
-    ttl?: number,
-  ): Promise<T> {
+  async getOrSet<T>(key: string, fn: () => Promise<T>, ttl?: number): Promise<T> {
     try {
       // Try to get from cache
       const cached = await this.get<T>(key);

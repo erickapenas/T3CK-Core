@@ -234,9 +234,7 @@ export class T3CKStack extends cdk.Stack {
       taskDefinition: authTaskDefinition,
       desiredCount: 2,
       securityGroups: props?.ecsSecurityGroupId
-        ? [
-            ec2.SecurityGroup.fromSecurityGroupId(this, 'ECSSG', props.ecsSecurityGroupId),
-          ]
+        ? [ec2.SecurityGroup.fromSecurityGroupId(this, 'ECSSG', props.ecsSecurityGroupId)]
         : undefined,
       vpcSubnets: {
         subnets,
@@ -248,9 +246,7 @@ export class T3CKStack extends cdk.Stack {
       taskDefinition: webhookTaskDefinition,
       desiredCount: 2,
       securityGroups: props?.ecsSecurityGroupId
-        ? [
-            ec2.SecurityGroup.fromSecurityGroupId(this, 'WebhookECSSG', props.ecsSecurityGroupId),
-          ]
+        ? [ec2.SecurityGroup.fromSecurityGroupId(this, 'WebhookECSSG', props.ecsSecurityGroupId)]
         : undefined,
       vpcSubnets: {
         subnets,
@@ -262,9 +258,7 @@ export class T3CKStack extends cdk.Stack {
       taskDefinition: tenantTaskDefinition,
       desiredCount: 1,
       securityGroups: props?.ecsSecurityGroupId
-        ? [
-            ec2.SecurityGroup.fromSecurityGroupId(this, 'TenantECSSG', props.ecsSecurityGroupId),
-          ]
+        ? [ec2.SecurityGroup.fromSecurityGroupId(this, 'TenantECSSG', props.ecsSecurityGroupId)]
         : undefined,
       vpcSubnets: {
         subnets,
@@ -368,7 +362,7 @@ export class T3CKStack extends cdk.Stack {
     // =========================================================================
     // PROVISIONING STATE MACHINE INTEGRATION
     // =========================================================================
-    
+
     // Create Lambda functions for state machine tasks
     const terraformLambda = new lambda.Function(this, 'TerraformLambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -471,4 +465,5 @@ export class T3CKStack extends cdk.Stack {
       description: 'Provisioning Success Notification Topic ARN',
       exportName: 't3ck-provisioning-success-topic-arn',
     });
-  }}
+  }
+}

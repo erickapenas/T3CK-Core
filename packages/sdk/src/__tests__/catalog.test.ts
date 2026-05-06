@@ -95,16 +95,27 @@ describe('CatalogModule', () => {
     await catalog.adjustInventory('prod-1', { tenantId: 't1', delta: -2 });
     await catalog.setInventory('prod-1', { tenantId: 't1', quantity: 20 });
 
-    expect(client.post).toHaveBeenCalledWith('/api/products/prod-1/variants', { sku: 'v1', name: 'V1' });
+    expect(client.post).toHaveBeenCalledWith('/api/products/prod-1/variants', {
+      sku: 'v1',
+      name: 'V1',
+    });
     expect(client.put).toHaveBeenCalledWith('/api/products/prod-1/variants/var-1', { stock: 10 });
     expect(client.delete).toHaveBeenCalledWith('/api/products/prod-1/variants/var-1');
 
-    expect(client.post).toHaveBeenCalledWith('/api/products/prod-1/images', { url: 'https://img.com/1.png' });
+    expect(client.post).toHaveBeenCalledWith('/api/products/prod-1/images', {
+      url: 'https://img.com/1.png',
+    });
     expect(client.delete).toHaveBeenCalledWith('/api/products/prod-1/images/img-1');
 
     expect(client.get).toHaveBeenCalledWith('/api/products/prod-1/recommendations?limit=3');
     expect(client.get).toHaveBeenCalledWith('/api/inventory/prod-1');
-    expect(client.post).toHaveBeenCalledWith('/api/inventory/prod-1/adjust', { tenantId: 't1', delta: -2 });
-    expect(client.put).toHaveBeenCalledWith('/api/inventory/prod-1/set', { tenantId: 't1', quantity: 20 });
+    expect(client.post).toHaveBeenCalledWith('/api/inventory/prod-1/adjust', {
+      tenantId: 't1',
+      delta: -2,
+    });
+    expect(client.put).toHaveBeenCalledWith('/api/inventory/prod-1/set', {
+      tenantId: 't1',
+      quantity: 20,
+    });
   });
 });

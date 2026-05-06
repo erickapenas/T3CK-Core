@@ -6,13 +6,34 @@ interface StoredResponse {
   createdAt: number;
 }
 
+export interface IdempotencySnapshotEntry extends StoredResponse {
+  key: string;
+}
+
 export class IdempotencyStore {
   private readonly storage = new Map<string, StoredResponse>();
 
   constructor(private readonly ttlMs: number = 1000 * 60 * 60 * 24) {}
 
   private normalizePayload(payload: unknown): string {
-    return JSON.stringify(payload, Object.keys(payload as Record<string, unknown>).sort());
+    return JSON.stringify(this.sortValue(payload));
+  }
+
+  private sortValue(value: unknown): unknown {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.sortValue(item));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.keys(value as Record<string, unknown>)
+        .sort()
+        .reduce<Record<string, unknown>>((acc, key) => {
+          acc[key] = this.sortValue((value as Record<string, unknown>)[key]);
+          return acc;
+        }, {});
+    }
+
+    return value;
   }
 
   private hashPayload(payload: unknown): string {
@@ -44,5 +65,23 @@ export class IdempotencyStore {
       response,
       createdAt: Date.now(),
     });
+  }
+
+  load(entries: IdempotencySnapshotEntry[]): void {
+    this.storage.clear();
+    for (const entry of entries) {
+      this.storage.set(entry.key, {
+        payloadHash: entry.payloadHash,
+        response: entry.response,
+        createdAt: entry.createdAt,
+      });
+    }
+  }
+
+  dump(): IdempotencySnapshotEntry[] {
+    return Array.from(this.storage.entries()).map(([key, value]) => ({
+      key,
+      ...value,
+    }));
   }
 }

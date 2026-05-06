@@ -8,11 +8,7 @@ const logger = new Logger('ValidationMiddleware');
  * Generic Input Validation Middleware
  * Validates request body, query, and params against Zod schema
  */
-export const validate = (schemas: {
-  body?: ZodSchema;
-  query?: ZodSchema;
-  params?: ZodSchema;
-}) => {
+export const validate = (schemas: { body?: ZodSchema; query?: ZodSchema; params?: ZodSchema }) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Validate body
@@ -35,10 +31,10 @@ export const validate = (schemas: {
       if (error instanceof ZodError) {
         logger.warn('Validation failed', {
           errors: error.errors,
-        requestId: req.headers['x-request-id'] as string,
+          requestId: req.headers['x-request-id'] as string,
           error: 'Validation Error',
           message: 'Invalid input data',
-          details: error.errors.map(err => ({
+          details: error.errors.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
           })),
@@ -61,10 +57,10 @@ export const validate = (schemas: {
 export const commonSchemas = {
   // UUID validation
   uuid: z.string().uuid(),
-  
+
   // Tenant ID validation
   tenantId: z.string().min(3).max(100),
-  
+
   // Pagination
   pagination: z.object({
     page: z.string().regex(/^\d+$/).transform(Number).default('1'),
@@ -72,7 +68,7 @@ export const commonSchemas = {
     sortBy: z.string().optional(),
     sortOrder: z.enum(['asc', 'desc']).optional(),
   }),
-  
+
   // Date range
   dateRange: z.object({
     startDate: z.string().datetime().optional(),
@@ -103,7 +99,7 @@ export const sanitizeInput = (req: Request, _res: Response, next: NextFunction) 
  */
 function sanitizeObject(obj: any): any {
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item));
+    return obj.map((item) => sanitizeObject(item));
   }
 
   if (obj !== null && typeof obj === 'object') {
@@ -191,13 +187,13 @@ export const detectSqlInjection = (req: Request, res: Response, next: NextFuncti
 
   const checkValue = (value: any): boolean => {
     if (typeof value === 'string') {
-      return sqlInjectionPatterns.some(pattern => pattern.test(value));
+      return sqlInjectionPatterns.some((pattern) => pattern.test(value));
     }
     if (Array.isArray(value)) {
-      return value.some(item => checkValue(item));
+      return value.some((item) => checkValue(item));
     }
     if (value !== null && typeof value === 'object') {
-      return Object.values(value).some(val => checkValue(val));
+      return Object.values(value).some((val) => checkValue(val));
     }
     return false;
   };

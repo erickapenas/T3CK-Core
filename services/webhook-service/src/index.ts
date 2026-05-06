@@ -1,6 +1,12 @@
 import express from 'express';
 import routes from './api/routes';
-import { Logger, getApiLimiter, getWebhookLimiter, closeRateLimiter, initializeTracing } from '@t3ck/shared';
+import {
+  Logger,
+  getApiLimiter,
+  getWebhookLimiter,
+  closeRateLimiter,
+  initializeTracing,
+} from '@t3ck/shared';
 import { setupHealthChecks } from './health';
 import { initSentry, setupSentryErrorHandler } from './sentry';
 import { setupMetricsMiddleware, setupMetricsEndpoint } from './metrics';
@@ -19,22 +25,15 @@ initSentry('webhook-service');
 const app = express();
 app.use(express.json());
 
-const redisEnabled =
-  process.env.REDIS_DISABLED !== 'true' &&
-  (process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production');
-
-if (!redisEnabled) {
-  process.env.REDIS_DISABLED = 'true';
-  if (!process.env.RATE_LIMIT_STORE) {
-    process.env.RATE_LIMIT_STORE = 'memory';
-  }
-  console.warn('[webhook-service] Redis disabled for local/dev execution (using memory fallback)');
+if (process.env.REDIS_DISABLED === 'true') {
+  throw new Error('Redis is required for webhook-service persistence');
 }
 
-// Initialize Redis cache
-if (redisEnabled) {
-  initializeCache({ prefix: 'webhook:' });
+if (!process.env.RATE_LIMIT_STORE) {
+  process.env.RATE_LIMIT_STORE = 'redis';
 }
+
+initializeCache({ prefix: 'webhook:' });
 
 // Initialize Config Manager
 initializeConfig({ parameterPrefix: '/t3ck-core' });
@@ -63,7 +62,10 @@ setupHealthChecks(app);
 import { getServiceRegistry } from './service-registry';
 app.get('/internal/registry', (_req, res) => {
   const registry = getServiceRegistry();
-  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({ service: k, instance: v }));
+  const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({
+    service: k,
+    instance: v,
+  }));
   res.json({ registered: entries });
 });
 

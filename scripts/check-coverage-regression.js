@@ -28,7 +28,9 @@ for (const [serviceName, base] of Object.entries(baseline)) {
     const basePct = Number(base[key]);
     if (actualPct + 0.001 < basePct) {
       failed = true;
-      console.error(`❌ coverage regression ${serviceName} ${key}: ${actualPct}% < baseline ${basePct}%`);
+      console.error(
+        `❌ coverage regression ${serviceName} ${key}: ${actualPct}% < baseline ${basePct}%`
+      );
     } else {
       console.log(`✅ no regression ${serviceName} ${key}: ${actualPct}% >= ${basePct}%`);
     }

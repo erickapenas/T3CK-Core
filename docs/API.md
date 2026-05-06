@@ -5,6 +5,7 @@
 **Base URL:** `http://api-gateway:3000`
 
 All requests should go through the API Gateway, which provides:
+
 - Authentication & Authorization
 - Rate Limiting
 - Request Routing
@@ -19,6 +20,7 @@ GET /health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -37,6 +39,7 @@ GET /health
 Cria pagamento (Pix/Boleto/Card) com suporte a idempotência.
 
 Header obrigatório:
+
 - `Idempotency-Key`
 
 ### GET /payments/:paymentId/pix-timer
@@ -46,6 +49,10 @@ Retorna tempo restante para expiração do Pix.
 ### GET /payments/:paymentId/pix-copy-paste
 
 Retorna payload de copia e cola para Pix.
+
+### POST /payments/:paymentId/confirm
+
+Consulta o status na AbacatePay apos retorno do checkout e sincroniza o pedido quando `ORDER_SERVICE_URL` estiver configurado.
 
 ### POST /payments/refund
 
@@ -78,6 +85,7 @@ GET /api/csrf-token
 ```
 
 **Response:**
+
 ```json
 {
   "csrfToken": "..."
@@ -99,6 +107,7 @@ GET /api/stats
 ```
 
 **Response:**
+
 ```json
 {
   "stats": {
@@ -125,6 +134,7 @@ GET /api/version
 ```
 
 **Response:**
+
 ```json
 {
   "version": "v1",
@@ -152,6 +162,7 @@ GET /api/version
 Autenticar usuário.
 
 **Request:**
+
 ```json
 {
   "provider": "firebase" | "cognito",
@@ -162,6 +173,7 @@ Autenticar usuário.
 ```
 
 **Response:**
+
 ```json
 {
   "accessToken": "jwt-token",
@@ -176,6 +188,7 @@ Autenticar usuário.
 Renovar token de acesso.
 
 **Request:**
+
 ```json
 {
   "refreshToken": "refresh-token"
@@ -183,6 +196,7 @@ Renovar token de acesso.
 ```
 
 **Response:**
+
 ```json
 {
   "accessToken": "new-jwt-token",
@@ -197,6 +211,7 @@ Renovar token de acesso.
 Verificar token JWT.
 
 **Request:**
+
 ```json
 {
   "token": "jwt-token"
@@ -204,6 +219,7 @@ Verificar token JWT.
 ```
 
 **Response:**
+
 ```json
 {
   "valid": true,
@@ -221,6 +237,7 @@ Verificar token JWT.
 Verificar token JWT e tenant.
 
 **Request:**
+
 ```json
 {
   "token": "jwt-token",
@@ -233,6 +250,7 @@ Verificar token JWT e tenant.
 Revogar token (blacklist).
 
 **Request:**
+
 ```json
 {
   "token": "jwt-token"
@@ -244,6 +262,7 @@ Revogar token (blacklist).
 Criar API key (requer `X-Internal-API-Key`).
 
 **Request:**
+
 ```json
 {
   "tenantId": "tenant-123",
@@ -259,6 +278,7 @@ Criar API key (requer `X-Internal-API-Key`).
 Verificar API key.
 
 **Request:**
+
 ```json
 {
   "apiKey": "t3ck_xxx"
@@ -274,6 +294,7 @@ Revogar API key (requer `X-Internal-API-Key`).
 Listar API keys por tenant ou user (requer `X-Internal-API-Key`).
 
 **Example:**
+
 ```
 GET /auth/api-keys?tenantId=tenant-123
 ```
@@ -291,6 +312,7 @@ Revogar sessão (requer `X-Internal-API-Key`).
 Revogar todas as sessões de um usuário (requer `X-Internal-API-Key`).
 
 **Request:**
+
 ```json
 {
   "userId": "user-456"
@@ -340,9 +362,11 @@ Listar chaves públicas ativas.
 Criar webhook.
 
 **Headers:**
+
 - `X-Tenant-ID: tenant-123`
 
 **Request:**
+
 ```json
 {
   "url": "https://example.com/webhook",
@@ -352,6 +376,7 @@ Criar webhook.
 ```
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -370,9 +395,11 @@ Criar webhook.
 Listar webhooks do tenant.
 
 **Headers:**
+
 - `X-Tenant-ID: tenant-123`
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -391,9 +418,11 @@ Listar webhooks do tenant.
 Obter logs de entregas do webhook.
 
 **Query Parameters:**
+
 - `limit`: Número de logs (padrão: 50)
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -417,6 +446,7 @@ Obter logs de entregas do webhook.
 Submeter formulário de provisionamento.
 
 **Request:**
+
 ```json
 {
   "tenantId": "cliente-123",
@@ -431,13 +461,16 @@ Submeter formulário de provisionamento.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": {
     "id": "cliente-123",
     "status": "pending",
-    "form": { /* ... */ },
+    "form": {
+      /* ... */
+    },
     "createdAt": "2024-01-01T00:00:00Z"
   },
   "message": "Form submitted successfully. Provisioning will begin shortly."
@@ -449,6 +482,7 @@ Submeter formulário de provisionamento.
 Obter status do provisionamento.
 
 **Response:**
+
 ```json
 {
   "tenantId": "cliente-123",
@@ -464,6 +498,7 @@ Obter status do provisionamento.
 Criar produto.
 
 **Request:**
+
 ```json
 {
   "tenantId": "tenant-123",
@@ -481,9 +516,11 @@ Criar produto.
 Listar produtos com busca/filtro.
 
 **Headers:**
+
 - `X-Tenant-ID: tenant-123`
 
 **Query (opcional):**
+
 - `query`, `categoryId`, `minPrice`, `maxPrice`, `inStock`, `tag`, `active`, `sortBy`
 
 ### PUT /api/products/:id
@@ -543,6 +580,7 @@ Consultar estoque e histórico de movimentações.
 Ajustar estoque com delta (+/-).
 
 **Request:**
+
 ```json
 {
   "tenantId": "tenant-123",
@@ -557,6 +595,7 @@ Ajustar estoque com delta (+/-).
 Definir estoque absoluto.
 
 **Request:**
+
 ```json
 {
   "tenantId": "tenant-123",
@@ -571,40 +610,49 @@ Definir estoque absoluto.
 > Todos os endpoints aceitam `X-Tenant-ID` no header (ou `tenantId` em body/query).
 
 ### GET /api/admin/dashboard
+
 - KPIs, pedidos recentes, produtos com estoque baixo e atividade recente.
 
 ### Product Management
+
 - `POST /api/admin/products`
 - `GET /api/admin/products`
 - `PUT /api/admin/products/:id`
 - `DELETE /api/admin/products/:id`
 
 ### Order Management
+
 - `POST /api/admin/orders`
 - `GET /api/admin/orders`
 - `PUT /api/admin/orders/:id`
 
 ### Customer Management
+
 - `POST /api/admin/customers`
 - `GET /api/admin/customers`
 - `PUT /api/admin/customers/:id`
 
 ### Analytics & Reports
+
 - `GET /api/admin/analytics`
 - `GET /api/admin/reports/:type` (`sales`, `inventory`, `customers`)
 
 ### Settings Management
+
 - `GET /api/admin/settings`
 - `PUT /api/admin/settings`
 
 ### User Management
+
 - `POST /api/admin/users`
 - `GET /api/admin/users`
 - `PUT /api/admin/users/:id`
 - `DELETE /api/admin/users/:id`
 
 ### Audit Logs
+
 - `GET /api/admin/audit-logs`
+
 ## Media Transformation Service
 
 ### GET /transform
@@ -612,6 +660,7 @@ Definir estoque absoluto.
 Transform image from URL with custom parameters.
 
 **Query Parameters:**
+
 - `url` (required): Source image URL
 - `w`: Width in pixels
 - `h`: Height in pixels
@@ -623,11 +672,13 @@ Transform image from URL with custom parameters.
 - `sharpen`: `true` to apply sharpening
 
 **Example:**
+
 ```
 GET /transform?url=https://example.com/image.jpg&w=640&format=webp&quality=85
 ```
 
 **Response:** Binary image data with headers:
+
 - `Content-Type`: image/webp
 - `X-Image-Width`: 640
 - `X-Image-Height`: 480
@@ -639,6 +690,7 @@ GET /transform?url=https://example.com/image.jpg&w=640&format=webp&quality=85
 Transform using predefined preset.
 
 **Built-in Presets:**
+
 - `thumbnail`: 150x150 WebP Q80
 - `small`: 320px WebP Q85
 - `medium`: 640px WebP Q85
@@ -648,6 +700,7 @@ Transform using predefined preset.
 - `avif-medium`: 1024px AVIF Q80
 
 **Example:**
+
 ```
 GET /preset/medium?url=https://example.com/image.jpg
 ```
@@ -657,6 +710,7 @@ GET /preset/medium?url=https://example.com/image.jpg
 Upload and transform image.
 
 **Request:** multipart/form-data
+
 - `image`: File
 - `width`, `height`, `format`, `quality`: Optional transform parameters
 
@@ -671,6 +725,7 @@ List all available presets.
 Create custom preset.
 
 **Request:**
+
 ```json
 {
   "name": "custom",
@@ -697,20 +752,24 @@ Clear image cache.
 Render pre-generated static page.
 
 **Parameters:**
+
 - `tenantId`: Tenant identifier
 - `resourceType`: `product`, `category`, or `page`
 - `resourceId`: Resource identifier
 
 **Query Parameters:**
+
 - `force`: Set to `true` to force regeneration
 
 **Example:**
+
 ```
 GET /render/tenant-1/product/prod-123
 GET /render/tenant-1/product/prod-123?force=true
 ```
 
 **Response:** HTML with cache headers
+
 - `Cache-Control`: public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200
 - `X-Cache-Hits`: Number of times this page was served from cache
 
@@ -719,6 +778,7 @@ GET /render/tenant-1/product/prod-123?force=true
 Initiate background pre-rendering job.
 
 **Request:**
+
 ```json
 {
   "url": "https://example.com/product/123",
@@ -731,6 +791,7 @@ Initiate background pre-rendering job.
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Pre-render job initiated",
@@ -744,6 +805,7 @@ Initiate background pre-rendering job.
 Batch pre-render multiple pages.
 
 **Request:**
+
 ```json
 {
   "configs": [
@@ -770,6 +832,7 @@ Batch pre-render multiple pages.
 Get pre-render job status.
 
 **Response:**
+
 ```json
 {
   "job": {
@@ -790,6 +853,7 @@ List all pre-render jobs.
 Purge specific resource from cache.
 
 **Example:**
+
 ```
 DELETE /cache/tenant-1/product/prod-123
 ```
@@ -807,6 +871,7 @@ Get Incremental Static Regeneration configuration.
 Update ISR configuration.
 
 **Request:**
+
 ```json
 {
   "enabled": true,
@@ -820,6 +885,7 @@ Update ISR configuration.
 Server-Side Render with user context.
 
 **Request:**
+
 ```json
 {
   "tenantId": "tenant-1",
@@ -845,6 +911,7 @@ Server-Side Render with user context.
 ```
 
 **Response:**
+
 ```json
 {
   "html": "<!DOCTYPE html><html>...</html>",
@@ -864,6 +931,7 @@ Server-Side Render with user context.
 Simplified SSR endpoint (auto-extracts context from headers and query).
 
 **Example:**
+
 ```
 GET /ssr/tenant-1/cart/user-123?discount=SUMMER20
 Headers:
@@ -873,6 +941,7 @@ Headers:
 ```
 
 **Response:**
+
 ```json
 {
   "html": "<!DOCTYPE html><html>...</html>",
@@ -890,6 +959,7 @@ Headers:
 Get SSR configuration.
 
 **Response:**
+
 ```json
 {
   "config": {
@@ -907,6 +977,7 @@ Get SSR configuration.
 Update SSR configuration.
 
 **Request:**
+
 ```json
 {
   "enabled": true,
@@ -918,6 +989,7 @@ Update SSR configuration.
 ```
 
 **Response:**
+
 ```json
 {
   "message": "SSR configuration updated",
@@ -936,6 +1008,7 @@ Update SSR configuration.
 Clear all SSR cache.
 
 **Response:**
+
 ```json
 {
   "message": "SSR cache cleared"
@@ -947,6 +1020,7 @@ Clear all SSR cache.
 Purge SSR cache entries by pattern.
 
 **Request:**
+
 ```json
 {
   "pattern": "*user-123*"
@@ -954,6 +1028,7 @@ Purge SSR cache entries by pattern.
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Purged 8 SSR cache entries matching pattern: *user-123*",
@@ -966,6 +1041,7 @@ Purge SSR cache entries by pattern.
 Get edge service statistics.
 
 **Response:**
+
 ```json
 {
   "stats": {

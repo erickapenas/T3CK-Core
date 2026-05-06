@@ -20,9 +20,7 @@ describe('Security Regression Tests', () => {
       { expiresIn: -1 }
     );
 
-    const response = await request(app)
-      .get('/secure')
-      .set('Authorization', `Bearer ${expired}`);
+    const response = await request(app).get('/secure').set('Authorization', `Bearer ${expired}`);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Token expired');

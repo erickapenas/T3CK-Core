@@ -1,11 +1,13 @@
 # Tenant Offboarding & Data Management Guide
 
 ## Overview
+
 This document covers tenant offboarding workflows, data export, compliance, and secure deletion procedures.
 
 ## 1. Tenant Offboarding Process
 
 ### Workflow Overview
+
 ```
 Initiate Offboarding
     ↓
@@ -21,6 +23,7 @@ Complete Offboarding
 ```
 
 ### States During Offboarding
+
 - **active** - Tenant operational, all services enabled
 - **offboarding** - Offboarding in progress, API access restricted
 - **offboarded** - Offboarding complete, tenant data deleted
@@ -29,6 +32,7 @@ Complete Offboarding
 ### Offboarding Endpoints
 
 #### Initiate Offboarding
+
 ```
 POST /tenant-service/offboarding/initiate
 Content-Type: application/json
@@ -51,6 +55,7 @@ Response:
 ```
 
 #### Export Tenant Data
+
 ```
 POST /tenant-service/offboarding/export
 Content-Type: application/json
@@ -77,6 +82,7 @@ Response:
 ```
 
 #### Revoke Access Tokens
+
 ```
 POST /tenant-service/offboarding/revoke-access
 Content-Type: application/json
@@ -94,6 +100,7 @@ Response:
 ```
 
 #### Delete Tenant Data
+
 ```
 POST /tenant-service/offboarding/delete
 Content-Type: application/json
@@ -112,6 +119,7 @@ Response:
 ```
 
 #### Get Offboarding Audit Trail
+
 ```
 GET /tenant-service/offboarding/audit/:tenantId
 Authorization: Bearer <admin-token>
@@ -159,6 +167,7 @@ Response:
 ### Supported Formats
 
 #### JSON Export
+
 ```json
 {
   "exportedAt": "2024-01-15T10:30:00Z",
@@ -188,6 +197,7 @@ Response:
 ```
 
 #### CSV Export
+
 ```
 Multiple CSV files, one per data type:
 - users.csv
@@ -199,6 +209,7 @@ Multiple CSV files, one per data type:
 ```
 
 ### Data Categories Included
+
 - **Users** - All user accounts, profiles, roles
 - **Orders** - Transaction history, order details
 - **Payments** - Payment records, payment methods
@@ -207,6 +218,7 @@ Multiple CSV files, one per data type:
 - **Audit Logs** - System audit trail, compliance records
 
 ### Export Security
+
 - ✅ Encrypted in transit (HTTPS)
 - ✅ Encrypted at rest (S3 SSE-KMS)
 - ✅ Access restricted to admin users only
@@ -218,6 +230,7 @@ Multiple CSV files, one per data type:
 ## 3. Data Deletion & Retention
 
 ### Retention Policy
+
 ```
 Data Classification  | Retention Period | Reason
 --------------------------------------------------
@@ -230,6 +243,7 @@ Backups            | 365 days         | Disaster recovery
 ### Deletion Workflow
 
 **Immediate Delete:**
+
 ```
 Tenant Data
   → Revoke Access (all tokens)
@@ -240,6 +254,7 @@ Tenant Data
 ```
 
 **Scheduled Delete (30 days retention):**
+
 ```
 Tenant Data
   → Mark for Deletion
@@ -253,6 +268,7 @@ Tenant Data
 ```
 
 ### Data Tables Affected
+
 - `users` - All user accounts
 - `orders` - Transaction history
 - `payments` - Payment records
@@ -266,6 +282,7 @@ Tenant Data
 ### GDPR Compliance
 
 #### Right to Access
+
 ```bash
 # Export all tenant data
 curl -X POST /tenant-service/offboarding/export \
@@ -273,6 +290,7 @@ curl -X POST /tenant-service/offboarding/export \
 ```
 
 #### Right to Erasure ("Right to be Forgotten")
+
 ```bash
 # Schedule data deletion with retention period
 curl -X POST /tenant-service/offboarding/delete \
@@ -280,6 +298,7 @@ curl -X POST /tenant-service/offboarding/delete \
 ```
 
 #### Audit Trail for Compliance
+
 ```bash
 # Get complete record of offboarding
 curl /tenant-service/offboarding/audit/tenant_abc
@@ -290,6 +309,7 @@ curl /tenant-service/offboarding/audit/tenant_abc
 ## 4. Access Token Revocation
 
 ### Token Types Revoked
+
 1. **JWT Access Tokens** - Immediate blacklist
 2. **API Keys** - Marked as revoked
 3. **Session Tokens** - Cleared from Redis
@@ -310,6 +330,7 @@ await redis.del(`tenant:${tenantId}:sessions`);
 ```
 
 ### Verification
+
 ```bash
 # Test access after revocation (should fail)
 curl -H "Authorization: Bearer <revoked-token>" \
@@ -322,6 +343,7 @@ curl -H "Authorization: Bearer <revoked-token>" \
 ## 5. Offboarding Scenarios
 
 ### Scenario 1: Customer Requested Exit
+
 ```
 Step 1: Export data for compliance
   ↓
@@ -337,6 +359,7 @@ Step 6: Auto-delete after 30 days
 ```
 
 ### Scenario 2: Fraud Detected
+
 ```
 Step 1: Immediate suspension
   ↓
@@ -352,6 +375,7 @@ Step 6: Notify compliance team
 ```
 
 ### Scenario 3: Inactivity (e.g., no usage for 180 days)
+
 ```
 Step 1: Send warning email (60 days before)
   ↓
@@ -371,6 +395,7 @@ Step 6: Delete after 7 days
 ## 6. Monitoring & Alerts
 
 ### CloudWatch Metrics
+
 ```
 - TenantOffboarding.Initiated (count)
 - TenantOffboarding.Completed (count)
@@ -381,6 +406,7 @@ Step 6: Delete after 7 days
 ```
 
 ### Alarm Configuration
+
 ```
 Alert if:
 - Offboarding fails: severity=HIGH
@@ -394,6 +420,7 @@ Alert if:
 ## 7. Disaster Recovery
 
 ### Backup Before Deletion
+
 ```
 All tenant data is:
 1. Exported to S3 (encrypted with KMS)
@@ -403,6 +430,7 @@ All tenant data is:
 ```
 
 ### Restore from Backup
+
 ```bash
 # If deletion was unintended
 1. Download export from S3
@@ -417,6 +445,7 @@ All tenant data is:
 ## 8. Service-to-Service Integration
 
 ### Authentication Service Notification
+
 ```
 POST http://auth-service:3001/auth/tokens/revoke-all
 {
@@ -425,6 +454,7 @@ POST http://auth-service:3001/auth/tokens/revoke-all
 ```
 
 ### Webhook Service Notification
+
 ```
 POST http://webhook-service:3002/webhooks/internal-events
 {
@@ -435,6 +465,7 @@ POST http://webhook-service:3002/webhooks/internal-events
 ```
 
 ### Event Bus Publishing
+
 ```
 Topic: tenant-offboarding-events
 Events:
@@ -449,19 +480,21 @@ Events:
 ## 9. Security Considerations
 
 ### Access Control
+
 - ✅ Admin-only endpoints
 - ✅ Approval audit trail required
 - ✅ Service-to-service auth via mutual TLS
 
 ### Data Protection
+
 - ✅ Encryption in transit (TLS 1.2+)
 - ✅ Encryption at rest (KMS)
 - ✅ Public access blocked
 - ✅ Access logging enabled
 
 ### Audit Trail
+
 - ✅ All offboarding operations logged
 - ✅ Immutable audit records
 - ✅ Timeline of all actions
 - ✅ Person/service responsible recorded
-

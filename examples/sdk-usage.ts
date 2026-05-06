@@ -1,6 +1,6 @@
 /**
  * Exemplo de uso do SDK T3CK
- * 
+ *
  * Execute com: ts-node examples/sdk-usage.ts
  */
 
@@ -68,7 +68,6 @@ async function exemploUsoSDK() {
     console.log('\n⚙️  Obtendo configurações...');
     const settings = await t3ck.settings.get();
     console.log('Configurações:', settings.data);
-
   } catch (error) {
     console.error('❌ Erro:', error);
   }

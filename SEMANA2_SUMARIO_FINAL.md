@@ -56,13 +56,13 @@ Timeline:           7/8 features até Dia 11
 
 ## ✅ O QUE JÁ FOI FEITO (RESUMO)
 
-| Feature | Dia | Status | Tempo | Docs |
-|---------|-----|--------|-------|------|
-| Health Checks | 1 | ✅ | 1.5h | ✅ |
-| Sentry | 2 | ✅ | 1.5h | ✅ |
-| Prometheus | 3 | ✅ | 1.5h | ✅ |
-| Redis Cache | 4 | ✅ | 1.5h | ✅ |
-| Config Mgmt | 5 | ✅ | 1.5h | ✅ |
+| Feature       | Dia | Status | Tempo | Docs |
+| ------------- | --- | ------ | ----- | ---- |
+| Health Checks | 1   | ✅     | 1.5h  | ✅   |
+| Sentry        | 2   | ✅     | 1.5h  | ✅   |
+| Prometheus    | 3   | ✅     | 1.5h  | ✅   |
+| Redis Cache   | 4   | ✅     | 1.5h  | ✅   |
+| Config Mgmt   | 5   | ✅     | 1.5h  | ✅   |
 
 **Total:** 5 features, 7.5 horas, 100% documentado
 
@@ -70,11 +70,11 @@ Timeline:           7/8 features até Dia 11
 
 ## ⏳ O QUE FALTA (RESUMO)
 
-| Feature | Dias | Estimado | Prioridade | Bloqueadores |
-|---------|------|----------|-----------|--------------|
-| Service Discovery | 6-8 | 4h | 🔴 HIGH | ✅ NENHUM |
-| Automated Backups | 9-11 | 3h | 🟡 MED | Service Disc ✅ |
-| Multi-region | Sem 3 | 6h+ | 🟢 LOW | Backups ✅ |
+| Feature           | Dias  | Estimado | Prioridade | Bloqueadores    |
+| ----------------- | ----- | -------- | ---------- | --------------- |
+| Service Discovery | 6-8   | 4h       | 🔴 HIGH    | ✅ NENHUM       |
+| Automated Backups | 9-11  | 3h       | 🟡 MED     | Service Disc ✅ |
+| Multi-region      | Sem 3 | 6h+      | 🟢 LOW     | Backups ✅      |
 
 **Total restante:** 7 horas em 5 dias (confortável!)
 
@@ -83,23 +83,27 @@ Timeline:           7/8 features até Dia 11
 ## 🚀 PRÓXIMAS AÇÕES (ORDEM)
 
 ### Hoje (AGORA)
+
 1. ✅ Você leu esta análise
 2. [ ] Escolha um documento e leia mais
 3. [ ] Compartilhe com seu time
 
 ### Dias 6-8
+
 1. [ ] Iniciar Service Discovery
 2. [ ] Seguir checklist (25+ tarefas)
 3. [ ] Terminar em 4 horas
 4. [ ] Commit + documentação
 
 ### Dias 9-11
+
 1. [ ] Iniciar Automated Backups
 2. [ ] Seguir checklist (20+ tarefas)
 3. [ ] Terminar em 3 horas
 4. [ ] Commit + documentação
 
 ### Semana 3
+
 1. [ ] Multi-region architecture
 2. [ ] 6+ horas com menos pressa
 3. [ ] Integrar com outras features
@@ -110,15 +114,15 @@ Timeline:           7/8 features até Dia 11
 
 Criamos 7 documentos. Escolha:
 
-| Seu Perfil | Leia Isto | Tempo |
-|-----------|-----------|-------|
-| **Ocupado** | RESUMO_RAPIDO.md | 2 min |
-| **Desenvolvedor** | CHECKLIST.md | 15 min |
-| **Gerente** | DASHBOARD.md | 10 min |
-| **Arquiteto** | ANALISE_FALTANDO.md | 20 min |
-| **Indeciso** | GUIA_LEITURA.md | 5 min |
-| **Português** | EXECUTIVO_PT_BR.md | 5 min |
-| **Quer tudo?** | INDEX.md | 3 min |
+| Seu Perfil        | Leia Isto           | Tempo  |
+| ----------------- | ------------------- | ------ |
+| **Ocupado**       | RESUMO_RAPIDO.md    | 2 min  |
+| **Desenvolvedor** | CHECKLIST.md        | 15 min |
+| **Gerente**       | DASHBOARD.md        | 10 min |
+| **Arquiteto**     | ANALISE_FALTANDO.md | 20 min |
+| **Indeciso**      | GUIA_LEITURA.md     | 5 min  |
+| **Português**     | EXECUTIVO_PT_BR.md  | 5 min  |
+| **Quer tudo?**    | INDEX.md            | 3 min  |
 
 **Começar por:** O apropriado para seu papel (sério!)
 
@@ -127,18 +131,21 @@ Criamos 7 documentos. Escolha:
 ## 💡 KEY INSIGHTS
 
 ### Por que está tão rápido?
+
 1. **Padrões reutilizáveis** (shared package)
 2. **Sem bloqueadores técnicos**
 3. **Documentação simultânea**
 4. **Zero refactoring** (código limpo first-time)
 
 ### Por que Multi-region é adiado?
+
 1. **Complexidade ALTA** (6+ horas)
 2. **Depende de 2 features antes**
 3. **Melhor em Semana 3 com calma**
 4. **Ainda tem 20.5h de buffer**
 
 ### Qual é a real?
+
 - **Velocidade:** 1.5h por feature (1.9x mais rápido)
 - **Qualidade:** Zero bugs, zero regressions
 - **Build:** ~4 segundos (5 serviços)
@@ -149,6 +156,7 @@ Criamos 7 documentos. Escolha:
 ## 🎯 VOCÊ DEVE FAZER
 
 **Se você é desenvolvedor:**
+
 ```
 1. Leia SEMANA2_CHECKLIST.md
 2. Comece Service Discovery HOJE (4 horas)
@@ -157,6 +165,7 @@ Criamos 7 documentos. Escolha:
 ```
 
 **Se você é gerente:**
+
 ```
 1. Leia SEMANA2_DASHBOARD.md
 2. Aprove timeline: SD dias 6-8, Backup dias 9-11
@@ -165,6 +174,7 @@ Criamos 7 documentos. Escolha:
 ```
 
 **Se você é arquiteto:**
+
 ```
 1. Leia SEMANA2_ANALISE_FALTANDO.md
 2. Revise estimativas (1.9x speedup)
@@ -201,6 +211,7 @@ Documentation:          6 files, 3000+ lines, 100% complete
 ## 🏆 PRÓXIMA SEMANA (PREVIEW)
 
 ### Semana 3 (Se tudo correr bem)
+
 ```
 Days 1-5:   Finalize Service Discovery + Backups
 Days 6-11:  Multi-region deployment
@@ -212,12 +223,14 @@ Days 12+:   Advanced features (performance, security)
 ## 🎓 LIÇÕES APRENDIDAS
 
 ### Oq funcionou bem
+
 - ✅ Padrões reusáveis (não precisa refazer a roda)
 - ✅ Documentação simultânea (não deixa dívida)
 - ✅ Sem bloqueadores (velocity não é obstruída)
 - ✅ Build rápido (~4s, feedback imediato)
 
 ### O que poderia melhorar
+
 - ⚠️ Multi-region precisa mais planejamento
 - ⚠️ Cross-service testing pode ser complexo
 - ⚠️ AWS infrastructure setup pode ter delays

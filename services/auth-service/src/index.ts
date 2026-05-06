@@ -25,7 +25,7 @@ import {
   getAuthLimiter,
   closeRateLimiter,
   initializeTracing,
-  validateAuthEnvironment
+  validateAuthEnvironment,
 } from '@t3ck/shared';
 import { initializeFirebase } from './firebase-init';
 import { setupHealthChecks } from './health';
@@ -52,19 +52,14 @@ initSentry('auth-service');
 // Inicializar Firebase
 initializeFirebase();
 
-const redisEnabled =
-  process.env.REDIS_DISABLED !== 'true' &&
-  (process.env.REDIS_ENABLED === 'true' || process.env.NODE_ENV === 'production');
-
-if (!redisEnabled) {
-  process.env.REDIS_DISABLED = 'true';
-  if (!process.env.RATE_LIMIT_STORE) {
-    process.env.RATE_LIMIT_STORE = 'memory';
-  }
-  console.warn('[auth-service] Redis disabled for local/dev execution (using memory fallback)');
+if (process.env.REDIS_DISABLED === 'true') {
+  throw new Error('Redis is required for auth-service persistence');
 }
 
-// Initialize Redis cache
+if (!process.env.RATE_LIMIT_STORE) {
+  process.env.RATE_LIMIT_STORE = 'redis';
+}
+
 initializeCache({ prefix: 'auth:' });
 
 // Initialize Config Manager
@@ -110,7 +105,9 @@ function ensureLocalJwtKeyMaterial(): void {
 
   process.env.JWT_PRIVATE_KEY = privateKey;
   process.env.JWT_PUBLIC_KEY = publicKey;
-  logger.warn('JWT key material not provided; generated ephemeral RSA key pair for local/dev runtime');
+  logger.warn(
+    'JWT key material not provided; generated ephemeral RSA key pair for local/dev runtime'
+  );
 }
 
 async function start() {
@@ -125,7 +122,10 @@ async function start() {
       refreshTtlSeconds: Number(process.env.JWT_REFRESH_EXPIRATION || 604800),
     });
     const apiKeyService = new ApiKeyService(getCache());
-    const sessionService = new SessionService(getCache(), Number(process.env.SESSION_TTL_SECONDS || 86400));
+    const sessionService = new SessionService(
+      getCache(),
+      Number(process.env.SESSION_TTL_SECONDS || 86400)
+    );
     const oidcService = new OidcService();
 
     const authService = new AuthService(keyManager, tokenStore);
@@ -136,7 +136,10 @@ async function start() {
     // Internal registry endpoint for debugging
     app.get('/internal/registry', (_req, res) => {
       const registry = getServiceRegistry();
-      const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({ service: k, instance: v }));
+      const entries = Array.from(registry.getAllInstances().entries()).map(([k, v]) => ({
+        service: k,
+        instance: v,
+      }));
       res.json({ registered: entries });
     });
 
@@ -162,104 +165,150 @@ async function start() {
     app.use(getApiLimiter()); // Apply API-wide rate limiter
 
     // Autenticação
-    app.post('/auth/login', getAuthLimiter(), validateRequest(AuthLoginSchema), async (req: Request, res: Response) => {
-      try {
-        const { provider, token, username, password } = req.body;
+    app.post(
+      '/auth/login',
+      getAuthLimiter(),
+      validateRequest(AuthLoginSchema),
+      async (req: Request, res: Response) => {
+        try {
+          const { provider, token, username, password } = req.body;
 
-        if (provider === 'firebase' && token) {
-          const payload = await authService.authenticateWithFirebase(token);
-          const tokens = await authService.issueTokens(payload);
-          const session = await sessionService.createSession(payload.tenantId, payload.userId, req.ip, req.headers['user-agent'] as string);
+          if (provider === 'firebase' && token) {
+            const payload = await authService.authenticateWithFirebase(token);
+            const tokens = await authService.issueTokens(payload);
+            const session = await sessionService.createSession(
+              payload.tenantId,
+              payload.userId,
+              req.ip,
+              req.headers['user-agent'] as string
+            );
 
-          res.json({
-            ...tokens,
-            sessionId: session.sessionId,
-          });
-          return;
+            res.json({
+              ...tokens,
+              sessionId: session.sessionId,
+            });
+            return;
+          }
+
+          if (provider === 'cognito' && username && password) {
+            const result = await authService.authenticateWithCognito(username, password);
+            res.json(result);
+            return;
+          }
+
+          res.status(400).json({ error: 'Invalid authentication parameters' });
+        } catch (error) {
+          logger.error('Login failed', { error });
+          res.status(401).json({ error: 'Authentication failed' });
         }
-
-        if (provider === 'cognito' && username && password) {
-          const result = await authService.authenticateWithCognito(username, password);
-          res.json(result);
-          return;
-        }
-
-        res.status(400).json({ error: 'Invalid authentication parameters' });
-      } catch (error) {
-        logger.error('Login failed', { error });
-        res.status(401).json({ error: 'Authentication failed' });
       }
-    });
+    );
 
     // Refresh token
-    app.post('/auth/refresh', validateRequest(AuthRefreshSchema), async (req: Request, res: Response) => {
-      try {
-        const { refreshToken } = req.body;
-        const result = await authService.refreshToken(refreshToken);
-        res.json(result);
-      } catch (error) {
-        logger.error('Token refresh failed', { error });
-        res.status(401).json({ error: 'Token refresh failed' });
+    app.post(
+      '/auth/refresh',
+      validateRequest(AuthRefreshSchema),
+      async (req: Request, res: Response) => {
+        try {
+          const { refreshToken } = req.body;
+          const result = await authService.refreshToken(refreshToken);
+          res.json(result);
+        } catch (error) {
+          logger.error('Token refresh failed', { error });
+          res.status(401).json({ error: 'Token refresh failed' });
+        }
       }
-    });
+    );
 
     // Verificar token
-    app.post('/auth/verify', validateRequest(AuthVerifySchema), async (req: Request, res: Response) => {
-      try {
-        const { token } = req.body;
-        const payload = await authService.verifyJWT(token);
-        res.json({ valid: true, payload });
-      } catch (error) {
-        logger.error('Token verification failed', { error });
-        res.status(401).json({ error: 'Invalid token' });
+    app.post(
+      '/auth/verify',
+      validateRequest(AuthVerifySchema),
+      async (req: Request, res: Response) => {
+        try {
+          const { token } = req.body;
+          const payload = await authService.verifyJWT(token);
+          res.json({ valid: true, payload });
+        } catch (error) {
+          logger.error('Token verification failed', { error });
+          res.status(401).json({ error: 'Invalid token' });
+        }
       }
-    });
+    );
 
     // Verificar token e tenant
-    app.post('/auth/verify-tenant', validateRequest(AuthVerifyTenantSchema), async (req: Request, res: Response) => {
-      try {
-        const { token, tenantId } = req.body;
-        const payload = await authService.verifyJWTWithTenant(token, tenantId);
-        res.json({ valid: true, payload });
-      } catch (error) {
-        logger.error('Tenant token verification failed', { error });
-        res.status(401).json({ error: 'Invalid token or tenant mismatch' });
+    app.post(
+      '/auth/verify-tenant',
+      validateRequest(AuthVerifyTenantSchema),
+      async (req: Request, res: Response) => {
+        try {
+          const { token, tenantId } = req.body;
+          const payload = await authService.verifyJWTWithTenant(token, tenantId);
+          res.json({ valid: true, payload });
+        } catch (error) {
+          logger.error('Tenant token verification failed', { error });
+          res.status(401).json({ error: 'Invalid token or tenant mismatch' });
+        }
       }
-    });
+    );
 
     // Revogar token
-    app.post('/auth/revoke', validateRequest(AuthRevokeSchema), async (req: Request, res: Response) => {
-      try {
-        const { token } = req.body;
-        await authService.revokeToken(token);
-        res.json({ message: 'Token revoked' });
-      } catch (error) {
-        logger.error('Token revoke failed', { error });
-        res.status(500).json({ error: 'Token revoke failed' });
+    app.post(
+      '/auth/revoke',
+      validateRequest(AuthRevokeSchema),
+      async (req: Request, res: Response) => {
+        try {
+          const { token } = req.body;
+          await authService.revokeToken(token);
+          res.json({ message: 'Token revoked' });
+        } catch (error) {
+          logger.error('Token revoke failed', { error });
+          res.status(500).json({ error: 'Token revoke failed' });
+        }
       }
-    });
+    );
 
     // API Keys
-    app.post('/auth/api-keys', requireInternalApiKey, validateRequest(ApiKeyCreateSchema), async (req: Request, res: Response) => {
-      const { tenantId, userId, name, scopes, expiresAt } = req.body;
-      const result = await apiKeyService.createApiKey({ tenantId, userId, name, scopes, expiresAt });
-      res.json(result);
-    });
-
-    app.post('/auth/api-keys/verify', validateRequest(ApiKeyVerifySchema), async (req: Request, res: Response) => {
-      const { apiKey } = req.body;
-      const metadata = await apiKeyService.verifyApiKey(apiKey);
-      if (!metadata) {
-        res.status(401).json({ valid: false });
-        return;
+    app.post(
+      '/auth/api-keys',
+      requireInternalApiKey,
+      validateRequest(ApiKeyCreateSchema),
+      async (req: Request, res: Response) => {
+        const { tenantId, userId, name, scopes, expiresAt } = req.body;
+        const result = await apiKeyService.createApiKey({
+          tenantId,
+          userId,
+          name,
+          scopes,
+          expiresAt,
+        });
+        res.json(result);
       }
-      res.json({ valid: true, metadata });
-    });
+    );
 
-    app.delete('/auth/api-keys/:keyId', requireInternalApiKey, validateRequest(ApiKeyRevokeSchema), async (req: Request, res: Response) => {
-      await apiKeyService.revokeApiKey(req.params.keyId);
-      res.json({ message: 'API key revoked' });
-    });
+    app.post(
+      '/auth/api-keys/verify',
+      validateRequest(ApiKeyVerifySchema),
+      async (req: Request, res: Response) => {
+        const { apiKey } = req.body;
+        const metadata = await apiKeyService.verifyApiKey(apiKey);
+        if (!metadata) {
+          res.status(401).json({ valid: false });
+          return;
+        }
+        res.json({ valid: true, metadata });
+      }
+    );
+
+    app.delete(
+      '/auth/api-keys/:keyId',
+      requireInternalApiKey,
+      validateRequest(ApiKeyRevokeSchema),
+      async (req: Request, res: Response) => {
+        await apiKeyService.revokeApiKey(req.params.keyId);
+        res.json({ message: 'API key revoked' });
+      }
+    );
 
     app.get('/auth/api-keys', requireInternalApiKey, async (req: Request, res: Response) => {
       const { tenantId, userId } = req.query as { tenantId?: string; userId?: string };
@@ -277,34 +326,57 @@ async function start() {
     });
 
     // Sessions
-    app.get('/auth/sessions/:userId', requireInternalApiKey, validateRequest(SessionListSchema), async (req: Request, res: Response) => {
-      const sessions = await sessionService.listSessionsByUser(req.params.userId);
-      res.json({ sessions });
-    });
+    app.get(
+      '/auth/sessions/:userId',
+      requireInternalApiKey,
+      validateRequest(SessionListSchema),
+      async (req: Request, res: Response) => {
+        const sessions = await sessionService.listSessionsByUser(req.params.userId);
+        res.json({ sessions });
+      }
+    );
 
-    app.delete('/auth/sessions/:sessionId', requireInternalApiKey, validateRequest(SessionRevokeSchema), async (req: Request, res: Response) => {
-      await sessionService.revokeSession(req.params.sessionId);
-      res.json({ message: 'Session revoked' });
-    });
+    app.delete(
+      '/auth/sessions/:sessionId',
+      requireInternalApiKey,
+      validateRequest(SessionRevokeSchema),
+      async (req: Request, res: Response) => {
+        await sessionService.revokeSession(req.params.sessionId);
+        res.json({ message: 'Session revoked' });
+      }
+    );
 
-    app.post('/auth/sessions/revoke-user', requireInternalApiKey, validateRequest(SessionRevokeUserSchema), async (req: Request, res: Response) => {
-      const { userId } = req.body;
-      await sessionService.revokeUserSessions(userId);
-      res.json({ message: 'User sessions revoked' });
-    });
+    app.post(
+      '/auth/sessions/revoke-user',
+      requireInternalApiKey,
+      validateRequest(SessionRevokeUserSchema),
+      async (req: Request, res: Response) => {
+        const { userId } = req.body;
+        await sessionService.revokeUserSessions(userId);
+        res.json({ message: 'User sessions revoked' });
+      }
+    );
 
     // OIDC / OAuth2
     app.get('/auth/oidc/authorize', (req: Request, res: Response) => {
-      const { state, scope, redirectUri } = req.query as { state?: string; scope?: string; redirectUri?: string };
+      const { state, scope, redirectUri } = req.query as {
+        state?: string;
+        scope?: string;
+        redirectUri?: string;
+      };
       const url = oidcService.getAuthorizeUrl({ state, scope, redirectUri });
       res.redirect(url);
     });
 
-    app.post('/auth/oidc/token', validateRequest(OidcTokenSchema), async (req: Request, res: Response) => {
-      const { code, refreshToken, redirectUri } = req.body;
-      const result = await oidcService.exchangeToken({ code, refreshToken, redirectUri });
-      res.json(result);
-    });
+    app.post(
+      '/auth/oidc/token',
+      validateRequest(OidcTokenSchema),
+      async (req: Request, res: Response) => {
+        const { code, refreshToken, redirectUri } = req.body;
+        const result = await oidcService.exchangeToken({ code, refreshToken, redirectUri });
+        res.json(result);
+      }
+    );
 
     app.get('/auth/oidc/userinfo', async (req: Request, res: Response) => {
       const token = (req.headers.authorization || '').replace('Bearer ', '');
@@ -322,17 +394,25 @@ async function start() {
     });
 
     // MFA
-    app.post('/auth/mfa/setup', validateRequest(MfaSetupSchema), async (req: Request, res: Response) => {
-      const { accessToken } = req.body;
-      const result = await authService.setupMfa(accessToken);
-      res.json(result);
-    });
+    app.post(
+      '/auth/mfa/setup',
+      validateRequest(MfaSetupSchema),
+      async (req: Request, res: Response) => {
+        const { accessToken } = req.body;
+        const result = await authService.setupMfa(accessToken);
+        res.json(result);
+      }
+    );
 
-    app.post('/auth/mfa/verify', validateRequest(MfaVerifySchema), async (req: Request, res: Response) => {
-      const { accessToken, userCode, enableMfa } = req.body;
-      const result = await authService.verifyMfa(accessToken, userCode, enableMfa);
-      res.json(result);
-    });
+    app.post(
+      '/auth/mfa/verify',
+      validateRequest(MfaVerifySchema),
+      async (req: Request, res: Response) => {
+        const { accessToken, userCode, enableMfa } = req.body;
+        const result = await authService.verifyMfa(accessToken, userCode, enableMfa);
+        res.json(result);
+      }
+    );
 
     // JWT Key Management
     app.get('/auth/keys', requireInternalApiKey, (_req: Request, res: Response) => {

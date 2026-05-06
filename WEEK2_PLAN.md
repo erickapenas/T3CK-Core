@@ -52,6 +52,7 @@ RESERVE:  Multi-region (complex, 6h+)  (⏳)    🔴 EXTRA
 ## ✅ O QUE FOI ENTREGUE - SEMANA 1
 
 ### 1. Documentação Completa ✅
+
 ```
 ✅ TECHNOLOGY_STACK.md         (42 techs implementadas + 20 faltando)
 ✅ TECHNOLOGY_SUMMARY.md       (Visual overview + diagrama arquitetura)
@@ -61,6 +62,7 @@ RESERVE:  Multi-region (complex, 6h+)  (⏳)    🔴 EXTRA
 ```
 
 ### 2. Infrastructure Core ✅
+
 ```
 ✅ AWS Step Functions State Machine     (9 estados, retry policies)
 ✅ Lambda Provisioning Handlers         (orchestration + logging)
@@ -68,6 +70,7 @@ RESERVE:  Multi-region (complex, 6h+)  (⏳)    🔴 EXTRA
 ```
 
 ### 3. Testing Framework ✅
+
 ```
 ✅ E2E Test Suite (4 categories)
   ├─ Health Endpoints
@@ -88,6 +91,7 @@ RESERVE:  Multi-region (complex, 6h+)  (⏳)    🔴 EXTRA
 ```
 
 ### 4. Operational Tools ✅
+
 ```
 ✅ Rollback Scripts (Bash + PowerShell)
 ✅ Secrets Management (.github/SECRETS.md)
@@ -106,6 +110,7 @@ RESERVE:  Multi-region (complex, 6h+)  (⏳)    🔴 EXTRA
 **Impacto:** ALTO (readiness/liveness probes)
 
 **✅ Implementado:**
+
 ```
 ✅ @godaddy/terminus instalado em auth-service, webhook-service, tenant-service
 ✅ /health endpoint (liveness probe) - sempre rápido (< 100ms)
@@ -118,6 +123,7 @@ RESERVE:  Multi-region (complex, 6h+)  (⏳)    🔴 EXTRA
 ```
 
 **Endpoints Disponíveis:**
+
 ```bash
 # Liveness probe - verificar se serviço está ativo
 curl GET http://localhost:3001/health
@@ -139,6 +145,7 @@ curl GET http://localhost:3001/ready
 **Impacto:** ALTO (error visibility)
 
 **Checklist:**
+
 ```
 [ ] npm install @sentry/node @sentry/aws-serverless
 [ ] Criar account Sentry.io
@@ -152,6 +159,7 @@ curl GET http://localhost:3001/ready
 ```
 
 **Código esperado:**
+
 ```typescript
 // src/config/sentry.ts
 import * as Sentry from '@sentry/node';
@@ -168,9 +176,9 @@ export function initSentry() {
         serverName: false,
         transaction: true,
         user: true,
-        version: false
-      })
-    ]
+        version: false,
+      }),
+    ],
   });
 }
 
@@ -179,6 +187,7 @@ app.use(Sentry.Handlers.errorHandler());
 ```
 
 **Resultado esperado:**
+
 - Todas as exceptions capturadas automaticamente
 - Alertas em Slack quando crítico
 - Dashboard com tendências de erros
@@ -193,6 +202,7 @@ app.use(Sentry.Handlers.errorHandler());
 **Impacto:** ALTO (observability)
 
 **Checklist:**
+
 ```
 [ ] npm install prom-client
 [ ] Criar src/metrics/prometheus.ts
@@ -206,6 +216,7 @@ app.use(Sentry.Handlers.errorHandler());
 ```
 
 **Código esperado:**
+
 ```typescript
 // src/metrics/prometheus.ts
 import { register, Counter, Histogram, Gauge } from 'prom-client';
@@ -214,30 +225,28 @@ export const httpRequestDuration = new Histogram({
   name: 'http_request_duration_ms',
   help: 'Duration of HTTP requests in ms',
   labelNames: ['method', 'route', 'status_code'],
-  buckets: [10, 50, 100, 500, 1000, 5000]
+  buckets: [10, 50, 100, 500, 1000, 5000],
 });
 
 export const httpRequestTotal = new Counter({
   name: 'http_requests_total',
   help: 'Total number of HTTP requests',
-  labelNames: ['method', 'route', 'status_code']
+  labelNames: ['method', 'route', 'status_code'],
 });
 
 // Middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - start;
     httpRequestDuration
       .labels(req.method, req.route?.path || 'unknown', res.statusCode)
       .observe(duration);
-    
-    httpRequestTotal
-      .labels(req.method, req.route?.path || 'unknown', res.statusCode)
-      .inc();
+
+    httpRequestTotal.labels(req.method, req.route?.path || 'unknown', res.statusCode).inc();
   });
-  
+
   next();
 });
 
@@ -249,6 +258,7 @@ app.get('/metrics', (req, res) => {
 ```
 
 **Resultado esperado:**
+
 - `/metrics` endpoint com Prometheus format
 - Dashboard Grafana com latência, erros, throughput
 - Alertas baseado em thresholds
@@ -262,6 +272,7 @@ app.get('/metrics', (req, res) => {
 **Impacto:** MÉDIO (performance)
 
 **Checklist:**
+
 ```
 [ ] Revisar Redis em auth-service
 [ ] Implementar cache em webhook-service
@@ -274,6 +285,7 @@ app.get('/metrics', (req, res) => {
 ```
 
 **Código esperado:**
+
 ```typescript
 // src/cache/cache-manager.ts
 import Redis from 'ioredis';
@@ -281,27 +293,24 @@ import Redis from 'ioredis';
 const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
-  retryStrategy: (times) => Math.min(times * 50, 2000)
+  retryStrategy: (times) => Math.min(times * 50, 2000),
 });
 
-export async function getOrSet<T>(
-  key: string,
-  ttl: number,
-  fetchFn: () => Promise<T>
-): Promise<T> {
+export async function getOrSet<T>(key: string, ttl: number, fetchFn: () => Promise<T>): Promise<T> {
   // Try cache first
   const cached = await redis.get(key);
   if (cached) return JSON.parse(cached);
-  
+
   // Fetch and cache
   const data = await fetchFn();
   await redis.setex(key, ttl, JSON.stringify(data));
-  
+
   return data;
 }
 ```
 
 **Resultado esperado:**
+
 - Cache distribuído entre serviços
 - TTL policies definidas
 - Cache invalidation automático
@@ -316,6 +325,7 @@ export async function getOrSet<T>(
 **Impacto:** MÉDIO (configuração centralizada)
 
 **Checklist:**
+
 ```
 [ ] Criar config loader
 [ ] Integrar AWS Parameter Store
@@ -328,6 +338,7 @@ export async function getOrSet<T>(
 ```
 
 **Código esperado:**
+
 ```typescript
 // src/config/parameter-store.ts
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
@@ -341,26 +352,27 @@ export async function getConfig(name: string): Promise<string> {
   if (cached && cached.expires > Date.now()) {
     return cached.value;
   }
-  
+
   // Fetch from Parameter Store
   const result = await ssm.send(
     new GetParameterCommand({
       Name: `/t3ck/${process.env.NODE_ENV}/${name}`,
-      WithDecryption: true
+      WithDecryption: true,
     })
   );
-  
+
   // Cache for 2 minutes
   cache.set(name, {
     value: result.Parameter?.Value,
-    expires: Date.now() + 2 * 60 * 1000
+    expires: Date.now() + 2 * 60 * 1000,
   });
-  
+
   return result.Parameter?.Value || '';
 }
 ```
 
 **Resultado esperado:**
+
 - Configurações centralizadas em AWS
 - Hot reload automático
 - Suporta secrets (encrypted)
@@ -375,6 +387,7 @@ export async function getConfig(name: string): Promise<string> {
 **Impacto:** MÉDIO (escalabilidade)
 
 **Checklist:**
+
 ```
 [ ] Setup AWS Cloud Map
 [ ] Criar namespaces para cada serviço
@@ -387,6 +400,7 @@ export async function getConfig(name: string): Promise<string> {
 ```
 
 **Código esperado:**
+
 ```typescript
 // src/discovery/service-discovery.ts
 import { ServiceDiscovery, ServiceInstance } from '@aws-sdk/client-servicediscovery';
@@ -397,26 +411,27 @@ export async function discoverService(serviceName: string): Promise<string> {
   // Query AWS Cloud Map
   const params = {
     NamespaceName: 't3ck-services',
-    ServiceName: serviceName
+    ServiceName: serviceName,
   };
-  
+
   // Get healthy instances
   const instances = await discovery.discoverInstances({
     Namespace: params.NamespaceName,
     Service: params.ServiceName,
-    HealthStatus: 'HEALTHY'
+    HealthStatus: 'HEALTHY',
   });
-  
+
   // Return first available instance
   if (instances.Instances?.length) {
     return instances.Instances[0].InstanceId!;
   }
-  
+
   throw new Error(`Service ${serviceName} not found`);
 }
 ```
 
 **Resultado esperado:**
+
 - Auto-discovery de serviços
 - DNS dinâmico
 - Health checks integrado
@@ -431,6 +446,7 @@ export async function discoverService(serviceName: string): Promise<string> {
 **Impacto:** ALTO (disaster recovery)
 
 **Checklist:**
+
 ```
 [ ] Revisar Terraform storage module
 [ ] Criar backup plan
@@ -442,6 +458,7 @@ export async function discoverService(serviceName: string): Promise<string> {
 ```
 
 **Terraform esperado:**
+
 ```hcl
 # infrastructure/terraform/modules/backup/main.tf
 resource "aws_backup_vault" "main" {
@@ -472,6 +489,7 @@ resource "aws_backup_resource_assignment" "firestore" {
 ```
 
 **Resultado esperado:**
+
 - Daily backups automáticos
 - 30 dias retention
 - Restore testado
@@ -487,6 +505,7 @@ resource "aws_backup_resource_assignment" "firestore" {
 **Prioridade:** ⏳ PRÓXIMA SEMANA OU SEMANA 3
 
 **Checklist:**
+
 ```
 [ ] Replicar infraestrutura para us-west-2
 [ ] Configurar Route53 failover policy
@@ -499,6 +518,7 @@ resource "aws_backup_resource_assignment" "firestore" {
 ```
 
 **Resultado esperado:**
+
 - Infraestrutura em 2 regiões
 - Automatic failover se região 1 cair
 - 99.99% uptime SLA
@@ -548,6 +568,7 @@ QUARTA (Feb 12):
 ## 🎯 PRÓXIMOS PASSOS IMEDIATOS (HOJE)
 
 ### 1. Setup inicial (30 min)
+
 ```
 [ ] npm install @godaddy/terminus
 [ ] npm install @sentry/node @sentry/aws-serverless
@@ -557,6 +578,7 @@ QUARTA (Feb 12):
 ```
 
 ### 2. Criar feature branches (30 min)
+
 ```bash
 git checkout -b feat/health-checks
 git checkout -b feat/error-tracking
@@ -568,6 +590,7 @@ git checkout -b feat/automated-backups
 ```
 
 ### 3. Documentação (30 min)
+
 ```
 [ ] Criar WEEK2_STATUS.md
 [ ] Criar WEEK2_CHECKLIST.md
@@ -597,15 +620,15 @@ git checkout -b feat/automated-backups
 
 ## 📊 MÉTRICAS DE SUCESSO
 
-| Métrica | Meta | Status |
-|---------|------|--------|
-| Health check time | <100ms | ⏳ TBD |
-| Error capture rate | 100% | ⏳ TBD |
-| Prometheus uptime | 99.9% | ⏳ TBD |
-| Cache hit rate | >80% | ⏳ TBD |
-| Config update time | <1s | ⏳ TBD |
-| Service discovery latency | <50ms | ⏳ TBD |
-| Backup success rate | 100% | ⏳ TBD |
+| Métrica                   | Meta   | Status |
+| ------------------------- | ------ | ------ |
+| Health check time         | <100ms | ⏳ TBD |
+| Error capture rate        | 100%   | ⏳ TBD |
+| Prometheus uptime         | 99.9%  | ⏳ TBD |
+| Cache hit rate            | >80%   | ⏳ TBD |
+| Config update time        | <1s    | ⏳ TBD |
+| Service discovery latency | <50ms  | ⏳ TBD |
+| Backup success rate       | 100%   | ⏳ TBD |
 
 ---
 

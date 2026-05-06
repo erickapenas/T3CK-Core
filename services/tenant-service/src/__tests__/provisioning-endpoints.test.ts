@@ -105,7 +105,9 @@ describe('Provisioning Endpoints Integration Tests', () => {
             json: (data: any) => resolve({ statusCode: code, body: data }),
           }),
         } as any;
-        app._router.stack.find((layer: any) => layer.route?.path === '/provisioning/submit')?.route?.stack[0]?.handle(req, res);
+        app._router.stack
+          .find((layer: any) => layer.route?.path === '/provisioning/submit')
+          ?.route?.stack[0]?.handle(req, res);
       });
 
       expect(response.statusCode).toBe(201);
@@ -126,7 +128,9 @@ describe('Provisioning Endpoints Integration Tests', () => {
             json: (data: any) => resolve({ statusCode: code, body: data }),
           }),
         } as any;
-        app._router.stack.find((layer: any) => layer.route?.path === '/provisioning/submit')?.route?.stack[0]?.handle(req, res);
+        app._router.stack
+          .find((layer: any) => layer.route?.path === '/provisioning/submit')
+          ?.route?.stack[0]?.handle(req, res);
       });
 
       expect(response.statusCode).toBe(400);
@@ -144,7 +148,9 @@ describe('Provisioning Endpoints Integration Tests', () => {
           }),
           json: (data: any) => resolve({ statusCode: 200, body: data }),
         } as any;
-        app._router.stack.find((layer: any) => layer.route?.path === '/provisioning/:tenantId/status')?.route?.stack[0]?.handle(req, res);
+        app._router.stack
+          .find((layer: any) => layer.route?.path === '/provisioning/:tenantId/status')
+          ?.route?.stack[0]?.handle(req, res);
       });
 
       expect(response.statusCode).toBe(200);
@@ -161,7 +167,9 @@ describe('Provisioning Endpoints Integration Tests', () => {
           }),
           json: (data: any) => resolve({ statusCode: 200, body: data }),
         } as any;
-        app._router.stack.find((layer: any) => layer.route?.path === '/provisioning/:tenantId/status')?.route?.stack[0]?.handle(req, res);
+        app._router.stack
+          .find((layer: any) => layer.route?.path === '/provisioning/:tenantId/status')
+          ?.route?.stack[0]?.handle(req, res);
       });
 
       expect(response.statusCode).toBe(404);
@@ -176,7 +184,9 @@ describe('Provisioning Endpoints Integration Tests', () => {
         const res = {
           json: (data: any) => resolve({ statusCode: 200, body: data }),
         } as any;
-        app._router.stack.find((layer: any) => layer.route?.path === '/queue/stats')?.route?.stack[0]?.handle(req, res);
+        app._router.stack
+          .find((layer: any) => layer.route?.path === '/queue/stats')
+          ?.route?.stack[0]?.handle(req, res);
       });
 
       expect(response.statusCode).toBe(200);

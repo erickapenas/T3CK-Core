@@ -1,5 +1,5 @@
 import { Database, DataClassification, RetentionPolicy } from '@t3ck/shared';
-import { Logger } from '@t3ck/shared/logger';
+import { Logger } from '@t3ck/shared';
 import axios from 'axios';
 
 interface OffboardingRequest {
@@ -54,9 +54,7 @@ export class TenantOffboardingService {
 
     try {
       // Validate tenant exists and is active
-      const tenant = await this.db.query('SELECT * FROM tenants WHERE id = ?', [
-        request.tenantId,
-      ]);
+      const tenant = await this.db.query('SELECT * FROM tenants WHERE id = ?', [request.tenantId]);
       if (!tenant) {
         throw new Error(`Tenant ${request.tenantId} not found`);
       }
@@ -94,7 +92,10 @@ export class TenantOffboardingService {
       }
 
       // Step 4: Update tenant status
-      await this.db.query('UPDATE tenants SET status = ? WHERE id = ?', ['offboarded', request.tenantId]);
+      await this.db.query('UPDATE tenants SET status = ? WHERE id = ?', [
+        'offboarded',
+        request.tenantId,
+      ]);
 
       this.addAuditTrail(request.tenantId, 'completed', {
         completedAt: new Date(),
@@ -118,16 +119,18 @@ export class TenantOffboardingService {
    * Export tenant data for compliance/archive
    * Supports JSON and CSV formats
    */
-  async exportTenantData(tenantId: string, format: 'json' | 'csv' = 'json'): Promise<TenantDataExport> {
+  async exportTenantData(
+    tenantId: string,
+    format: 'json' | 'csv' = 'json'
+  ): Promise<TenantDataExport> {
     this.logger.info(`[TenantOffboarding] Exporting data for tenant: ${tenantId}`, { format });
 
     try {
       const exportedData = await this.compileTenantData(tenantId);
 
       // Convert to requested format
-      const formatted = format === 'json' 
-        ? JSON.stringify(exportedData, null, 2)
-        : this.convertToCSV(exportedData);
+      const formatted =
+        format === 'json' ? JSON.stringify(exportedData, null, 2) : this.convertToCSV(exportedData);
 
       // Upload to S3 with encryption
       const s3Url = await this.uploadToS3(tenantId, formatted, format);

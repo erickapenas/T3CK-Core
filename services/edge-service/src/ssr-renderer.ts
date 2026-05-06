@@ -65,8 +65,8 @@ export class SSRRenderer {
           'X-Render-Mode': 'SSR',
           'X-Render-Time': `${renderTime}ms`,
           'X-Cache': 'MISS',
-          'Cache-Control': this.config.cacheEnabled 
-            ? `private, max-age=${this.config.cacheTTL}` 
+          'Cache-Control': this.config.cacheEnabled
+            ? `private, max-age=${this.config.cacheTTL}`
             : 'no-cache, no-store, must-revalidate',
         },
         renderTime,
@@ -457,12 +457,17 @@ export class SSRRenderer {
   getStats(): SSRStats {
     return {
       totalSSRRequests: this.stats.totalRequests,
-      averageRenderTime: this.stats.totalRequests > 0
-        ? Math.round(this.stats.totalRenderTime / this.stats.totalRequests)
-        : 0,
-      cacheHitRate: this.stats.cacheHits + this.stats.cacheMisses > 0
-        ? ((this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) * 100).toFixed(2) + '%'
-        : '0%',
+      averageRenderTime:
+        this.stats.totalRequests > 0
+          ? Math.round(this.stats.totalRenderTime / this.stats.totalRequests)
+          : 0,
+      cacheHitRate:
+        this.stats.cacheHits + this.stats.cacheMisses > 0
+          ? (
+              (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
+              100
+            ).toFixed(2) + '%'
+          : '0%',
       cachedPages: this.cache.size,
     };
   }

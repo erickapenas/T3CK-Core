@@ -202,7 +202,13 @@ export async function getQueueStats(queueName: string) {
   const queue = createQueue(queueName);
 
   try {
-    const stats = await (queue as any).getCountsPerState?.() || { wait: 0, active: 0, completed: 0, failed: 0, delayed: 0 };
+    const stats = (await (queue as any).getCountsPerState?.()) || {
+      wait: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+    };
 
     return {
       queueName,
@@ -211,7 +217,10 @@ export async function getQueueStats(queueName: string) {
       completed: (stats as any).completed || 0,
       failed: (stats as any).failed || 0,
       delayed: (stats as any).delayed || 0,
-      total: Object.values(stats || {}).reduce((sum: number, val: any) => sum + (Number(val) || 0), 0),
+      total: Object.values(stats || {}).reduce(
+        (sum: number, val: any) => sum + (Number(val) || 0),
+        0
+      ),
     };
   } catch (error) {
     logger.error(`Failed to get queue stats for: ${queueName}`, { error });

@@ -9,7 +9,7 @@ import { config } from '../config';
 /**
  * Helmet.js - Protection against common vulnerabilities
  * - XSS Protection
- * - Clickjacking Protection  
+ * - Clickjacking Protection
  * - Content Security Policy
  * - HSTS
  * - noSniff
@@ -64,10 +64,7 @@ export const corsMiddleware = cors({
 /**
  * CSRF Protection using double submit cookie pattern
  */
-const {
-  generateToken,
-  doubleCsrfProtection,
-} = doubleCsrf({
+const { generateToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => config.jwtSecret,
   cookieName: config.env === 'production' ? '__Host-csrf-token' : 'csrf-token',
   cookieOptions: {
@@ -126,16 +123,16 @@ export const compressionMiddleware: any = compression({
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction) => {
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  
+
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // Permissions Policy (formerly Feature Policy)
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
+
   // Remove X-Powered-By header
   res.removeHeader('X-Powered-By');
-  
+
   next();
 };
 

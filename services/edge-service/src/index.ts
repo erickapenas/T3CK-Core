@@ -1,7 +1,13 @@
 import express, { Request, Response } from 'express';
 import { EdgeRenderer } from './edge-renderer';
 import { SSRRenderer } from './ssr-renderer';
-import { PreRenderConfigSchema, BatchPreRenderSchema, ISRConfigSchema, SSRRequestSchema, SSRConfigSchema } from './validation';
+import {
+  PreRenderConfigSchema,
+  BatchPreRenderSchema,
+  ISRConfigSchema,
+  SSRRequestSchema,
+  SSRConfigSchema,
+} from './validation';
 import { Logger } from '@t3ck/shared';
 
 const logger = new Logger('edge-service');
@@ -57,8 +63,8 @@ app.post('/prerender', async (req: Request, res: Response) => {
     const config = PreRenderConfigSchema.parse(req.body);
     const jobId = await renderer.preRender(config);
 
-    res.json({ 
-      message: 'Pre-render job initiated', 
+    res.json({
+      message: 'Pre-render job initiated',
       jobId,
       status: 'pending',
     });
@@ -74,8 +80,8 @@ app.post('/prerender/batch', async (req: Request, res: Response) => {
     const { configs } = BatchPreRenderSchema.parse(req.body);
     const jobIds = await renderer.batchPreRender(configs);
 
-    res.json({ 
-      message: 'Batch pre-render initiated', 
+    res.json({
+      message: 'Batch pre-render initiated',
       count: jobIds.length,
       jobIds,
     });
@@ -88,7 +94,7 @@ app.post('/prerender/batch', async (req: Request, res: Response) => {
 // Get job status
 app.get('/jobs/:jobId', (req: Request, res: Response) => {
   const job = renderer.getJob(req.params.jobId);
-  
+
   if (!job) {
     return res.status(404).json({ error: 'Job not found' });
   }
@@ -99,13 +105,13 @@ app.get('/jobs/:jobId', (req: Request, res: Response) => {
 // List all jobs
 app.get('/jobs', (_req: Request, res: Response) => {
   const jobs = renderer.getJobs();
-  res.json({ 
+  res.json({
     jobs,
     total: jobs.length,
-    pending: jobs.filter(j => j.status === 'pending').length,
-    processing: jobs.filter(j => j.status === 'processing').length,
-    completed: jobs.filter(j => j.status === 'completed').length,
-    failed: jobs.filter(j => j.status === 'failed').length,
+    pending: jobs.filter((j) => j.status === 'pending').length,
+    processing: jobs.filter((j) => j.status === 'processing').length,
+    completed: jobs.filter((j) => j.status === 'completed').length,
+    failed: jobs.filter((j) => j.status === 'failed').length,
   });
 });
 
@@ -146,7 +152,7 @@ app.put('/isr/config', (req: Request, res: Response) => {
 
 // Get stats
 app.get('/stats', (_req: Request, res: Response) => {
-  res.json({ 
+  res.json({
     stats: renderer.getStats(),
     ssrStats: ssrRenderer.getStats(),
   });
@@ -187,7 +193,7 @@ app.get('/ssr/:tenantId/:resourceType/:resourceId', async (req: Request, res: Re
       headers: {
         'user-agent': req.get('user-agent') || '',
         'accept-language': req.get('accept-language') || '',
-        'cookie': req.get('cookie') || '',
+        cookie: req.get('cookie') || '',
       },
       context: {
         // Parse from headers/cookies if needed

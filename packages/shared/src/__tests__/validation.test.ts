@@ -1,8 +1,4 @@
-import {
-  validateEmail,
-  validateTenantId,
-  validateRequired,
-} from '../validation';
+import { validateEmail, validateTenantId, validateRequired } from '../validation';
 
 describe('Validation utilities', () => {
   describe('validateEmail', () => {

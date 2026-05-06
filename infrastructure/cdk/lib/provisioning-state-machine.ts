@@ -124,24 +124,20 @@ export class ProvisioningStateMachine extends Construct {
     // ============================================================================
     // CDK EXECUTION STATE - Deploy CDK stacks
     // ============================================================================
-    const cdkExecutionState = new stepfunctions_tasks.LambdaInvoke(
-      this,
-      'CDKExecution',
-      {
-        lambda: props.cdkLambda,
-        outputPath: '$.cdkResult',
-        resultPath: '$.cdkResult',
-        comment: 'Execute CDK deployment for application infrastructure',
-        retryOnServiceExceptions: true,
-        payload: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          companyName: stepfunctions.JsonPath.stringAt('$.companyName'),
-          region: stepfunctions.JsonPath.stringAt('$.region'),
-          action: 'deploy',
-        }),
-      }
-    );
+    const cdkExecutionState = new stepfunctions_tasks.LambdaInvoke(this, 'CDKExecution', {
+      lambda: props.cdkLambda,
+      outputPath: '$.cdkResult',
+      resultPath: '$.cdkResult',
+      comment: 'Execute CDK deployment for application infrastructure',
+      retryOnServiceExceptions: true,
+      payload: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        companyName: stepfunctions.JsonPath.stringAt('$.companyName'),
+        region: stepfunctions.JsonPath.stringAt('$.region'),
+        action: 'deploy',
+      }),
+    });
 
     cdkExecutionState.addRetry({
       errors: ['States.TaskFailed', 'States.Timeout'],
@@ -153,22 +149,18 @@ export class ProvisioningStateMachine extends Construct {
     // ============================================================================
     // FIREBASE SETUP STATE - Configure Firebase for new tenant
     // ============================================================================
-    const firebaseSetupState = new stepfunctions_tasks.LambdaInvoke(
-      this,
-      'FirebaseSetup',
-      {
-        lambda: props.firebaseConfigLambda,
-        outputPath: '$.firebaseResult',
-        resultPath: '$.firebaseResult',
-        comment: 'Configure Firebase project and Firestore for new tenant',
-        retryOnServiceExceptions: true,
-        payload: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          projectId: stepfunctions.JsonPath.stringAt('$.firebaseProjectId'),
-        }),
-      }
-    );
+    const firebaseSetupState = new stepfunctions_tasks.LambdaInvoke(this, 'FirebaseSetup', {
+      lambda: props.firebaseConfigLambda,
+      outputPath: '$.firebaseResult',
+      resultPath: '$.firebaseResult',
+      comment: 'Configure Firebase project and Firestore for new tenant',
+      retryOnServiceExceptions: true,
+      payload: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        projectId: stepfunctions.JsonPath.stringAt('$.firebaseProjectId'),
+      }),
+    });
 
     firebaseSetupState.addRetry({
       errors: ['States.TaskFailed', 'States.Timeout'],
@@ -180,23 +172,19 @@ export class ProvisioningStateMachine extends Construct {
     // ============================================================================
     // ROUTE53 CONFIGURATION STATE - Setup DNS records
     // ============================================================================
-    const route53ConfigState = new stepfunctions_tasks.LambdaInvoke(
-      this,
-      'Route53Configuration',
-      {
-        lambda: props.route53ConfigLambda,
-        outputPath: '$.route53Result',
-        resultPath: '$.route53Result',
-        comment: 'Configure Route53 DNS records for tenant domain',
-        retryOnServiceExceptions: true,
-        payload: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          hostedZoneId: stepfunctions.JsonPath.stringAt('$.hostedZoneId'),
-          region: stepfunctions.JsonPath.stringAt('$.region'),
-        }),
-      }
-    );
+    const route53ConfigState = new stepfunctions_tasks.LambdaInvoke(this, 'Route53Configuration', {
+      lambda: props.route53ConfigLambda,
+      outputPath: '$.route53Result',
+      resultPath: '$.route53Result',
+      comment: 'Configure Route53 DNS records for tenant domain',
+      retryOnServiceExceptions: true,
+      payload: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        hostedZoneId: stepfunctions.JsonPath.stringAt('$.hostedZoneId'),
+        region: stepfunctions.JsonPath.stringAt('$.region'),
+      }),
+    });
 
     route53ConfigState.addRetry({
       errors: ['States.TaskFailed', 'States.Timeout'],
@@ -208,24 +196,20 @@ export class ProvisioningStateMachine extends Construct {
     // ============================================================================
     // HEALTH CHECK STATE - Verify all services are healthy with retry loop
     // ============================================================================
-    const healthCheckState = new stepfunctions_tasks.LambdaInvoke(
-      this,
-      'HealthCheck',
-      {
-        lambda: props.healthCheckLambda,
-        outputPath: '$.healthCheckResult',
-        resultPath: '$.healthCheckResult',
-        comment: 'Verify all provisioned services are healthy and operational',
-        retryOnServiceExceptions: true,
-        payload: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          region: stepfunctions.JsonPath.stringAt('$.region'),
-          maxRetries: 10,
-          delaySeconds: 30,
-        }),
-      }
-    );
+    const healthCheckState = new stepfunctions_tasks.LambdaInvoke(this, 'HealthCheck', {
+      lambda: props.healthCheckLambda,
+      outputPath: '$.healthCheckResult',
+      resultPath: '$.healthCheckResult',
+      comment: 'Verify all provisioned services are healthy and operational',
+      retryOnServiceExceptions: true,
+      payload: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        region: stepfunctions.JsonPath.stringAt('$.region'),
+        maxRetries: 10,
+        delaySeconds: 30,
+      }),
+    });
 
     healthCheckState.addRetry({
       errors: ['States.TaskFailed', 'HealthCheckFailed'],
@@ -237,25 +221,19 @@ export class ProvisioningStateMachine extends Construct {
     // ============================================================================
     // SUCCESS NOTIFICATION STATE - Send SNS notification on success
     // ============================================================================
-    const notifySuccessState = new stepfunctions_tasks.SnsPublish(
-      this,
-      'NotifySuccess',
-      {
-        topic: this.successTopic,
-        message: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          companyName: stepfunctions.JsonPath.stringAt('$.companyName'),
-          status: 'PROVISIONING_COMPLETED',
-          timestamp: stepfunctions.JsonPath.stringAt('$$.State.EnteredTime'),
-          contactEmail: stepfunctions.JsonPath.stringAt('$.contactEmail'),
-        }),
-        subject: stepfunctions.JsonPath.stringAt(
-          '$.companyName + " - Provisioning Complete"'
-        ),
-        resultPath: stepfunctions.JsonPath.DISCARD,
-      }
-    );
+    const notifySuccessState = new stepfunctions_tasks.SnsPublish(this, 'NotifySuccess', {
+      topic: this.successTopic,
+      message: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        companyName: stepfunctions.JsonPath.stringAt('$.companyName'),
+        status: 'PROVISIONING_COMPLETED',
+        timestamp: stepfunctions.JsonPath.stringAt('$$.State.EnteredTime'),
+        contactEmail: stepfunctions.JsonPath.stringAt('$.contactEmail'),
+      }),
+      subject: stepfunctions.JsonPath.stringAt('$.companyName + " - Provisioning Complete"'),
+      resultPath: stepfunctions.JsonPath.DISCARD,
+    });
 
     // ============================================================================
     // SUCCESS END STATE - Mark provisioning as complete
@@ -267,47 +245,37 @@ export class ProvisioningStateMachine extends Construct {
     // ============================================================================
     // FAILURE HANDLING - Send to DLQ and notify failure
     // ============================================================================
-    const sendToDLQState = new stepfunctions_tasks.SqsSendMessage(
-      this,
-      'SendFailureToDLQ',
-      {
-        queue: this.dlqQueue,
-        messageBody: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          status: 'PROVISIONING_FAILED',
-          error: stepfunctions.JsonPath.stringAt('$.errorMessage'),
-          errorCode: stepfunctions.JsonPath.stringAt('$.errorCode'),
-          timestamp: stepfunctions.JsonPath.stringAt('$$.State.EnteredTime'),
-          executionArn: stepfunctions.JsonPath.stringAt('$$.Execution.Arn'),
-        }),
-        resultPath: stepfunctions.JsonPath.DISCARD,
-      }
-    );
+    const sendToDLQState = new stepfunctions_tasks.SqsSendMessage(this, 'SendFailureToDLQ', {
+      queue: this.dlqQueue,
+      messageBody: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        status: 'PROVISIONING_FAILED',
+        error: stepfunctions.JsonPath.stringAt('$.errorMessage'),
+        errorCode: stepfunctions.JsonPath.stringAt('$.errorCode'),
+        timestamp: stepfunctions.JsonPath.stringAt('$$.State.EnteredTime'),
+        executionArn: stepfunctions.JsonPath.stringAt('$$.Execution.Arn'),
+      }),
+      resultPath: stepfunctions.JsonPath.DISCARD,
+    });
 
     // ============================================================================
     // FAILURE NOTIFICATION STATE - Send SNS notification on failure
     // ============================================================================
-    const notifyFailureState = new stepfunctions_tasks.SnsPublish(
-      this,
-      'NotifyFailure',
-      {
-        topic: failureTopic,
-        message: stepfunctions.TaskInput.fromObject({
-          tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
-          domain: stepfunctions.JsonPath.stringAt('$.domain'),
-          companyName: stepfunctions.JsonPath.stringAt('$.companyName'),
-          status: 'PROVISIONING_FAILED',
-          error: stepfunctions.JsonPath.stringAt('$.errorMessage'),
-          contactEmail: stepfunctions.JsonPath.stringAt('$.contactEmail'),
-          timestamp: stepfunctions.JsonPath.stringAt('$$.State.EnteredTime'),
-        }),
-        subject: stepfunctions.JsonPath.stringAt(
-          '$.companyName + " - Provisioning Failed"'
-        ),
-        resultPath: stepfunctions.JsonPath.DISCARD,
-      }
-    );
+    const notifyFailureState = new stepfunctions_tasks.SnsPublish(this, 'NotifyFailure', {
+      topic: failureTopic,
+      message: stepfunctions.TaskInput.fromObject({
+        tenantId: stepfunctions.JsonPath.stringAt('$.tenantId'),
+        domain: stepfunctions.JsonPath.stringAt('$.domain'),
+        companyName: stepfunctions.JsonPath.stringAt('$.companyName'),
+        status: 'PROVISIONING_FAILED',
+        error: stepfunctions.JsonPath.stringAt('$.errorMessage'),
+        contactEmail: stepfunctions.JsonPath.stringAt('$.contactEmail'),
+        timestamp: stepfunctions.JsonPath.stringAt('$$.State.EnteredTime'),
+      }),
+      subject: stepfunctions.JsonPath.stringAt('$.companyName + " - Provisioning Failed"'),
+      resultPath: stepfunctions.JsonPath.DISCARD,
+    });
 
     // ============================================================================
     // FAILURE END STATE - Mark provisioning as failed
@@ -333,9 +301,7 @@ export class ProvisioningStateMachine extends Construct {
 
     // Add catch handler for any errors in the chain
     chain.addCatch(
-      stepfunctions.Chain.start(sendToDLQState)
-        .next(notifyFailureState)
-        .next(failureEndState),
+      stepfunctions.Chain.start(sendToDLQState).next(notifyFailureState).next(failureEndState),
       {
         errors: ['States.ALL'],
         resultPath: '$.error',

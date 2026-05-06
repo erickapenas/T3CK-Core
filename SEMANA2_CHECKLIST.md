@@ -7,9 +7,11 @@
 ## ✅ IMPLEMENTADO (5/8 - DIAS 1-5)
 
 ### ✅ 1. Health Check Library (@godaddy/terminus)
+
 **Estimado:** 2h | **Gasto:** 1.5h | **Restante:** 0h
 
 **Integração:**
+
 - [x] Instalar em auth-service
 - [x] Instalar em webhook-service
 - [x] Instalar em tenant-service
@@ -29,9 +31,11 @@
 ---
 
 ### ✅ 2. Error Tracking (Sentry)
+
 **Estimado:** 3h | **Gasto:** 1.5h | **Restante:** 0h
 
 **Integração:**
+
 - [x] Instalar @sentry/node em 3 serviços
 - [x] Instalar @sentry/tracing em 3 serviços
 - [x] Criar sentry.ts em cada serviço
@@ -55,9 +59,11 @@
 ---
 
 ### ✅ 3. Metrics & Monitoring (Prometheus)
+
 **Estimado:** 4h | **Gasto:** 1.5h | **Restante:** 0h
 
 **Integração:**
+
 - [x] Instalar prom-client em 3 serviços
 - [x] Criar metrics.ts em cada serviço
 - [x] /metrics endpoint (Prometheus format)
@@ -81,9 +87,11 @@
 ---
 
 ### ✅ 4. Enhanced Caching (Redis with ioredis)
+
 **Estimado:** 3h | **Gasto:** 1.5h | **Restante:** 0h
 
 **Integração:**
+
 - [x] Instalar ioredis em 3 serviços
 - [x] Criar cache.ts em cada serviço
 - [x] initializeCache() function
@@ -110,9 +118,11 @@
 ---
 
 ### ✅ 5. Config Management (AWS Parameter Store)
+
 **Estimado:** 3h | **Gasto:** 1.5h | **Restante:** 0h
 
 **Integração:**
+
 - [x] Instalar @aws-sdk/client-ssm em 3 serviços
 - [x] Instalar @aws-sdk/client-secrets-manager em 3 serviços
 - [x] Criar config.ts em cada serviço
@@ -141,15 +151,18 @@
 ## ✅ IMPLEMENTADO (6/8 - DIAS 1-6)
 
 ### ✅ 6. Service Discovery (In-Memory Registry with Health Checks)
+
 **Estimado:** 4h | **Gasto:** 2h | **Restante:** 0h
 **Prioridade:** 🔴 ALTA | **Bloqueadores:** ✅ NENHUM
 **Status:** ✅ COMPLETO | **Próximo:** Automated Backups (DIA 9-11)
 
 **Instalação:**
+
 - [x] Studied AWS Cloud Map (package not available in npm)
 - [x] Decided: In-memory registry with extensibility
 
 **Implementação - Module Base:**
+
 - [x] Criar `packages/shared/src/service-discovery.ts` (332 linhas)
   - [x] ServiceRegistry singleton class
   - [x] ServiceInstance interface
@@ -162,6 +175,7 @@
   - [x] Winston logging
 
 **Integração:**
+
 - [x] Update `packages/shared/src/index.ts`
   - [x] Export service-discovery module
 - [x] Update `services/auth-service/src/service-registry.ts`
@@ -172,6 +186,7 @@
 - [x] Update `services/tenant-service/src/service-registry.ts` (same pattern)
 
 **Testes:**
+
 - [x] Test service registration in memory
 - [x] Test service discovery/lookup
 - [x] Test health check mechanism
@@ -180,12 +195,14 @@
 - [x] Test error handling
 
 **Validação:**
+
 - [x] TypeScript strict mode passing (all 5 packages)
 - [x] Build passing (pnpm build)
 - [x] No regressions on existing tests
 - [x] Git commits successful (3 commits)
 
 **Documentação:**
+
 - [x] Complete rewrite of `docs/SERVICE_DISCOVERY_IMPLEMENTATION.md` (550+ lines)
   - [x] Architecture overview
   - [x] Design pattern explanation
@@ -202,11 +219,13 @@
   - [x] Migration guide from static URLs
 
 **Git Commits:**
+
 - commit 9444981: feat: implement service discovery with in-memory registry and health checks
 - commit 66860e8: docs: comprehensive service discovery implementation guide
 - commit 567165e: chore: service discovery completion summary
 
 **Key Features:**
+
 - ✅ In-memory registry (zero external dependencies)
 - ✅ Automatic health checks (30s interval, 5s timeout)
 - ✅ Round-robin load balancing
@@ -220,11 +239,13 @@
 ## ✅ IMPLEMENTADO (7/8 - DIAS 1-6)
 
 ### ✅ 7. Automated Backups (Firestore + Redis)
+
 **Estimado:** 3h | **Gasto:** 1.5h | **Restante:** 0h
 **Prioridade:** 🟡 MÉDIA | **Bloqueadores:** ✅ NENHUM
 **Status:** ✅ COMPLETO | **Próximo:** Feature 8 (TBD)
 
 **Implementação - Backup Module:**
+
 - [x] Criar `packages/shared/src/backup.ts` (371 linhas)
   - [x] BackupManager class (singleton pattern)
   - [x] runBackupNow() function
@@ -236,12 +257,12 @@
   - [x] Winston logging integration
 
 **Features Implementadas:**
+
 - [x] Firestore backup via gcloud CLI
   - [x] GCS bucket upload
   - [x] Timestamped paths
   - [x] Error handling
   - [x] Logging
-  
 - [x] Redis backup via redis-cli
   - [x] SAVE command execution
   - [x] S3 upload via aws-cli
@@ -259,14 +280,13 @@
   - [x] Backup status reporting
 
 **Integração:**
+
 - [x] Update `packages/shared/src/index.ts`
   - [x] Export backup module
-  
 - [x] Update `services/auth-service/src/backup.ts`
   - [x] Import from shared module
   - [x] Wrapper functions for compatibility
   - [x] getBackupManager() function
-  
 - [x] Update `services/webhook-service/src/backup.ts` (same pattern)
 - [x] Update `services/tenant-service/src/backup.ts` (same pattern)
 
@@ -276,15 +296,18 @@
   - [x] tenant-service initializes backups on startup
 
 **Validação:**
+
 - [x] TypeScript strict mode passing (all 5 packages)
 - [x] Build passing (pnpm build)
 - [x] No regressions on existing tests
 - [x] Git commit successful
 
 **Git Commits:**
+
 - commit 6a28ff3: feat: implement automated backups with firestore and redis support
 
 **Key Features:**
+
 - ✅ Firestore export to GCS via gcloud CLI
 - ✅ Redis snapshot to S3 via aws-cli
 - ✅ Optional cron scheduling (node-cron)
@@ -294,6 +317,7 @@
 - ✅ Configurable via environment variables
 
 **Configuration (Environment Variables):**
+
 - BACKUPS_ENABLED (default: true)
 - GCP_PROJECT (for Firestore backups)
 - BACKUP_GCS_BUCKET (Google Cloud Storage bucket)
@@ -310,6 +334,7 @@
 - [ ] Test SNS notifications
 
 **Validação:**
+
 - [ ] TypeScript strict mode passing
 - [ ] Build passing (pnpm build)
 - [ ] Lambda function deployable
@@ -317,6 +342,7 @@
 - [ ] Git commit successful
 
 **Documentação:**
+
 - [x] Criar `docs/BACKUPS_IMPLEMENTATION_COMPREHENSIVE.md` (860+ linhas)
   - [x] Backup architecture overview
   - [x] BackupManager class details
@@ -334,16 +360,19 @@
   - [x] Best practices
 
 **Git Commits:**
+
 - commit 3eaa37a: docs: comprehensive automated backups implementation guide with architecture and troubleshooting
 
 ---
 
 ### ⏳ 8. Multi-region Deployment (EXTRA)
+
 **Estimado:** 6h+ | **Gasto:** 0h | **Restante:** 6h+
 **Prioridade:** 🟢 BAIXA | **Bloqueadores:** Service Discovery + Backups
 **Status:** ⏳ ADIADO PARA SEMANA 3
 
 **Por que adiar?**
+
 - [ ] Complexidade ALTA
 - [ ] 6+ horas de desenvolvimento
 - [ ] Depende: Service Discovery ✅ (next)
@@ -352,6 +381,7 @@
 - [ ] Menos pressure para deadline
 
 **Será implementado em Semana 3:**
+
 - [ ] Setup cross-region database replication
 - [ ] Configure CloudFront distribution
 - [ ] Implement Route53 geolocation routing
@@ -361,11 +391,13 @@
 ---
 
 ### ✅ 8. Multi-region Deployment
+
 **Estimado:** 6h+ | **Gasto:** 1.5h | **Restante:** 0h
 **Prioridade:** 🟡 MÉDIA | **Bloqueadores:** Service Discovery ✅ + Backups ✅
 **Status:** ✅ COMPLETO
 
 **Implementação:**
+
 - [x] Create MultiRegionManager singleton class (538 lines)
   - [x] Region registration system
   - [x] Health check mechanism (30s interval)
@@ -396,27 +428,29 @@
   - [x] Testing schedule (weekly)
 
 **Integração:**
+
 - [x] Update `packages/shared/src/index.ts`
   - [x] Export multi-region module
-  
 - [x] Update `services/auth-service/src/multi-region.ts`
   - [x] Wrapper functions for service integration
   - [x] getMultiRegionManagerInstance() function
-  
 - [x] Update `services/webhook-service/src/multi-region.ts` (same pattern)
 - [x] Update `services/tenant-service/src/multi-region.ts` (same pattern)
 
 **Validação:**
+
 - [x] TypeScript strict mode passing (all 5 packages)
 - [x] Build passing (pnpm build)
 - [x] No regressions on existing tests
 - [x] Git commit successful (36b370a)
 
 **Git Commits:**
+
 - commit 36b370a: feat: implement multi-region deployment with cross-region failover and disaster recovery
 - commit 9adba0a: docs: comprehensive multi-region deployment guide with failover strategies and DR procedures
 
 **Key Features:**
+
 - ✅ Health-based automatic failover
 - ✅ Regional health monitoring (latency + status)
 - ✅ Failback when primary recovers
@@ -427,14 +461,16 @@
 - ✅ Multi-provider support (AWS/GCP)
 
 **Configuration (Environment Variables):**
+
 - PRIMARY_REGION (default: us-east-1)
 - SECONDARY_REGIONS (comma-separated, default: us-west-2,eu-west-1)
 - PRIMARY_ENDPOINT, PRIMARY_HEALTH_CHECK
-- SECONDARY_ENDPOINT_*, SECONDARY_HEALTH_CHECK_*
+- SECONDARY*ENDPOINT*_, SECONDARY*HEALTH_CHECK*_
 - HEALTH_CHECK_INTERVAL_SECONDS (default: 30)
 - DB_ENGINE, DB_INSTANCE, DB_REGION
 
 **Documentação:**
+
 - [x] Criar `docs/MULTI_REGION_DEPLOYMENT.md` (738 linhas)
   - [x] Architecture overview with diagrams
   - [x] Core components documentation
@@ -455,6 +491,7 @@
 ## ⏳ FALTANDO (0/8)
 
 ### 🔴 IMEDIATO - Dia 6-8 (4 HORAS)
+
 ```
 [ ] 1. Service Discovery - AWS Cloud Map
     └─ Sem bloqueadores
@@ -463,6 +500,7 @@
 ```
 
 ### 🟡 PRÓXIMO - Dia 9-11 (3 HORAS)
+
 ```
 [ ] 2. Automated Backups - RDS/S3
     └─ Essencial para produção
@@ -471,6 +509,7 @@
 ```
 
 ### 🟢 ADIADO - Semana 3 (6+ HORAS)
+
 ```
 [ ] 3. Multi-region Deployment
     └─ Complexidade ALTA
@@ -482,12 +521,12 @@
 
 ## 📈 TIMELINE RECOMENDADA
 
-| Dia | Feature | Duração | Status |
-|-----|---------|---------|--------|
-| 6 | Service Discovery START | 2h | ⏳ |
-| 7-8 | Service Discovery COMPLETE | 2h | ⏳ |
-| 9-10 | Automated Backups | 3h | ⏳ |
-| 11 | Buffer + Testing | 2h | ⏳ |
+| Dia  | Feature                    | Duração | Status |
+| ---- | -------------------------- | ------- | ------ |
+| 6    | Service Discovery START    | 2h      | ⏳     |
+| 7-8  | Service Discovery COMPLETE | 2h      | ⏳     |
+| 9-10 | Automated Backups          | 3h      | ⏳     |
+| 11   | Buffer + Testing           | 2h      | ⏳     |
 
 **Resultado esperado:** 7/8 features (87.5%) até final de Semana 2
 
@@ -496,6 +535,7 @@
 ## 💡 NOTAS IMPORTANTES
 
 ### Velocidade Excepcional
+
 ```
 Média: 1.5 horas por feature (1.9x mais rápido que estimado)
 Qual é o segredo?
@@ -507,6 +547,7 @@ Qual é o segredo?
 ```
 
 ### Qualidade Consistente
+
 ```
 Build time: ~4 segundos (5 serviços)
 TypeScript errors: 0
@@ -516,6 +557,7 @@ Git history: Limpo
 ```
 
 ### Pronto para Produção
+
 ```
 ✅ Health checks para K8s
 ✅ Error tracking com Sentry
@@ -531,6 +573,7 @@ Git history: Limpo
 ## 🎯 DEFINIÇÃO DE SUCESSO
 
 **Semana 2 será sucesso se:**
+
 - ✅ Service Discovery (4h) → implementado dias 6-8
 - ✅ Automated Backups (3h) → implementado dias 9-11
 - ✅ 7/8 features prontos até dia 11

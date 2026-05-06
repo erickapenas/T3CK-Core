@@ -66,7 +66,11 @@ export class TokenStore {
       audience: 't3ck-api',
     });
 
-    await this.cache.set(`refresh:${jti}`, { tenantId: payload.tenantId, userId: payload.userId }, this.refreshTtlSeconds);
+    await this.cache.set(
+      `refresh:${jti}`,
+      { tenantId: payload.tenantId, userId: payload.userId },
+      this.refreshTtlSeconds
+    );
 
     return token;
   }
@@ -77,7 +81,7 @@ export class TokenStore {
       audience: 't3ck-api',
     });
 
-    if (payload.jti && await this.isRevoked(payload.jti)) {
+    if (payload.jti && (await this.isRevoked(payload.jti))) {
       throw new Error('Token revoked');
     }
 
@@ -103,14 +107,19 @@ export class TokenStore {
     return payload;
   }
 
-  async rotateRefreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  async rotateRefreshToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = await this.verifyRefreshToken(refreshToken);
 
     if (payload.jti) {
       await this.revokeTokenByJti(payload.jti, payload.exp);
     }
 
-    const accessToken = await this.issueAccessToken(payload, Number(process.env.JWT_EXPIRATION || 3600));
+    const accessToken = await this.issueAccessToken(
+      payload,
+      Number(process.env.JWT_EXPIRATION || 3600)
+    );
     const newRefreshToken = await this.issueRefreshToken(payload);
 
     return { accessToken, refreshToken: newRefreshToken };

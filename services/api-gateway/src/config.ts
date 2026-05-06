@@ -7,8 +7,12 @@ export const config: GatewayConfig = {
   jwtPublicKey: process.env.JWT_PUBLIC_KEY,
   enableMetrics: process.env.ENABLE_METRICS === 'true',
   enableCsrf: process.env.ENABLE_CSRF !== 'false', // enabled by default
-  corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5174', 'http://localhost:5175'],
-  
+  corsOrigins: process.env.CORS_ORIGINS?.split(',') || [
+    'http://localhost:3000',
+    'http://localhost:5175',
+    'http://localhost:5176',
+  ],
+
   services: [
     {
       prefix: '/api/v1/auth',
@@ -84,6 +88,63 @@ export const config: GatewayConfig = {
       rateLimit: {
         windowMs: 15 * 60 * 1000,
         max: 1000,
+      },
+    },
+    {
+      prefix: '/api/admin-unified-dashboard',
+      target: process.env.ADMIN_SERVICE_URL || 'http://localhost:3006',
+      upstreamBasePath: '/api/admin-unified-dashboard',
+      version: 'v1',
+      requiresAuth: true,
+      requiredRoles: ['admin', 'usuario'],
+      rateLimit: {
+        windowMs: 15 * 60 * 1000,
+        max: 600,
+      },
+    },
+    {
+      prefix: '/api/webhooks/fiscal-provider',
+      target: process.env.ADMIN_SERVICE_URL || 'http://localhost:3006',
+      upstreamBasePath: '/api/webhooks/fiscal-provider',
+      version: 'v1',
+      requiresAuth: false,
+      rateLimit: {
+        windowMs: 60 * 1000,
+        max: 120,
+      },
+    },
+    {
+      prefix: '/api/webhooks/shipping-provider',
+      target: process.env.ADMIN_SERVICE_URL || 'http://localhost:3006',
+      upstreamBasePath: '/api/webhooks/shipping-provider',
+      version: 'v1',
+      requiresAuth: false,
+      rateLimit: {
+        windowMs: 60 * 1000,
+        max: 120,
+      },
+    },
+    {
+      prefix: '/api/v1/user-dashboard',
+      target: process.env.USER_DASHBOARD_SERVICE_URL || 'http://localhost:3015',
+      upstreamBasePath: '/user-dashboard',
+      version: 'v1',
+      requiresAuth: true,
+      requiredRoles: ['admin', 'user', 'usuario', 'customer'],
+      rateLimit: {
+        windowMs: 15 * 60 * 1000,
+        max: 240,
+      },
+    },
+    {
+      prefix: '/api/v1/user-dashboard-webhooks',
+      target: process.env.USER_DASHBOARD_SERVICE_URL || 'http://localhost:3015',
+      upstreamBasePath: '/webhooks',
+      version: 'v1',
+      requiresAuth: false,
+      rateLimit: {
+        windowMs: 60 * 1000,
+        max: 120,
       },
     },
     {

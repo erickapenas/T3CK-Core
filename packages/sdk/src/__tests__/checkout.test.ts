@@ -117,4 +117,13 @@ describe('CheckoutModule', () => {
       '/checkout/orders?status=paid&startDate=2026-01-01&endDate=2026-01-31&page=2&limit=50'
     );
   });
+
+  it('confirmPayment posts tenant confirmation', async () => {
+    const checkout = new CheckoutModule(client);
+    (client.post as jest.Mock).mockResolvedValue({});
+
+    await checkout.confirmPayment('pay-1', 'tenant-1');
+
+    expect(client.post).toHaveBeenCalledWith('/payments/pay-1/confirm', { tenantId: 'tenant-1' });
+  });
 });

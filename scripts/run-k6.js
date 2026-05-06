@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 const { spawnSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 const scriptPath = process.argv[2];
 if (!scriptPath) {
@@ -12,9 +14,20 @@ function run(cmd, args) {
   return result;
 }
 
-const local = run('k6', ['run', scriptPath]);
+const args = ['run', '--summary-trend-stats', 'avg,min,med,max,p(90),p(95),p(99)'];
+if (process.env.K6_SUMMARY_EXPORT) {
+  fs.mkdirSync(path.dirname(process.env.K6_SUMMARY_EXPORT), { recursive: true });
+  args.push('--summary-export', process.env.K6_SUMMARY_EXPORT);
+}
+args.push(scriptPath);
+
+const local = run('k6', args);
 if (!local.error && local.status === 0) {
   process.exit(0);
+}
+
+if (!local.error) {
+  process.exit(local.status ?? 1);
 }
 
 if (process.env.CI === 'true') {

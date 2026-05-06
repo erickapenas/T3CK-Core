@@ -1,44 +1,162 @@
+import type * as admin from 'firebase-admin';
+import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
+import { AggregateField, FieldValue } from 'firebase-admin/firestore';
 import {
   AdminCustomer,
+  AdminTheme,
   AdminOrder,
   AdminProduct,
   AdminSettings,
+  AdminSessionUser,
   AdminTenantConfiguration,
   AdminUser,
   AnalyticsData,
   AuditLog,
+  DashboardLayout,
   DashboardData,
+  DashboardWidget,
+  DesignTokens,
+  PaginatedResult,
+  PaginationOptions,
   ReportData,
+  TenantTheme,
+  ThemeBundle,
+  UserThemePreferences,
 } from './types';
 import { getFirestore, initializeFirestore } from './firebase';
+import { DEFAULT_THEME_ID, DEFAULT_WIDGETS, SYSTEM_THEMES } from './theme-defaults';
+import { AuditLogService } from './audit/audit-log-service';
 
 const randomId = (prefix: string): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 const now = (): string => new Date().toISOString();
+const PASSWORD_PREFIX = 'scrypt';
+const AUTH_USERS_COLLECTION = 'adminAuthUsers';
 
-type CollectionName = 'products' | 'orders' | 'customers' | 'users' | 'auditLogs';
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `${PASSWORD_PREFIX}:${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, storedHash?: string): boolean {
+  if (!storedHash) {
+    return false;
+  }
+
+  const [prefix, salt, hash] = storedHash.split(':');
+  if (prefix !== PASSWORD_PREFIX || !salt || !hash) {
+    return false;
+  }
+
+  const expected = Buffer.from(hash, 'hex');
+  const actual = scryptSync(password, salt, expected.length);
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
+}
+
+function sanitizeUser(user: AdminUser): AdminSessionUser {
+  const { passwordHash: _passwordHash, ...sessionUser } = user;
+  return sessionUser;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function sanitizeTokenValue(value: unknown, depth = 0): unknown {
+  if (depth > 6) {
+    return undefined;
+  }
+
+  if (value === null || typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.length > 240) {
+      return undefined;
+    }
+    if (/javascript:|expression\(|<script|<\/script/i.test(trimmed)) {
+      return undefined;
+    }
+    return trimmed;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 24)
+      .map((item) => sanitizeTokenValue(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+
+  if (isPlainObject(value)) {
+    return sanitizeDesignTokens(value, depth + 1);
+  }
+
+  return undefined;
+}
+
+function sanitizeDesignTokens(tokens: unknown, depth = 0): DesignTokens {
+  if (!isPlainObject(tokens)) {
+    return {};
+  }
+
+  const sanitized: DesignTokens = {};
+  for (const [key, value] of Object.entries(tokens).slice(0, 120)) {
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]{0,47}$/.test(key)) {
+      continue;
+    }
+    const safeValue = sanitizeTokenValue(value, depth);
+    if (safeValue !== undefined) {
+      sanitized[key] = safeValue;
+    }
+  }
+
+  const serialized = JSON.stringify(sanitized);
+  if (serialized.length > 15000) {
+    throw new Error('theme tokens exceed the 15kb limit');
+  }
+
+  return sanitized;
+}
+
+type CollectionName =
+  | 'products'
+  | 'orders'
+  | 'customers'
+  | 'users'
+  | 'auditLogs'
+  | 'productDailyStats';
+
+interface ProductDailyStats {
+  id: string;
+  tenantId: string;
+  productId: string;
+  date: string;
+  quantity: number;
+  revenue: number;
+  updatedAt: string;
+}
 
 export class AdminService {
-  private products = new Map<string, AdminProduct>();
-  private orders = new Map<string, AdminOrder>();
-  private customers = new Map<string, AdminCustomer>();
-  private settings = new Map<string, AdminSettings>();
-  private tenantConfigurations = new Map<string, AdminTenantConfiguration>();
-  private users = new Map<string, AdminUser>();
-  private auditLogs: AuditLog[] = [];
-  private firestoreHealthy = true;
+  private readonly auditLogService = new AuditLogService();
 
   constructor() {
     initializeFirestore();
   }
 
-  private firestoreEnabled(): boolean {
-    return this.firestoreHealthy && Boolean(getFirestore());
-  }
+  private requireFirestore(): admin.firestore.Firestore {
+    const firestore = getFirestore();
 
-  private disableFirestore(error: unknown): void {
-    this.firestoreHealthy = false;
-    const message = (error as Error).message || String(error);
-    console.warn(`[admin-service] Firestore disabled, using in-memory fallback: ${message}`);
+    if (!firestore) {
+      throw new Error('Firestore is required for admin-service persistence');
+    }
+
+    return firestore;
   }
 
   private collectionPath(tenantId: string, collection: CollectionName): string {
@@ -46,126 +164,372 @@ export class AdminService {
   }
 
   private async ensureTenantDocument(tenantId: string): Promise<void> {
-    const firestore = getFirestore();
-    if (!firestore) {
-      return;
-    }
-
-    try {
-      await firestore.collection('tenants').doc(tenantId).set(
-        {
-          id: tenantId,
-          updatedAt: now(),
-        },
-        { merge: true }
-      );
-    } catch (error) {
-      this.disableFirestore(error);
-    }
+    await this.requireFirestore().collection('tenants').doc(tenantId).set(
+      {
+        id: tenantId,
+        updatedAt: now(),
+      },
+      { merge: true }
+    );
   }
 
   private async listCollection<T>(tenantId: string, collection: CollectionName): Promise<T[]> {
-    const firestore = getFirestore();
-    if (!firestore) {
-      return [];
-    }
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, collection))
+      .orderBy('createdAt', 'desc')
+      .get();
 
-    try {
-      const snapshot = await firestore
-        .collection(this.collectionPath(tenantId, collection))
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as T);
+  }
+
+  private async listCollectionPage<T>(
+    tenantId: string,
+    collection: CollectionName,
+    options: PaginationOptions
+  ): Promise<PaginatedResult<T>> {
+    const page = Math.max(1, options.page);
+    const limit = Math.max(1, Math.min(100, options.limit));
+    const collectionRef = this.requireFirestore().collection(
+      this.collectionPath(tenantId, collection)
+    );
+    const [snapshot, countSnapshot] = await Promise.all([
+      collectionRef
         .orderBy('createdAt', 'desc')
-        .get();
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .get(),
+      collectionRef.count().get(),
+    ]);
+    const total = countSnapshot.data().count;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
 
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as T));
-    } catch (error) {
-      this.disableFirestore(error);
-      return [];
-    }
+    return {
+      items: snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as T),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
-  private async getDoc<T>(tenantId: string, collection: CollectionName, id: string): Promise<T | null> {
-    const firestore = getFirestore();
-    if (!firestore) {
-      return null;
-    }
+  private async countCollection(tenantId: string, collection: CollectionName): Promise<number> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, collection))
+      .count()
+      .get();
 
-    try {
-      const snapshot = await firestore.collection(this.collectionPath(tenantId, collection)).doc(id).get();
-      if (!snapshot.exists) {
-        return null;
-      }
-
-      return { id: snapshot.id, ...snapshot.data() } as T;
-    } catch (error) {
-      this.disableFirestore(error);
-      return null;
-    }
+    return snapshot.data().count;
   }
 
-  private async setDoc(tenantId: string, collection: CollectionName, id: string, payload: Record<string, unknown>): Promise<void> {
-    const firestore = getFirestore();
-    if (!firestore) {
+  private async listLowStockProducts(
+    tenantId: string,
+    lowStockThreshold: number,
+    limit = 10
+  ): Promise<AdminProduct[]> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'products'))
+      .where('stock', '<=', lowStockThreshold)
+      .orderBy('stock', 'asc')
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as AdminProduct);
+  }
+
+  private async countOrdersForAnalytics(
+    tenantId: string,
+    from: string,
+    to: string
+  ): Promise<number> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'orders'))
+      .where('createdAt', '>=', from)
+      .where('createdAt', '<=', to)
+      .count()
+      .get();
+
+    return snapshot.data().count;
+  }
+
+  private async sumCompletedOrderRevenueForAnalytics(
+    tenantId: string,
+    from: string,
+    to: string
+  ): Promise<number> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'orders'))
+      .where('status', '==', 'completed')
+      .where('createdAt', '>=', from)
+      .where('createdAt', '<=', to)
+      .aggregate({ revenue: AggregateField.sum('total') })
+      .get();
+
+    return snapshot.data().revenue || 0;
+  }
+
+  private async listTopCustomers(tenantId: string, limit = 10): Promise<AdminCustomer[]> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'customers'))
+      .orderBy('totalSpent', 'desc')
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as AdminCustomer);
+  }
+
+  private async countRepeatCustomers(tenantId: string): Promise<number> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'customers'))
+      .where('totalOrders', '>', 1)
+      .count()
+      .get();
+
+    return snapshot.data().count;
+  }
+
+  private async sumCompletedOrderRevenue(tenantId: string): Promise<number> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'orders'))
+      .where('status', '==', 'completed')
+      .aggregate({ revenue: AggregateField.sum('total') })
+      .get();
+
+    return snapshot.data().revenue || 0;
+  }
+
+  private statsDate(value: string): string {
+    return value.slice(0, 10);
+  }
+
+  private productStatsDocId(date: string, productId: string): string {
+    return `${date}_${productId}`;
+  }
+
+  private async applyProductStatsDelta(order: AdminOrder, multiplier: 1 | -1): Promise<void> {
+    if (!order.items.length) {
       return;
     }
 
-    try {
-      await this.ensureTenantDocument(tenantId);
-      await firestore.collection(this.collectionPath(tenantId, collection)).doc(id).set(payload, { merge: true });
-    } catch (error) {
-      this.disableFirestore(error);
+    await this.ensureTenantDocument(order.tenantId);
+    const firestore = this.requireFirestore();
+    const batch = firestore.batch();
+    const date = this.statsDate(order.createdAt);
+    const updatedAt = now();
+
+    for (const item of order.items) {
+      const docRef = firestore
+        .collection(this.collectionPath(order.tenantId, 'productDailyStats'))
+        .doc(this.productStatsDocId(date, item.productId));
+      batch.set(
+        docRef,
+        {
+          tenantId: order.tenantId,
+          productId: item.productId,
+          date,
+          quantity: FieldValue.increment(item.quantity * multiplier),
+          revenue: FieldValue.increment(item.quantity * item.price * multiplier),
+          updatedAt,
+        },
+        { merge: true }
+      );
     }
+
+    await batch.commit();
+  }
+
+  private async listTopProductStats(
+    tenantId: string,
+    from: string,
+    to: string,
+    limit = 5
+  ): Promise<Array<{ productId: string; quantity: number; revenue: number }>> {
+    const fromDate = this.statsDate(from);
+    const toDate = this.statsDate(to);
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'productDailyStats'))
+      .where('date', '>=', fromDate)
+      .where('date', '<=', toDate)
+      .get();
+    const byProduct = new Map<string, { quantity: number; revenue: number }>();
+
+    for (const doc of snapshot.docs) {
+      const stats = doc.data() as ProductDailyStats;
+      const current = byProduct.get(stats.productId) || { quantity: 0, revenue: 0 };
+      current.quantity += stats.quantity || 0;
+      current.revenue += stats.revenue || 0;
+      byProduct.set(stats.productId, current);
+    }
+
+    return Array.from(byProduct.entries())
+      .map(([productId, stats]) => ({ productId, ...stats }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, limit);
+  }
+
+  async backfillProductDailyStats(
+    tenantId: string,
+    from?: string,
+    to?: string
+  ): Promise<{ processedOrders: number; writtenStats: number }> {
+    let query: admin.firestore.Query = this.requireFirestore()
+      .collection(this.collectionPath(tenantId, 'orders'))
+      .orderBy('createdAt', 'asc');
+
+    if (from) {
+      query = query.where('createdAt', '>=', from);
+    }
+
+    if (to) {
+      query = query.where('createdAt', '<=', to);
+    }
+
+    const snapshot = await query.get();
+    const byDayAndProduct = new Map<string, ProductDailyStats>();
+
+    for (const doc of snapshot.docs) {
+      const order = { id: doc.id, ...doc.data() } as AdminOrder;
+      const date = this.statsDate(order.createdAt);
+
+      for (const item of order.items) {
+        const id = this.productStatsDocId(date, item.productId);
+        const current =
+          byDayAndProduct.get(id) ||
+          ({
+            id,
+            tenantId,
+            productId: item.productId,
+            date,
+            quantity: 0,
+            revenue: 0,
+            updatedAt: now(),
+          } satisfies ProductDailyStats);
+        current.quantity += item.quantity;
+        current.revenue += item.quantity * item.price;
+        byDayAndProduct.set(id, current);
+      }
+    }
+
+    await this.ensureTenantDocument(tenantId);
+    const firestore = this.requireFirestore();
+    let batch = firestore.batch();
+    let operations = 0;
+
+    for (const stats of byDayAndProduct.values()) {
+      const docRef = firestore
+        .collection(this.collectionPath(tenantId, 'productDailyStats'))
+        .doc(stats.id);
+      batch.set(docRef, stats, { merge: true });
+      operations += 1;
+
+      if (operations % 450 === 0) {
+        await batch.commit();
+        batch = firestore.batch();
+      }
+    }
+
+    if (operations > 0 && operations % 450 !== 0) {
+      await batch.commit();
+    }
+
+    return {
+      processedOrders: snapshot.size,
+      writtenStats: byDayAndProduct.size,
+    };
+  }
+
+  private async getDoc<T>(
+    tenantId: string,
+    collection: CollectionName,
+    id: string
+  ): Promise<T | null> {
+    const snapshot = await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, collection))
+      .doc(id)
+      .get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return { id: snapshot.id, ...snapshot.data() } as T;
+  }
+
+  private async setDoc(
+    tenantId: string,
+    collection: CollectionName,
+    id: string,
+    payload: Record<string, unknown>
+  ): Promise<void> {
+    await this.ensureTenantDocument(tenantId);
+    await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, collection))
+      .doc(id)
+      .set(payload, {
+        merge: true,
+      });
   }
 
   private async deleteDoc(tenantId: string, collection: CollectionName, id: string): Promise<void> {
-    const firestore = getFirestore();
-    if (!firestore) {
-      return;
-    }
+    await this.requireFirestore()
+      .collection(this.collectionPath(tenantId, collection))
+      .doc(id)
+      .delete();
+  }
 
-    try {
-      await firestore.collection(this.collectionPath(tenantId, collection)).doc(id).delete();
-    } catch (error) {
-      this.disableFirestore(error);
-    }
+  private async syncAuthUser(user: AdminUser): Promise<void> {
+    await this.requireFirestore()
+      .collection(AUTH_USERS_COLLECTION)
+      .doc(user.username)
+      .set(user as unknown as Record<string, unknown>, { merge: true });
+  }
+
+  private async deleteAuthUser(username: string): Promise<void> {
+    await this.requireFirestore().collection(AUTH_USERS_COLLECTION).doc(username).delete();
   }
 
   async getDashboard(tenantId: string): Promise<DashboardData> {
-    const tenantProducts = await this.listProducts(tenantId);
-    const tenantOrders = await this.listOrders(tenantId);
-    const tenantCustomers = await this.listCustomers(tenantId);
-    const revenue = tenantOrders
-      .filter((order) => order.status === 'completed')
-      .reduce((sum, order) => sum + order.total, 0);
-
-    const lowStockThreshold = (await this.getSettings(tenantId)).lowStockThreshold;
-    const lowStockProducts = tenantProducts.filter((product) => product.stock <= lowStockThreshold);
-    const recentOrders = [...tenantOrders]
-      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-      .slice(0, 10);
-    const recentAuditLogs = (await this.listAuditLogs(tenantId)).slice(0, 20);
+    const settings = await this.getSettings(tenantId);
+    const [productCount, orderCount, customerCount, recentOrdersPage, recentAuditLogsPage] =
+      await Promise.all([
+        this.countCollection(tenantId, 'products'),
+        this.countCollection(tenantId, 'orders'),
+        this.countCollection(tenantId, 'customers'),
+        this.listOrdersPage(tenantId, { page: 1, limit: 10 }),
+        this.listAuditLogsPage(tenantId, { page: 1, limit: 20 }),
+      ]);
+    const [revenue, lowStockProducts] = await Promise.all([
+      this.sumCompletedOrderRevenue(tenantId),
+      this.listLowStockProducts(tenantId, settings.lowStockThreshold),
+    ]);
 
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
       action: 'dashboard.viewed',
       resourceType: 'dashboard',
-      metadata: { orders: tenantOrders.length, products: tenantProducts.length },
+      metadata: { orders: orderCount, products: productCount },
     });
 
     return {
       kpis: {
         revenue,
-        orders: tenantOrders.length,
-        customers: tenantCustomers.length,
-        products: tenantProducts.length,
-        averageTicket: tenantOrders.length ? revenue / tenantOrders.length : 0,
+        orders: orderCount,
+        customers: customerCount,
+        products: productCount,
+        averageTicket: orderCount ? revenue / orderCount : 0,
       },
       lowStockProducts,
-      recentOrders,
-      recentAuditLogs,
+      recentOrders: recentOrdersPage.items,
+      recentAuditLogs: recentAuditLogsPage.items,
     };
   }
 
-  async createProduct(input: Omit<AdminProduct, 'id' | 'createdAt' | 'updatedAt'>): Promise<AdminProduct> {
+  async createProduct(
+    input: Omit<AdminProduct, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<AdminProduct> {
     const product: AdminProduct = {
       ...input,
       id: randomId('prd'),
@@ -173,8 +537,12 @@ export class AdminService {
       updatedAt: now(),
     };
 
-    this.products.set(product.id, product);
-    await this.setDoc(product.tenantId, 'products', product.id, product as unknown as Record<string, unknown>);
+    await this.setDoc(
+      product.tenantId,
+      'products',
+      product.id,
+      product as unknown as Record<string, unknown>
+    );
     await this.addAuditLog(product.tenantId, {
       actorUserId: 'system',
       action: 'product.created',
@@ -187,19 +555,30 @@ export class AdminService {
   }
 
   async listProducts(tenantId: string): Promise<AdminProduct[]> {
-    if (this.firestoreEnabled()) {
-      return this.listCollection<AdminProduct>(tenantId, 'products');
-    }
-
-    return Array.from(this.products.values()).filter((item) => item.tenantId === tenantId);
+    return this.listCollection<AdminProduct>(tenantId, 'products');
   }
 
-  async updateProduct(tenantId: string, productId: string, updates: Partial<AdminProduct>): Promise<AdminProduct> {
+  async listProductsPage(
+    tenantId: string,
+    options: PaginationOptions
+  ): Promise<PaginatedResult<AdminProduct>> {
+    return this.listCollectionPage<AdminProduct>(tenantId, 'products', options);
+  }
+
+  async updateProduct(
+    tenantId: string,
+    productId: string,
+    updates: Partial<AdminProduct>
+  ): Promise<AdminProduct> {
     const current = await this.requireProduct(tenantId, productId);
     const updated: AdminProduct = { ...current, ...updates, updatedAt: now() };
 
-    this.products.set(productId, updated);
-    await this.setDoc(tenantId, 'products', productId, updated as unknown as Record<string, unknown>);
+    await this.setDoc(
+      tenantId,
+      'products',
+      productId,
+      updated as unknown as Record<string, unknown>
+    );
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
       action: 'product.updated',
@@ -217,7 +596,6 @@ export class AdminService {
       return false;
     }
 
-    this.products.delete(productId);
     await this.deleteDoc(tenantId, 'products', productId);
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
@@ -229,7 +607,9 @@ export class AdminService {
     return true;
   }
 
-  async createOrder(input: Omit<AdminOrder, 'id' | 'createdAt' | 'updatedAt'>): Promise<AdminOrder> {
+  async createOrder(
+    input: Omit<AdminOrder, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<AdminOrder> {
     const order: AdminOrder = {
       ...input,
       id: randomId('ord'),
@@ -237,8 +617,13 @@ export class AdminService {
       updatedAt: now(),
     };
 
-    this.orders.set(order.id, order);
-    await this.setDoc(order.tenantId, 'orders', order.id, order as unknown as Record<string, unknown>);
+    await this.setDoc(
+      order.tenantId,
+      'orders',
+      order.id,
+      order as unknown as Record<string, unknown>
+    );
+    await this.applyProductStatsDelta(order, 1);
     await this.addAuditLog(order.tenantId, {
       actorUserId: 'system',
       action: 'order.created',
@@ -251,19 +636,29 @@ export class AdminService {
   }
 
   async listOrders(tenantId: string): Promise<AdminOrder[]> {
-    if (this.firestoreEnabled()) {
-      return this.listCollection<AdminOrder>(tenantId, 'orders');
-    }
-
-    return Array.from(this.orders.values()).filter((item) => item.tenantId === tenantId);
+    return this.listCollection<AdminOrder>(tenantId, 'orders');
   }
 
-  async updateOrder(tenantId: string, orderId: string, updates: Partial<AdminOrder>): Promise<AdminOrder> {
+  async listOrdersPage(
+    tenantId: string,
+    options: PaginationOptions
+  ): Promise<PaginatedResult<AdminOrder>> {
+    return this.listCollectionPage<AdminOrder>(tenantId, 'orders', options);
+  }
+
+  async updateOrder(
+    tenantId: string,
+    orderId: string,
+    updates: Partial<AdminOrder>
+  ): Promise<AdminOrder> {
     const current = await this.requireOrder(tenantId, orderId);
     const updated: AdminOrder = { ...current, ...updates, updatedAt: now() };
 
-    this.orders.set(orderId, updated);
     await this.setDoc(tenantId, 'orders', orderId, updated as unknown as Record<string, unknown>);
+    if (updates.items) {
+      await this.applyProductStatsDelta(current, -1);
+      await this.applyProductStatsDelta(updated, 1);
+    }
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
       action: 'order.updated',
@@ -275,7 +670,9 @@ export class AdminService {
     return updated;
   }
 
-  async createCustomer(input: Omit<AdminCustomer, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders' | 'totalSpent'>): Promise<AdminCustomer> {
+  async createCustomer(
+    input: Omit<AdminCustomer, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders' | 'totalSpent'>
+  ): Promise<AdminCustomer> {
     const customer: AdminCustomer = {
       ...input,
       id: randomId('cus'),
@@ -285,8 +682,12 @@ export class AdminService {
       updatedAt: now(),
     };
 
-    this.customers.set(customer.id, customer);
-    await this.setDoc(customer.tenantId, 'customers', customer.id, customer as unknown as Record<string, unknown>);
+    await this.setDoc(
+      customer.tenantId,
+      'customers',
+      customer.id,
+      customer as unknown as Record<string, unknown>
+    );
     await this.addAuditLog(customer.tenantId, {
       actorUserId: 'system',
       action: 'customer.created',
@@ -299,19 +700,34 @@ export class AdminService {
   }
 
   async listCustomers(tenantId: string): Promise<AdminCustomer[]> {
-    if (this.firestoreEnabled()) {
-      return this.listCollection<AdminCustomer>(tenantId, 'customers');
-    }
-
-    return Array.from(this.customers.values()).filter((item) => item.tenantId === tenantId);
+    return this.listCollection<AdminCustomer>(tenantId, 'customers');
   }
 
-  async updateCustomer(tenantId: string, customerId: string, updates: Partial<AdminCustomer>): Promise<AdminCustomer> {
+  async listCustomersPage(
+    tenantId: string,
+    options: PaginationOptions
+  ): Promise<PaginatedResult<AdminCustomer>> {
+    return this.listCollectionPage<AdminCustomer>(tenantId, 'customers', options);
+  }
+
+  async getCustomer(tenantId: string, customerId: string): Promise<AdminCustomer | null> {
+    return this.getDoc<AdminCustomer>(tenantId, 'customers', customerId);
+  }
+
+  async updateCustomer(
+    tenantId: string,
+    customerId: string,
+    updates: Partial<AdminCustomer>
+  ): Promise<AdminCustomer> {
     const current = await this.requireCustomer(tenantId, customerId);
     const updated: AdminCustomer = { ...current, ...updates, updatedAt: now() };
 
-    this.customers.set(customerId, updated);
-    await this.setDoc(tenantId, 'customers', customerId, updated as unknown as Record<string, unknown>);
+    await this.setDoc(
+      tenantId,
+      'customers',
+      customerId,
+      updated as unknown as Record<string, unknown>
+    );
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
       action: 'customer.updated',
@@ -324,23 +740,13 @@ export class AdminService {
   }
 
   async getSettings(tenantId: string): Promise<AdminSettings> {
-    if (this.firestoreEnabled()) {
-      const firestore = getFirestore();
-      if (firestore) {
-        try {
-          const snapshot = await firestore.collection(`tenants/${tenantId}/admin/data/settings`).doc('current').get();
-          if (snapshot.exists) {
-            return snapshot.data() as AdminSettings;
-          }
-        } catch (error) {
-          this.disableFirestore(error);
-        }
-      }
-    }
+    const settingsRef = this.requireFirestore()
+      .collection(`tenants/${tenantId}/admin/data/settings`)
+      .doc('current');
+    const snapshot = await settingsRef.get();
 
-    const existing = this.settings.get(tenantId);
-    if (existing) {
-      return existing;
+    if (snapshot.exists) {
+      return snapshot.data() as AdminSettings;
     }
 
     const defaults: AdminSettings = {
@@ -352,18 +758,8 @@ export class AdminService {
       updatedAt: now(),
     };
 
-    this.settings.set(tenantId, defaults);
-    if (this.firestoreEnabled()) {
-      const firestore = getFirestore();
-      if (firestore) {
-        try {
-          await this.ensureTenantDocument(tenantId);
-          await firestore.collection(`tenants/${tenantId}/admin/data/settings`).doc('current').set(defaults, { merge: true });
-        } catch (error) {
-          this.disableFirestore(error);
-        }
-      }
-    }
+    await this.ensureTenantDocument(tenantId);
+    await settingsRef.set(defaults, { merge: true });
 
     return defaults;
   }
@@ -372,18 +768,13 @@ export class AdminService {
     const current = await this.getSettings(tenantId);
     const updated: AdminSettings = { ...current, ...updates, updatedAt: now(), tenantId };
 
-    this.settings.set(tenantId, updated);
-    if (this.firestoreEnabled()) {
-      const firestore = getFirestore();
-      if (firestore) {
-        try {
-          await this.ensureTenantDocument(tenantId);
-          await firestore.collection(`tenants/${tenantId}/admin/data/settings`).doc('current').set(updated, { merge: true });
-        } catch (error) {
-          this.disableFirestore(error);
-        }
-      }
-    }
+    await this.ensureTenantDocument(tenantId);
+    await this.requireFirestore()
+      .collection(`tenants/${tenantId}/admin/data/settings`)
+      .doc('current')
+      .set(updated, {
+        merge: true,
+      });
 
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
@@ -397,23 +788,13 @@ export class AdminService {
   }
 
   async getTenantConfiguration(tenantId: string): Promise<AdminTenantConfiguration> {
-    if (this.firestoreEnabled()) {
-      const firestore = getFirestore();
-      if (firestore) {
-        try {
-          const snapshot = await firestore.collection(`tenants/${tenantId}/admin/data/tenantConfig`).doc('current').get();
-          if (snapshot.exists) {
-            return snapshot.data() as AdminTenantConfiguration;
-          }
-        } catch (error) {
-          this.disableFirestore(error);
-        }
-      }
-    }
+    const configRef = this.requireFirestore()
+      .collection(`tenants/${tenantId}/admin/data/tenantConfig`)
+      .doc('current');
+    const snapshot = await configRef.get();
 
-    const existing = this.tenantConfigurations.get(tenantId);
-    if (existing) {
-      return existing;
+    if (snapshot.exists) {
+      return snapshot.data() as AdminTenantConfiguration;
     }
 
     const defaults: AdminTenantConfiguration = {
@@ -427,18 +808,8 @@ export class AdminService {
       updatedAt: now(),
     };
 
-    this.tenantConfigurations.set(tenantId, defaults);
-    if (this.firestoreEnabled()) {
-      const firestore = getFirestore();
-      if (firestore) {
-        try {
-          await this.ensureTenantDocument(tenantId);
-          await firestore.collection(`tenants/${tenantId}/admin/data/tenantConfig`).doc('current').set(defaults, { merge: true });
-        } catch (error) {
-          this.disableFirestore(error);
-        }
-      }
-    }
+    await this.ensureTenantDocument(tenantId);
+    await configRef.set(defaults, { merge: true });
 
     return defaults;
   }
@@ -455,18 +826,13 @@ export class AdminService {
       updatedAt: now(),
     };
 
-    this.tenantConfigurations.set(tenantId, updated);
-    if (this.firestoreEnabled()) {
-      const firestore = getFirestore();
-      if (firestore) {
-        try {
-          await this.ensureTenantDocument(tenantId);
-          await firestore.collection(`tenants/${tenantId}/admin/data/tenantConfig`).doc('current').set(updated, { merge: true });
-        } catch (error) {
-          this.disableFirestore(error);
-        }
-      }
-    }
+    await this.ensureTenantDocument(tenantId);
+    await this.requireFirestore()
+      .collection(`tenants/${tenantId}/admin/data/tenantConfig`)
+      .doc('current')
+      .set(updated, {
+        merge: true,
+      });
 
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
@@ -479,16 +845,362 @@ export class AdminService {
     return updated;
   }
 
-  async createUser(input: Omit<AdminUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<AdminUser> {
-    const user: AdminUser = {
-      ...input,
-      id: randomId('usr'),
+  listThemes(): AdminTheme[] {
+    return SYSTEM_THEMES;
+  }
+
+  private resolveTheme(themeId?: string): AdminTheme {
+    return (
+      SYSTEM_THEMES.find((theme) => theme.id === themeId || theme.slug === themeId) ||
+      SYSTEM_THEMES.find((theme) => theme.id === DEFAULT_THEME_ID) ||
+      SYSTEM_THEMES[0]
+    );
+  }
+
+  private tenantThemeCollection(tenantId: string): admin.firestore.CollectionReference {
+    return this.requireFirestore().collection(`tenants/${tenantId}/admin/data/tenant_themes`);
+  }
+
+  private userPreferencesCollection(tenantId: string): admin.firestore.CollectionReference {
+    return this.requireFirestore().collection(`tenants/${tenantId}/admin/data/user_theme_preferences`);
+  }
+
+  private dashboardLayoutCollection(tenantId: string): admin.firestore.CollectionReference {
+    return this.requireFirestore().collection(`tenants/${tenantId}/admin/data/dashboard_layouts`);
+  }
+
+  private dashboardWidgetCollection(tenantId: string): admin.firestore.CollectionReference {
+    return this.requireFirestore().collection(`tenants/${tenantId}/admin/data/dashboard_widgets`);
+  }
+
+  async getTenantTheme(tenantId: string, status: 'active' | 'draft' = 'active'): Promise<TenantTheme> {
+    const docId = status === 'draft' ? 'draft' : 'active';
+    const ref = this.tenantThemeCollection(tenantId).doc(docId);
+    const snapshot = await ref.get();
+
+    if (snapshot.exists) {
+      return snapshot.data() as TenantTheme;
+    }
+
+    const defaults: TenantTheme = {
+      id: docId,
+      tenantId,
+      themeId: DEFAULT_THEME_ID,
+      customTokensJson: {},
+      logoUrl: '',
+      faviconUrl: '',
+      displayName: `Tenant ${tenantId}`,
+      status: docId === 'draft' ? 'draft' : 'published',
+      isActive: docId === 'active',
       createdAt: now(),
       updatedAt: now(),
     };
 
-    this.users.set(user.id, user);
+    await this.ensureTenantDocument(tenantId);
+    await ref.set(defaults, { merge: true });
+    return defaults;
+  }
+
+  async updateTenantThemeDraft(
+    tenantId: string,
+    updates: Partial<TenantTheme>,
+    userId = 'system'
+  ): Promise<TenantTheme> {
+    const current = await this.getTenantTheme(tenantId, 'draft');
+    const updated: TenantTheme = {
+      ...current,
+      ...updates,
+      id: 'draft',
+      tenantId,
+      themeId: updates.themeId || current.themeId || DEFAULT_THEME_ID,
+      customTokensJson: sanitizeDesignTokens(updates.customTokensJson ?? current.customTokensJson),
+      status: 'draft',
+      isActive: false,
+      updatedBy: userId,
+      createdAt: current.createdAt || now(),
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await this.tenantThemeCollection(tenantId).doc('draft').set(updated, { merge: true });
+    await this.addAuditLog(tenantId, {
+      actorUserId: userId,
+      action: 'theme.draft.updated',
+      resourceType: 'theme',
+      resourceId: tenantId,
+      metadata: { themeId: updated.themeId },
+    });
+
+    return updated;
+  }
+
+  async publishTenantTheme(
+    tenantId: string,
+    updates: Partial<TenantTheme> | undefined,
+    userId = 'system'
+  ): Promise<TenantTheme> {
+    const source = updates ? await this.updateTenantThemeDraft(tenantId, updates, userId) : await this.getTenantTheme(tenantId, 'draft');
+    const published: TenantTheme = {
+      ...source,
+      id: 'active',
+      tenantId,
+      themeId: source.themeId || DEFAULT_THEME_ID,
+      customTokensJson: sanitizeDesignTokens(source.customTokensJson),
+      status: 'published',
+      isActive: true,
+      updatedBy: userId,
+      createdAt: source.createdAt || now(),
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await this.tenantThemeCollection(tenantId).doc('active').set(published, { merge: true });
+    await this.tenantThemeCollection(tenantId).doc('draft').set(
+      {
+        ...published,
+        id: 'draft',
+        status: 'draft',
+        isActive: false,
+      },
+      { merge: true }
+    );
+    await this.addAuditLog(tenantId, {
+      actorUserId: userId,
+      action: 'theme.published',
+      resourceType: 'theme',
+      resourceId: tenantId,
+      metadata: { themeId: published.themeId },
+    });
+
+    return published;
+  }
+
+  async resetTenantTheme(tenantId: string, userId = 'system'): Promise<TenantTheme> {
+    const reset: TenantTheme = {
+      id: 'active',
+      tenantId,
+      themeId: DEFAULT_THEME_ID,
+      customTokensJson: {},
+      logoUrl: '',
+      faviconUrl: '',
+      displayName: `Tenant ${tenantId}`,
+      status: 'published',
+      isActive: true,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: now(),
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await this.tenantThemeCollection(tenantId).doc('active').set(reset, { merge: true });
+    await this.tenantThemeCollection(tenantId).doc('draft').set(
+      {
+        ...reset,
+        id: 'draft',
+        status: 'draft',
+        isActive: false,
+      },
+      { merge: true }
+    );
+    await this.addAuditLog(tenantId, {
+      actorUserId: userId,
+      action: 'theme.reset',
+      resourceType: 'theme',
+      resourceId: tenantId,
+      metadata: { themeId: DEFAULT_THEME_ID },
+    });
+
+    return reset;
+  }
+
+  async getUserThemePreferences(
+    tenantId: string,
+    userId: string
+  ): Promise<UserThemePreferences> {
+    const ref = this.userPreferencesCollection(tenantId).doc(userId);
+    const snapshot = await ref.get();
+
+    if (snapshot.exists) {
+      return snapshot.data() as UserThemePreferences;
+    }
+
+    const defaults: UserThemePreferences = {
+      id: userId,
+      tenantId,
+      userId,
+      preferredMode: 'system',
+      density: 'comfortable',
+      fontSize: 'medium',
+      reducedMotion: false,
+      reducedTransparency: false,
+      highContrast: false,
+      customTokensJson: {},
+      defaultDashboardPeriod: 'last30',
+      favoriteShortcuts: ['dashboard', 'orders', 'integrations'],
+      visibleTableColumns: {},
+      savedFilters: {},
+      createdAt: now(),
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await ref.set(defaults, { merge: true });
+    return defaults;
+  }
+
+  async updateUserThemePreferences(
+    tenantId: string,
+    userId: string,
+    updates: Partial<UserThemePreferences>
+  ): Promise<UserThemePreferences> {
+    const current = await this.getUserThemePreferences(tenantId, userId);
+    const updated: UserThemePreferences = {
+      ...current,
+      ...updates,
+      id: userId,
+      tenantId,
+      userId,
+      customTokensJson: sanitizeDesignTokens(updates.customTokensJson ?? current.customTokensJson),
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await this.userPreferencesCollection(tenantId).doc(userId).set(updated, { merge: true });
+    await this.addAuditLog(tenantId, {
+      actorUserId: userId,
+      action: 'theme.user_preferences.updated',
+      resourceType: 'theme',
+      resourceId: userId,
+      metadata: {
+        preferredMode: updated.preferredMode,
+        density: updated.density,
+        highContrast: updated.highContrast,
+      },
+    });
+
+    return updated;
+  }
+
+  async getDashboardLayout(tenantId: string, userId?: string): Promise<DashboardLayout> {
+    const docId = userId || 'tenant-default';
+    const ref = this.dashboardLayoutCollection(tenantId).doc(docId);
+    const snapshot = await ref.get();
+
+    if (snapshot.exists) {
+      return snapshot.data() as DashboardLayout;
+    }
+
+    const defaults: DashboardLayout = {
+      id: docId,
+      tenantId,
+      userId,
+      layoutJson: {
+        columns: 12,
+        density: 'comfortable',
+        widgets: DEFAULT_WIDGETS.map((widget) => ({
+          widgetKey: widget.widgetKey,
+          position: widget.position,
+          size: widget.size,
+          visible: widget.visible,
+        })),
+      },
+      isDefault: !userId,
+      createdAt: now(),
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await ref.set(defaults, { merge: true });
+    return defaults;
+  }
+
+  async updateDashboardLayout(
+    tenantId: string,
+    userId: string | undefined,
+    updates: Partial<DashboardLayout>
+  ): Promise<DashboardLayout> {
+    const docId = userId || 'tenant-default';
+    const current = await this.getDashboardLayout(tenantId, userId);
+    const updated: DashboardLayout = {
+      ...current,
+      ...updates,
+      id: docId,
+      tenantId,
+      userId,
+      layoutJson: sanitizeDesignTokens(updates.layoutJson ?? current.layoutJson) as Record<string, unknown>,
+      updatedAt: now(),
+    };
+
+    await this.ensureTenantDocument(tenantId);
+    await this.dashboardLayoutCollection(tenantId).doc(docId).set(updated, { merge: true });
+    await this.addAuditLog(tenantId, {
+      actorUserId: userId || 'system',
+      action: 'dashboard.layout.updated',
+      resourceType: 'dashboard_layout',
+      resourceId: docId,
+      metadata: { isDefault: updated.isDefault },
+    });
+
+    return updated;
+  }
+
+  async getDashboardWidgets(tenantId: string, userId?: string): Promise<DashboardWidget[]> {
+    const snapshot = await this.dashboardWidgetCollection(tenantId)
+      .where('userId', '==', userId || '')
+      .orderBy('position', 'asc')
+      .get();
+
+    if (!snapshot.empty) {
+      return snapshot.docs.map((doc) => doc.data() as DashboardWidget);
+    }
+
+    return DEFAULT_WIDGETS.map((widget) => ({
+      ...widget,
+      tenantId,
+      userId,
+      createdAt: now(),
+      updatedAt: now(),
+    }));
+  }
+
+  async getThemeBundle(tenantId: string, userId: string): Promise<ThemeBundle> {
+    const tenantTheme = await this.getTenantTheme(tenantId);
+    const userPreferences = await this.getUserThemePreferences(tenantId, userId);
+    const dashboardLayout = await this.getDashboardLayout(tenantId, userId);
+    const dashboardWidgets = await this.getDashboardWidgets(tenantId, userId);
+    const activeTheme = this.resolveTheme(
+      userPreferences.highContrast ? 'high-contrast' : tenantTheme.themeId
+    );
+
+    return {
+      themes: this.listThemes(),
+      activeTheme,
+      tenantTheme,
+      userPreferences,
+      dashboardLayout,
+      dashboardWidgets,
+    };
+  }
+
+  async createUser(
+    input: Omit<AdminUser, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }
+  ): Promise<AdminUser> {
+    const payload = input;
+    const user: AdminUser = {
+      ...payload,
+      username: payload.username || payload.email,
+      passwordHash: payload.password
+        ? hashPassword(payload.password)
+        : payload.passwordHash,
+      id: randomId('usr'),
+      createdAt: now(),
+      updatedAt: now(),
+    };
+    delete (user as AdminUser & { password?: string }).password;
+
     await this.setDoc(user.tenantId, 'users', user.id, user as unknown as Record<string, unknown>);
+    await this.syncAuthUser(user);
     await this.addAuditLog(user.tenantId, {
       actorUserId: 'system',
       action: 'user.created',
@@ -501,19 +1213,36 @@ export class AdminService {
   }
 
   async listUsers(tenantId: string): Promise<AdminUser[]> {
-    if (this.firestoreEnabled()) {
-      return this.listCollection<AdminUser>(tenantId, 'users');
-    }
-
-    return Array.from(this.users.values()).filter((item) => item.tenantId === tenantId);
+    return this.listCollection<AdminUser>(tenantId, 'users');
   }
 
-  async updateUser(tenantId: string, userId: string, updates: Partial<AdminUser>): Promise<AdminUser> {
-    const current = await this.requireUser(tenantId, userId);
-    const updated: AdminUser = { ...current, ...updates, updatedAt: now() };
+  async listUsersPage(
+    tenantId: string,
+    options: PaginationOptions
+  ): Promise<PaginatedResult<AdminUser>> {
+    return this.listCollectionPage<AdminUser>(tenantId, 'users', options);
+  }
 
-    this.users.set(userId, updated);
+  async updateUser(
+    tenantId: string,
+    userId: string,
+    updates: Partial<AdminUser> & { password?: string }
+  ): Promise<AdminUser> {
+    const current = await this.requireUser(tenantId, userId);
+    const payload = updates;
+    const updated: AdminUser = {
+      ...current,
+      ...payload,
+      passwordHash: payload.password ? hashPassword(payload.password) : current.passwordHash,
+      updatedAt: now(),
+    };
+    delete (updated as AdminUser & { password?: string }).password;
+
     await this.setDoc(tenantId, 'users', userId, updated as unknown as Record<string, unknown>);
+    if (current.username !== updated.username) {
+      await this.deleteAuthUser(current.username);
+    }
+    await this.syncAuthUser(updated);
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
       action: 'user.updated',
@@ -531,8 +1260,8 @@ export class AdminService {
       return false;
     }
 
-    this.users.delete(userId);
     await this.deleteDoc(tenantId, 'users', userId);
+    await this.deleteAuthUser(existing.username);
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
       action: 'user.deleted',
@@ -543,37 +1272,63 @@ export class AdminService {
     return true;
   }
 
-  async getAnalytics(tenantId: string, from: string, to: string): Promise<AnalyticsData> {
-    const orders = await this.listOrders(tenantId);
-    const products = await this.listProducts(tenantId);
-    const customers = await this.listCustomers(tenantId);
+  async authenticateUser(username: string, password: string): Promise<AdminSessionUser | null> {
+    const normalizedUsername = username.trim();
+    const firestore = this.requireFirestore();
+    const authUserSnapshot = await firestore
+      .collection(AUTH_USERS_COLLECTION)
+      .doc(normalizedUsername)
+      .get();
 
-    const totalRevenue = orders
-      .filter((order) => order.status === 'completed')
-      .reduce((sum, order) => sum + order.total, 0);
-
-    const orderProductMap = new Map<string, { quantity: number; revenue: number }>();
-    for (const order of orders) {
-      for (const item of order.items) {
-        const current = orderProductMap.get(item.productId) || { quantity: 0, revenue: 0 };
-        current.quantity += item.quantity;
-        current.revenue += item.quantity * item.price;
-        orderProductMap.set(item.productId, current);
+    if (authUserSnapshot.exists) {
+      const user = { id: authUserSnapshot.id, ...authUserSnapshot.data() } as AdminUser;
+      if (user.active !== false && verifyPassword(password, user.passwordHash)) {
+        return sanitizeUser(user);
       }
     }
 
-    const topProducts = Array.from(orderProductMap.entries())
-      .map(([productId, metrics]) => ({
-        productId,
-        name: products.find((p) => p.id === productId)?.name || productId,
-        quantity: metrics.quantity,
-        revenue: metrics.revenue,
-      }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
+    if (process.env.NODE_ENV !== 'production') {
+      const fallbackUsername = process.env.ADMIN_BOOTSTRAP_USERNAME || 'admin';
+      const fallbackPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD || 'admin';
+      if (normalizedUsername === fallbackUsername && password === fallbackPassword) {
+        return {
+          id: 'bootstrap-admin',
+          tenantId: process.env.ADMIN_BOOTSTRAP_TENANT_ID || 'tenant-demo',
+          username: fallbackUsername,
+          name: 'Bootstrap Admin',
+          email: process.env.ADMIN_BOOTSTRAP_EMAIL || 'admin@t3ck.local',
+          role: 'admin',
+          active: true,
+          createdAt: now(),
+          updatedAt: now(),
+        };
+      }
+    }
 
-    const repeatCustomers = customers.filter((customer) => customer.totalOrders > 1).length;
-    const repeatRate = customers.length > 0 ? repeatCustomers / customers.length : 0;
+    return null;
+  }
+
+  async getAnalytics(tenantId: string, from: string, to: string): Promise<AnalyticsData> {
+    const [totalOrders, totalRevenue, topProducts, customerCount, repeatCustomers] =
+      await Promise.all([
+        this.countOrdersForAnalytics(tenantId, from, to),
+        this.sumCompletedOrderRevenueForAnalytics(tenantId, from, to),
+        this.listTopProductStats(tenantId, from, to),
+        this.countCollection(tenantId, 'customers'),
+        this.countRepeatCustomers(tenantId),
+      ]);
+
+    const productsById = new Map(
+      (
+        await Promise.all(
+          topProducts.map((product) => this.getProductIfExists(tenantId, product.productId))
+        )
+      )
+        .filter((product): product is AdminProduct => Boolean(product))
+        .map((product) => [product.id, product])
+    );
+
+    const repeatRate = customerCount > 0 ? repeatCustomers / customerCount : 0;
 
     await this.addAuditLog(tenantId, {
       actorUserId: 'system',
@@ -586,40 +1341,55 @@ export class AdminService {
       period: { from, to },
       sales: {
         totalRevenue,
-        totalOrders: orders.length,
-        averageTicket: orders.length > 0 ? totalRevenue / orders.length : 0,
+        totalOrders,
+        averageTicket: totalOrders > 0 ? totalRevenue / totalOrders : 0,
       },
-      topProducts,
+      topProducts: topProducts.map((product) => ({
+        ...product,
+        name: productsById.get(product.productId)?.name || product.productId,
+      })),
       customerMetrics: {
-        totalCustomers: customers.length,
+        totalCustomers: customerCount,
         repeatRate,
       },
     };
   }
 
-  async generateReport(tenantId: string, reportType: ReportData['reportType']): Promise<ReportData> {
+  async generateReport(
+    tenantId: string,
+    reportType: ReportData['reportType']
+  ): Promise<ReportData> {
     let data: Record<string, unknown> = {};
 
     if (reportType === 'sales') {
-      const analytics = await this.getAnalytics(tenantId, new Date(Date.now() - 30 * 86400000).toISOString(), now());
+      const analytics = await this.getAnalytics(
+        tenantId,
+        new Date(Date.now() - 30 * 86400000).toISOString(),
+        now()
+      );
       data = analytics as unknown as Record<string, unknown>;
     }
 
     if (reportType === 'inventory') {
-      const products = await this.listProducts(tenantId);
+      const lowStockThreshold = (await this.getSettings(tenantId)).lowStockThreshold;
+      const [totalProducts, lowStock] = await Promise.all([
+        this.countCollection(tenantId, 'products'),
+        this.listLowStockProducts(tenantId, lowStockThreshold, 20),
+      ]);
       data = {
-        totalProducts: products.length,
-        lowStock: products.filter((p) => p.stock <= (this.settings.get(tenantId)?.lowStockThreshold || 5)),
+        totalProducts,
+        lowStock,
       };
     }
 
     if (reportType === 'customers') {
-      const customers = await this.listCustomers(tenantId);
+      const [totalCustomers, topCustomers] = await Promise.all([
+        this.countCollection(tenantId, 'customers'),
+        this.listTopCustomers(tenantId),
+      ]);
       data = {
-        totalCustomers: customers.length,
-        topCustomers: [...customers]
-          .sort((a, b) => b.totalSpent - a.totalSpent)
-          .slice(0, 10),
+        totalCustomers,
+        topCustomers,
       };
     }
 
@@ -641,14 +1411,15 @@ export class AdminService {
   }
 
   async listAuditLogs(tenantId: string): Promise<AuditLog[]> {
-    if (this.firestoreEnabled()) {
-      const logs = await this.listCollection<AuditLog>(tenantId, 'auditLogs');
-      return logs.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-    }
+    const logs = await this.listCollection<AuditLog>(tenantId, 'auditLogs');
+    return logs.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  }
 
-    return this.auditLogs
-      .filter((log) => log.tenantId === tenantId)
-      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  async listAuditLogsPage(
+    tenantId: string,
+    options: PaginationOptions
+  ): Promise<PaginatedResult<AuditLog>> {
+    return this.listCollectionPage<AuditLog>(tenantId, 'auditLogs', options);
   }
 
   private async addAuditLog(
@@ -662,35 +1433,22 @@ export class AdminService {
       ...input,
     };
 
-    this.auditLogs.push(audit);
     await this.setDoc(tenantId, 'auditLogs', audit.id, audit as unknown as Record<string, unknown>);
+    await this.auditLogService.recordLegacy(tenantId, input).catch(() => {
+      // Legacy audit writes must not fail business operations.
+    });
     return audit;
   }
 
-  private async getProductIfExists(tenantId: string, productId: string): Promise<AdminProduct | null> {
-    if (this.firestoreEnabled()) {
-      return this.getDoc<AdminProduct>(tenantId, 'products', productId);
-    }
-
-    const value = this.products.get(productId);
-    if (!value || value.tenantId !== tenantId) {
-      return null;
-    }
-
-    return value;
+  private async getProductIfExists(
+    tenantId: string,
+    productId: string
+  ): Promise<AdminProduct | null> {
+    return this.getDoc<AdminProduct>(tenantId, 'products', productId);
   }
 
   private async getUserIfExists(tenantId: string, userId: string): Promise<AdminUser | null> {
-    if (this.firestoreEnabled()) {
-      return this.getDoc<AdminUser>(tenantId, 'users', userId);
-    }
-
-    const value = this.users.get(userId);
-    if (!value || value.tenantId !== tenantId) {
-      return null;
-    }
-
-    return value;
+    return this.getDoc<AdminUser>(tenantId, 'users', userId);
   }
 
   private async requireProduct(tenantId: string, productId: string): Promise<AdminProduct> {
@@ -703,16 +1461,8 @@ export class AdminService {
   }
 
   private async requireOrder(tenantId: string, orderId: string): Promise<AdminOrder> {
-    if (this.firestoreEnabled()) {
-      const value = await this.getDoc<AdminOrder>(tenantId, 'orders', orderId);
-      if (!value) {
-        throw new Error('Order not found');
-      }
-      return value;
-    }
-
-    const value = this.orders.get(orderId);
-    if (!value || value.tenantId !== tenantId) {
+    const value = await this.getDoc<AdminOrder>(tenantId, 'orders', orderId);
+    if (!value) {
       throw new Error('Order not found');
     }
 
@@ -720,16 +1470,8 @@ export class AdminService {
   }
 
   private async requireCustomer(tenantId: string, customerId: string): Promise<AdminCustomer> {
-    if (this.firestoreEnabled()) {
-      const value = await this.getDoc<AdminCustomer>(tenantId, 'customers', customerId);
-      if (!value) {
-        throw new Error('Customer not found');
-      }
-      return value;
-    }
-
-    const value = this.customers.get(customerId);
-    if (!value || value.tenantId !== tenantId) {
+    const value = await this.getDoc<AdminCustomer>(tenantId, 'customers', customerId);
+    if (!value) {
       throw new Error('Customer not found');
     }
 

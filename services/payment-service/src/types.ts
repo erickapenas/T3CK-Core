@@ -1,6 +1,22 @@
-export type PaymentMethod = 'pix' | 'boleto' | 'card';
+export type PaymentMethod = 'pix' | 'boleto' | 'card' | 'checkout';
 
-export type AbacatePayStatus = 'pending' | 'paid' | 'refunded' | 'failed' | 'chargeback';
+export type AbacateCheckoutMethod = 'PIX' | 'CARD';
+
+export type AbacatePayStatus =
+  | 'PENDING'
+  | 'EXPIRED'
+  | 'CANCELLED'
+  | 'PAID'
+  | 'UNDER_DISPUTE'
+  | 'REFUNDED'
+  | 'REDEEMED'
+  | 'APPROVED'
+  | 'FAILED'
+  | 'pending'
+  | 'paid'
+  | 'refunded'
+  | 'failed'
+  | 'chargeback';
 
 export type InternalPaymentStatus =
   | 'AWAITING_PAYMENT'
@@ -18,6 +34,22 @@ export interface PaymentRequest {
   method: PaymentMethod;
   description?: string;
   dueMinutes?: number;
+  checkoutItems?: Array<{
+    id: string;
+    quantity: number;
+  }>;
+  checkoutMethods?: AbacateCheckoutMethod[];
+  returnUrl?: string;
+  completionUrl?: string;
+  coupons?: string[];
+  maxInstallments?: number;
+  upSellProductId?: string;
+  customer?: {
+    name: string;
+    email?: string;
+    taxId: string;
+    cellphone?: string;
+  };
   metadata?: Record<string, unknown>;
 }
 
@@ -39,6 +71,11 @@ export interface PaymentResult {
     barcode: string;
     dueDate: string;
     pdfUrl?: string;
+  };
+  hostedCheckout?: {
+    url: string;
+    returnUrl?: string;
+    completionUrl?: string;
   };
   checkout?: {
     logoUrl?: string;

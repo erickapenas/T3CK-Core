@@ -90,7 +90,7 @@ pnpm dev
 
 1. **Explorar o SDK**: Veja [examples/sdk-usage.ts](../examples/sdk-usage.ts)
 2. **Configurar Webhooks**: Veja [examples/webhook-setup.ts](../examples/webhook-setup.ts)
-3. **Ler Documentação**: 
+3. **Ler Documentação**:
    - [Quick Start](QUICKSTART.md)
    - [Architecture](ARCHITECTURE.md)
    - [API Reference](API.md)
@@ -121,20 +121,25 @@ pnpm dev
 ## 🔧 Troubleshooting
 
 ### Erro: "Module not found"
+
 ```bash
 pnpm install
 ```
 
 ### Erro: "AWS credentials not found"
+
 ```bash
 aws configure
 ```
 
 ### Erro: "Firebase not initialized"
+
 Verifique se `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` está configurado no `.env`
 
 ### Serviços não iniciam
+
 Verifique se as portas estão livres:
+
 ```bash
 # Linux/macOS
 lsof -i :3001

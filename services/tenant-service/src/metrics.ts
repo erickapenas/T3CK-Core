@@ -79,7 +79,7 @@ export const cacheSize = new Gauge({
 export function setupMetricsMiddleware(app: any): void {
   app.use((req: any, res: any, next: any) => {
     const start = Date.now();
-    
+
     // Increment active connections
     activeConnections.inc();
 
@@ -92,7 +92,7 @@ export function setupMetricsMiddleware(app: any): void {
 
       httpRequestDuration.observe(
         { method: req.method, route: req.route?.path || req.path, status_code: status },
-        duration,
+        duration
       );
       httpRequestTotal.inc({
         method: req.method,
@@ -131,10 +131,14 @@ export function trackProvisioningDuration(durationMs: number, success: boolean):
   provisioningDuration.observe({ status: success ? 'completed' : 'failed' }, durationMs / 1000);
 }
 
-export function trackProvisioningStep(stepName: string, durationMs: number, success: boolean): void {
+export function trackProvisioningStep(
+  stepName: string,
+  durationMs: number,
+  success: boolean
+): void {
   provisioningStepDuration.observe(
     { step_name: stepName, status: success ? 'success' : 'failure' },
-    durationMs / 1000,
+    durationMs / 1000
   );
 }
 
@@ -142,21 +146,25 @@ export function updateActiveTenants(count: number): void {
   tenantsActive.set(count);
 }
 
-export function trackFirestoreOperation(operation: string, durationMs: number, success: boolean): void {
+export function trackFirestoreOperation(
+  operation: string,
+  durationMs: number,
+  success: boolean
+): void {
   firestoreOperationsDuration.observe(
     { operation, status: success ? 'success' : 'failure' },
-    durationMs / 1000,
+    durationMs / 1000
   );
 }
 
 export function trackStepFunctionsExecution(
   executionType: string,
   durationMs: number,
-  success: boolean,
+  success: boolean
 ): void {
   stepFunctionsExecutionDuration.observe(
     { execution_type: executionType, status: success ? 'success' : 'failure' },
-    durationMs / 1000,
+    durationMs / 1000
   );
 }
 

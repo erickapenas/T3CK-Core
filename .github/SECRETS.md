@@ -8,12 +8,13 @@ Configure estes secrets em `Settings → Secrets and variables → Actions`:
 
 ### AWS Credentials
 
-| Secret | Descrição | Exemplo |
-|--------|-----------|---------|
-| `AWS_ACCESS_KEY_ID` | AWS IAM User Access Key | `AKIAIOSFODNN7EXAMPLE` |
+| Secret                  | Descrição               | Exemplo                                    |
+| ----------------------- | ----------------------- | ------------------------------------------ |
+| `AWS_ACCESS_KEY_ID`     | AWS IAM User Access Key | `AKIAIOSFODNN7EXAMPLE`                     |
 | `AWS_SECRET_ACCESS_KEY` | AWS IAM User Secret Key | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
 
 **Permissões mínimas necessárias:**
+
 ```json
 {
   "Version": "2012-10-17",
@@ -50,25 +51,26 @@ Configure estes secrets em `Settings → Secrets and variables → Actions`:
 
 ### Staging Environment
 
-| Secret | Descrição | Exemplo |
-|--------|-----------|---------|
+| Secret        | Descrição               | Exemplo            |
+| ------------- | ----------------------- | ------------------ |
 | `STAGING_URL` | URL do ambiente staging | `staging.t3ck.dev` |
 
 ### Production Environment
 
-| Secret | Descrição | Exemplo |
-|--------|-----------|---------|
+| Secret     | Descrição                  | Exemplo        |
+| ---------- | -------------------------- | -------------- |
 | `PROD_URL` | URL do ambiente production | `api.t3ck.com` |
 
 ### Notificações (Opcional)
 
-| Secret | Descrição | Exemplo |
-|--------|-----------|---------|
+| Secret          | Descrição                          | Exemplo                                |
+| --------------- | ---------------------------------- | -------------------------------------- |
 | `SLACK_WEBHOOK` | Webhook do Slack para notificações | `https://hooks.slack.com/services/...` |
 
 ## 🔐 Configuração de Environment Secrets
 
 ### Staging Environment
+
 **Location:** `Settings → Environments → staging → Environment secrets`
 
 ```
@@ -76,6 +78,7 @@ STAGING_URL=staging.t3ck.dev
 ```
 
 ### Production Environment
+
 **Location:** `Settings → Environments → production → Environment secrets`
 
 ```
@@ -107,16 +110,19 @@ ECR_REGISTRY: (obtido do login-ecr)
 ## 🚨 Troubleshooting
 
 ### "Not authorized to perform: ecr:GetAuthorizationToken"
+
 - Verificar se IAM user tem permissão para ECR
 - Regenerar Access Key
 - Atualizar secrets
 
 ### "ECS service not found"
+
 - Verificar se cluster e services existem
 - Verificar se nome do cluster está correto (t3ck-cluster)
 - Verificar se nomes dos services estão corretos
 
 ### "Service deployment failed"
+
 - Verificar logs do ECS
 - Verificar CloudWatch logs
 - Verificar se task definition está válida
@@ -133,6 +139,7 @@ ECR_REGISTRY: (obtido do login-ecr)
 ## 🔑 Suporte
 
 Para suporte ou dúvidas:
+
 1. Consulte a documentação do GitHub Actions
 2. Verifique os logs de workflow
 3. Contacte o time DevOps

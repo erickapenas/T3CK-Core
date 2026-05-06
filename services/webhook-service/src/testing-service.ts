@@ -208,7 +208,8 @@ export class WebhookTestingService {
     // Placeholder implementation
     console.log(
       `[WebhookTesting] Sending test request for webhook ${webhookId}:`,
-      payload
+      payload,
+      headers
     );
 
     return {
@@ -218,5 +219,3 @@ export class WebhookTestingService {
     };
   }
 }
-
-export { WebhookTestingService };

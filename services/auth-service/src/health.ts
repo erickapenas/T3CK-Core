@@ -34,7 +34,7 @@ export function setupHealthChecks(app: Express): void {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: Math.floor((Date.now() - startTime) / 1000),
-      services: {}
+      services: {},
     };
 
     if (process.env.VERSION) {
@@ -54,8 +54,8 @@ export function setupHealthChecks(app: Express): void {
       uptime: Math.floor((Date.now() - startTime) / 1000),
       services: {
         firebase: 'ok',
-        cache: 'ok'
-      }
+        cache: 'ok',
+      },
     };
 
     try {
@@ -69,7 +69,7 @@ export function setupHealthChecks(app: Express): void {
         status: 'error',
         timestamp: new Date().toISOString(),
         uptime: Math.floor((Date.now() - startTime) / 1000),
-        services: health.services
+        services: health.services,
       });
     }
   });
@@ -88,8 +88,8 @@ export function setupHealthChecks(app: Express): void {
     },
     healthChecks: {
       '/health': async () => ({ ok: true }),
-      '/ready': async () => ({ ok: true })
-    }
+      '/ready': async () => ({ ok: true }),
+    },
   });
 
   logger.info('Health checks initialized');

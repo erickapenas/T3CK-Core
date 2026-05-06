@@ -216,12 +216,17 @@ export class MediaTransformer {
       totalTransformations: this.stats.transformations,
       cacheHits: this.stats.cacheHits,
       cacheMisses: this.stats.cacheMisses,
-      cacheHitRate: this.stats.cacheHits + this.stats.cacheMisses > 0
-        ? ((this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) * 100).toFixed(2) + '%'
-        : '0%',
-      averageProcessingTime: this.stats.transformations > 0
-        ? Math.round(this.stats.totalProcessingTime / this.stats.transformations)
-        : 0,
+      cacheHitRate:
+        this.stats.cacheHits + this.stats.cacheMisses > 0
+          ? (
+              (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
+              100
+            ).toFixed(2) + '%'
+          : '0%',
+      averageProcessingTime:
+        this.stats.transformations > 0
+          ? Math.round(this.stats.totalProcessingTime / this.stats.transformations)
+          : 0,
       totalBytesSaved: this.stats.totalBytesSaved,
       cacheSize: this.getCacheSize(),
       cacheEntries: this.cache.size,

@@ -22,14 +22,12 @@ describe('Edge Service API', () => {
       const mockJobId = 'job-123';
       (EdgeRenderer.prototype.preRender as jest.Mock).mockResolvedValue(mockJobId);
 
-      const response = await request(app)
-        .post('/prerender')
-        .send({
-          url: 'https://example.com',
-          tenantId: 'tenant-1',
-          resourceType: 'product',
-          resourceId: 'prod-1',
-        });
+      const response = await request(app).post('/prerender').send({
+        url: 'https://example.com',
+        tenantId: 'tenant-1',
+        resourceType: 'product',
+        resourceId: 'prod-1',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.jobId).toBe(mockJobId);

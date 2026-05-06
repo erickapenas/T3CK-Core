@@ -32,13 +32,13 @@ SEMANA 2: ████████░░░░ 62.5%
 
 ### Dia 1-5: Implementações Completas
 
-| Feature | Status | Docs | Build |
-|---------|--------|------|-------|
-| Health Checks | ✅ 1.5h | ✅ | ✅ |
-| Sentry | ✅ 1.5h | ✅ | ✅ |
-| Prometheus | ✅ 1.5h | ✅ | ✅ |
-| Redis Cache | ✅ 1.5h | ✅ | ✅ |
-| Config Mgmt | ✅ 1.5h | ✅ | ✅ |
+| Feature       | Status  | Docs | Build |
+| ------------- | ------- | ---- | ----- |
+| Health Checks | ✅ 1.5h | ✅   | ✅    |
+| Sentry        | ✅ 1.5h | ✅   | ✅    |
+| Prometheus    | ✅ 1.5h | ✅   | ✅    |
+| Redis Cache   | ✅ 1.5h | ✅   | ✅    |
+| Config Mgmt   | ✅ 1.5h | ✅   | ✅    |
 
 **SUBTOTAL:** 7.5 horas, 5 documentações, 0 erros
 
@@ -47,6 +47,7 @@ SEMANA 2: ████████░░░░ 62.5%
 ## ⏳ O QUE FALTA
 
 ### 1. Service Discovery (AWS Cloud Map) - 4 HORAS
+
 ```
 ❌ Não iniciado
 ⏳ Próximo: Dia 6-8 (DIA 6 HOJE!)
@@ -55,11 +56,13 @@ SEMANA 2: ████████░░░░ 62.5%
 ```
 
 **Arquivos a criar:**
+
 - `packages/shared/src/service-discovery.ts` (300 linhas)
 - `services/*/src/discovery.ts` (3 arquivos)
 - `docs/SERVICE_DISCOVERY.md` (500+ linhas)
 
 **Integração:**
+
 - Modificar 3 `index.ts` files
 - Testar register/lookup/deregister
 - Build & commit
@@ -67,6 +70,7 @@ SEMANA 2: ████████░░░░ 62.5%
 ---
 
 ### 2. Automated Backups - 3 HORAS
+
 ```
 ❌ Não iniciado
 ⏳ Próximo: Dia 9-11 (após Service Discovery)
@@ -75,11 +79,13 @@ SEMANA 2: ████████░░░░ 62.5%
 ```
 
 **Arquivos a criar:**
+
 - `packages/shared/src/backup.ts` (250 linhas)
 - `infrastructure/lambda/backup/` (Lambda function)
 - `docs/AUTOMATED_BACKUPS.md` (500+ linhas)
 
 **Setup AWS:**
+
 - RDS automated backups
 - S3 bucket para snapshots
 - EventBridge trigger
@@ -88,6 +94,7 @@ SEMANA 2: ████████░░░░ 62.5%
 ---
 
 ### 3. Multi-region (EXTRA) - 6+ HORAS
+
 ```
 ❌ Não iniciado
 ⏳ Adiado para: Semana 3
@@ -96,6 +103,7 @@ SEMANA 2: ████████░░░░ 62.5%
 ```
 
 **Por que adiar?**
+
 - Complexidade ALTA
 - 6+ horas de desenvolvimento
 - Depende de 2 features anteriores
@@ -106,6 +114,7 @@ SEMANA 2: ████████░░░░ 62.5%
 ## 🚀 PRÓXIMOS PASSOS (IMEDIATO)
 
 ### HOJE - Iniciar Service Discovery
+
 ```bash
 # 1. Instalar SDK
 pnpm add @aws-sdk/client-cloud-map -F auth-service
@@ -128,6 +137,7 @@ git commit -m "feat: service discovery (AWS Cloud Map)"
 ---
 
 ### DEPOIS - Automated Backups
+
 ```bash
 # 1. Instalar SDKs
 pnpm add @aws-sdk/client-rds @aws-sdk/client-s3
@@ -151,17 +161,20 @@ git commit -m "feat: automated backups (RDS/S3)"
 ## 📊 MÉTRICAS
 
 ### Produtividade
+
 - **5 features em 7.5 horas** = 1.5h por feature
 - **Estimado original:** 2-4h por feature
 - **Speedup:** 1.9x mais rápido ⚡⚡
 
 ### Qualidade
+
 - **Build errors:** 0
 - **TypeScript errors:** 0
 - **Regressions:** 0
 - **Documentação:** 100% completa
 
 ### Tempo Restante
+
 - **Total Semana 2:** 28 horas
 - **Gasto:** 7.5 horas
 - **Restante:** 20.5 horas
@@ -221,16 +234,19 @@ RESULTADO: 7/8 features = 87.5% ✅
 ## 🎓 KEY INSIGHTS
 
 ### Velocidade Excepcional
+
 - Equipe implementando **2.7x mais rápido** que estimado
 - Documentação simultânea com código
 - Zero technical debt
 
 ### Qualidade Consistente
+
 - Build time: ~4s para 5 serviços
 - TypeScript strict mode: 100% passing
 - Commits limpos e organizados
 
 ### Pronto para Produção
+
 - Health checks para K8s/ECS
 - Error tracking com Sentry
 - Metrics com Prometheus

@@ -4,8 +4,11 @@ import { TransactionLogEntry } from './types';
 export class ImmutableTransactionLog {
   private readonly entries: TransactionLogEntry[] = [];
 
-  append(entry: Omit<TransactionLogEntry, 'hash' | 'prevHash' | 'createdAt' | 'id'>): TransactionLogEntry {
-    const prevHash = this.entries.length > 0 ? this.entries[this.entries.length - 1].hash : 'GENESIS';
+  append(
+    entry: Omit<TransactionLogEntry, 'hash' | 'prevHash' | 'createdAt' | 'id'>
+  ): TransactionLogEntry {
+    const prevHash =
+      this.entries.length > 0 ? this.entries[this.entries.length - 1].hash : 'GENESIS';
     const createdAt = new Date().toISOString();
     const id = `txlog_${Date.now()}_${this.entries.length + 1}`;
 
@@ -61,5 +64,16 @@ export class ImmutableTransactionLog {
     }
 
     return true;
+  }
+
+  load(entries: TransactionLogEntry[]): void {
+    this.entries.splice(0, this.entries.length, ...entries);
+    if (!this.verifyIntegrity()) {
+      throw new Error('Transaction log integrity check failed while loading state.');
+    }
+  }
+
+  dump(): TransactionLogEntry[] {
+    return [...this.entries];
   }
 }

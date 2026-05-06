@@ -7,22 +7,22 @@ import { Construct } from 'constructs';
  * Interface for the provisioning form input
  */
 export interface ProvisioningInput {
-    tenantId: string;
-    domain: string;
-    companyName: string;
-    contactEmail: string;
-    contactPhone: string;
-    region: string;
+  tenantId: string;
+  domain: string;
+  companyName: string;
+  contactEmail: string;
+  contactPhone: string;
+  region: string;
 }
 /**
  * Props for the ProvisioningStateMachine construct
  */
 export interface ProvisioningStateMachineProps {
-    terraformLambda: lambda.IFunction;
-    cdkLambda: lambda.IFunction;
-    firebaseConfigLambda: lambda.IFunction;
-    route53ConfigLambda: lambda.IFunction;
-    healthCheckLambda: lambda.IFunction;
+  terraformLambda: lambda.IFunction;
+  cdkLambda: lambda.IFunction;
+  firebaseConfigLambda: lambda.IFunction;
+  route53ConfigLambda: lambda.IFunction;
+  healthCheckLambda: lambda.IFunction;
 }
 /**
  * AWS Step Functions State Machine for T3CK provisioning workflow
@@ -38,8 +38,8 @@ export interface ProvisioningStateMachineProps {
  * 8. Handles errors with DLQ for failed jobs
  */
 export declare class ProvisioningStateMachine extends Construct {
-    readonly stateMachine: stepfunctions.StateMachine;
-    readonly dlqQueue: sqs.Queue;
-    readonly successTopic: sns.Topic;
-    constructor(scope: Construct, id: string, props: ProvisioningStateMachineProps);
+  readonly stateMachine: stepfunctions.StateMachine;
+  readonly dlqQueue: sqs.Queue;
+  readonly successTopic: sns.Topic;
+  constructor(scope: Construct, id: string, props: ProvisioningStateMachineProps);
 }

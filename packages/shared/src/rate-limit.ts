@@ -11,7 +11,9 @@ let redisClient: Redis | null = null;
 
 function shouldDisableRateLimit(): boolean {
   const explicitDisable = String(process.env.RATE_LIMIT_DISABLED || '').toLowerCase() === 'true';
-  return explicitDisable || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  return (
+    explicitDisable || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+  );
 }
 
 function isLocalRequest(req: Request): boolean {
@@ -33,7 +35,8 @@ function shouldUseRedisStore(): boolean {
     return true;
   }
 
-  const redisRequired = String(process.env.RATE_LIMIT_REDIS_REQUIRED || '').toLowerCase() === 'true';
+  const redisRequired =
+    String(process.env.RATE_LIMIT_REDIS_REQUIRED || '').toLowerCase() === 'true';
   if (redisRequired) {
     return true;
   }
@@ -90,7 +93,8 @@ export function createRateLimiter(options?: {
   statusCode?: number;
 }): RateLimitRequestHandler {
   if (shouldDisableRateLimit()) {
-    return ((_: Request, __: Response, next: () => void) => next()) as unknown as RateLimitRequestHandler;
+    return ((_: Request, __: Response, next: () => void) =>
+      next()) as unknown as RateLimitRequestHandler;
   }
 
   const useRedisStore = shouldUseRedisStore();
@@ -131,9 +135,11 @@ export function createRateLimiter(options?: {
 
       return false;
     },
-    keyGenerator: options?.keyGenerator || ((req: Request) => {
-      return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
-    }),
+    keyGenerator:
+      options?.keyGenerator ||
+      ((req: Request) => {
+        return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
+      }),
     handler: (req: Request, res: Response) => {
       logger.warn('Rate limit exceeded', {
         ip: req.ip,

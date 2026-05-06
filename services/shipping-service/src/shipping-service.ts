@@ -18,19 +18,42 @@ export class ShippingService {
   private readonly notifications: ShippingNotification[] = [];
 
   calculateOptions(input: ShippingCalculationInput): ShippingOption[] {
-    const volumeWeight = (input.dimensionsCm.length * input.dimensionsCm.width * input.dimensionsCm.height) / 6000;
+    const volumeWeight =
+      (input.dimensionsCm.length * input.dimensionsCm.width * input.dimensionsCm.height) / 6000;
     const billableWeight = Math.max(input.weightKg, volumeWeight);
 
     const base = 12 + billableWeight * 4;
 
     return [
-      { carrier: 'correios', serviceLevel: 'economy', amount: Number((base * 1).toFixed(2)), currency: 'BRL', estimatedDays: 7 },
-      { carrier: 'melhor_envio', serviceLevel: 'standard', amount: Number((base * 1.25).toFixed(2)), currency: 'BRL', estimatedDays: 4 },
-      { carrier: 'loggi', serviceLevel: 'express', amount: Number((base * 1.8).toFixed(2)), currency: 'BRL', estimatedDays: 2 },
+      {
+        carrier: 'correios',
+        serviceLevel: 'economy',
+        amount: Number((base * 1).toFixed(2)),
+        currency: 'BRL',
+        estimatedDays: 7,
+      },
+      {
+        carrier: 'melhor_envio',
+        serviceLevel: 'standard',
+        amount: Number((base * 1.25).toFixed(2)),
+        currency: 'BRL',
+        estimatedDays: 4,
+      },
+      {
+        carrier: 'loggi',
+        serviceLevel: 'express',
+        amount: Number((base * 1.8).toFixed(2)),
+        currency: 'BRL',
+        estimatedDays: 2,
+      },
     ];
   }
 
-  integrateCarrier(tenantId: string, orderId: string, carrier: CarrierCode): CarrierIntegrationResult {
+  integrateCarrier(
+    tenantId: string,
+    orderId: string,
+    carrier: CarrierCode
+  ): CarrierIntegrationResult {
     return {
       carrier,
       success: true,
@@ -90,7 +113,9 @@ export class ShippingService {
 
   getTracking(tenantId: string, shipmentId: string): TrackingEvent[] {
     this.requireShipment(tenantId, shipmentId);
-    return (this.tracking.get(shipmentId) || []).sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
+    return (this.tracking.get(shipmentId) || []).sort(
+      (a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt)
+    );
   }
 
   sendNotification(input: {
@@ -126,11 +151,18 @@ export class ShippingService {
 
   listNotifications(tenantId: string, shipmentId?: string): ShippingNotification[] {
     return this.notifications
-      .filter((item) => item.tenantId === tenantId && (!shipmentId || item.shipmentId === shipmentId))
+      .filter(
+        (item) => item.tenantId === tenantId && (!shipmentId || item.shipmentId === shipmentId)
+      )
       .sort((a, b) => Date.parse(b.sentAt) - Date.parse(a.sentAt));
   }
 
-  private pushTracking(shipmentId: string, status: ShipmentStatus, message?: string, location?: string): void {
+  private pushTracking(
+    shipmentId: string,
+    status: ShipmentStatus,
+    message?: string,
+    location?: string
+  ): void {
     const list = this.tracking.get(shipmentId) || [];
     list.push({
       shipmentId,

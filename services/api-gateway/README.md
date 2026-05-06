@@ -5,6 +5,7 @@ Centrally managed API Gateway with comprehensive security, routing, rate limitin
 ## 🎯 Features
 
 ### 🔒 Security
+
 - ✅ **Helmet.js** - XSS Protection, CSP, HSTS, noSniff
 - ✅ **CORS** - Configurable origin whitelist
 - ✅ **CSRF Protection** - Double submit cookie pattern
@@ -18,6 +19,7 @@ Centrally managed API Gateway with comprehensive security, routing, rate limitin
 - ✅ **Role-Based Access Control** - RBAC middleware
 
 ### 🔄 Routing & Proxy
+
 - ✅ **API Versioning** - `/api/v1/`, `/api/v2/` support
 - ✅ **Request Routing** - Intelligent service routing
 - ✅ **Reverse Proxy** - http-proxy-middleware
@@ -26,6 +28,7 @@ Centrally managed API Gateway with comprehensive security, routing, rate limitin
 - ✅ **Health Checks** - Per-service health monitoring
 
 ### 📊 Monitoring & Logging
+
 - ✅ **Request Logging** - Morgan + custom logger
 - ✅ **Performance Monitoring** - Response time tracking
 - ✅ **Prometheus Metrics** - Request count, duration, errors
@@ -33,6 +36,7 @@ Centrally managed API Gateway with comprehensive security, routing, rate limitin
 - ✅ **Error Tracking** - Comprehensive error logs
 
 ### ⚡ Performance
+
 - ✅ **Compression** - Gzip/Deflate response compression
 - ✅ **Graceful Shutdown** - @godaddy/terminus
 - ✅ **Connection Pooling** - Efficient proxying
@@ -104,11 +108,13 @@ pnpm start
 ## 📡 API Endpoints
 
 ### Health Check
+
 ```
 GET /health
 ```
 
 Response:
+
 ```json
 {
   "status": "healthy",
@@ -119,6 +125,7 @@ Response:
 ```
 
 ### Metrics
+
 ```
 GET /metrics
 ```
@@ -126,11 +133,13 @@ GET /metrics
 Returns Prometheus metrics format.
 
 ### CSRF Token
+
 ```
 GET /api/csrf-token
 ```
 
 Response:
+
 ```json
 {
   "csrfToken": "..."
@@ -138,11 +147,13 @@ Response:
 ```
 
 ### API Statistics
+
 ```
 GET /api/stats
 ```
 
 Response:
+
 ```json
 {
   "stats": {
@@ -194,6 +205,7 @@ curl -X GET http://localhost:3000/api/v1/products \
 ### 1. XSS Protection (Helmet.js)
 
 Automatically enabled. Sets security headers:
+
 - `X-Content-Type-Options: nosniff`
 - `X-XSS-Protection: 1; mode=block`
 - `Content-Security-Policy`
@@ -277,6 +289,7 @@ All routes are versioned:
 ### Prometheus Metrics
 
 Available metrics:
+
 - `http_requests_total` - Total HTTP requests
 - `http_request_duration_seconds` - Request duration histogram
 - `http_requests_in_progress` - Active requests
@@ -318,15 +331,15 @@ docker run -p 3000:3000 \
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | Server port |
-| `NODE_ENV` | `development` | Environment |
-| `JWT_SECRET` | - | JWT secret key |
-| `JWT_PUBLIC_KEY` | - | JWT public key (RS256) |
-| `ENABLE_METRICS` | `false` | Enable Prometheus metrics |
-| `ENABLE_CSRF` | `true` | Enable CSRF protection |
-| `CORS_ORIGINS` | `*` | Allowed CORS origins (comma-separated) |
+| Variable         | Default       | Description                            |
+| ---------------- | ------------- | -------------------------------------- |
+| `PORT`           | `3000`        | Server port                            |
+| `NODE_ENV`       | `development` | Environment                            |
+| `JWT_SECRET`     | -             | JWT secret key                         |
+| `JWT_PUBLIC_KEY` | -             | JWT public key (RS256)                 |
+| `ENABLE_METRICS` | `false`       | Enable Prometheus metrics              |
+| `ENABLE_CSRF`    | `true`        | Enable CSRF protection                 |
+| `CORS_ORIGINS`   | `*`           | Allowed CORS origins (comma-separated) |
 
 ### Service Configuration
 

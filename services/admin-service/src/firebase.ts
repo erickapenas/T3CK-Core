@@ -1,4 +1,6 @@
 import * as admin from 'firebase-admin';
+import { existsSync } from 'fs';
+import path from 'path';
 import { Logger } from '@t3ck/shared';
 
 const logger = new Logger('admin-firebase');
@@ -6,7 +8,16 @@ const logger = new Logger('admin-firebase');
 let initialized = false;
 let firestore: admin.firestore.Firestore | null = null;
 
-const defaultServiceAccountPath = 'c:\\Users\\erick\\Downloads\\t3ck-core-78a6f-firebase-adminsdk-fbsvc-1d58970990.json';
+const serviceAccountCandidates = [
+  process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH,
+  path.resolve(process.cwd(), '.keys', 'firebase-service-account.json'),
+  'C:\\Users\\erick\\Downloads\\t3ck-core-78a6f-firebase-adminsdk-fbsvc-4cf2b9ba2a.json',
+  'C:\\Users\\erick\\Downloads\\t3ck-core-78a6f-firebase-adminsdk-fbsvc-1d58970990.json',
+].filter((candidate): candidate is string => Boolean(candidate));
+
+function resolveServiceAccountPath(): string | null {
+  return serviceAccountCandidates.find((candidate) => existsSync(candidate)) || null;
+}
 
 export function initializeFirestore(): admin.firestore.Firestore | null {
   if (firestore) {
@@ -25,41 +36,33 @@ export function initializeFirestore(): admin.firestore.Firestore | null {
 
       if (existingApp) {
         initialized = true;
-      } else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH || defaultServiceAccountPath) {
-        const credentialPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH || defaultServiceAccountPath;
+      } else if (resolveServiceAccountPath()) {
+        const credentialPath = resolveServiceAccountPath() as string;
         const serviceAccount = require(credentialPath);
-        admin.initializeApp(
-          { credential: admin.credential.cert(serviceAccount) },
-          appName
-        );
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }, appName);
         initialized = true;
       } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        admin.initializeApp(
-          { credential: admin.credential.cert(serviceAccount) },
-          appName
-        );
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }, appName);
         initialized = true;
       } else {
-        admin.initializeApp(
-          { credential: admin.credential.applicationDefault() },
-          appName
-        );
+        admin.initializeApp({ credential: admin.credential.applicationDefault() }, appName);
         initialized = true;
       }
     }
 
-    const app = admin.apps.find((item): item is admin.app.App => {
-      if (!item) {
-        return false;
-      }
-      return item.name === 'admin-service';
-    }) || admin.app();
+    const app =
+      admin.apps.find((item): item is admin.app.App => {
+        if (!item) {
+          return false;
+        }
+        return item.name === 'admin-service';
+      }) || admin.app();
     firestore = app.firestore();
     logger.info('Firestore initialized for admin-service');
     return firestore;
   } catch (error) {
-    logger.warn('Firestore unavailable for admin-service, using in-memory fallback', {
+    logger.error('Firestore unavailable for admin-service', {
       error: (error as Error).message,
     });
     firestore = null;

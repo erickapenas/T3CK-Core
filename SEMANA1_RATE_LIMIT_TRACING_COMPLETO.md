@@ -12,12 +12,14 @@
 **Status:** COMPLETO E FUNCIONAL ✅
 
 #### Instalado:
+
 ```
 ✅ express-rate-limit@8.2.1
 ✅ rate-limit-redis@4.3.1
 ```
 
 #### Implementado em `packages/shared/src/rate-limit.ts`:
+
 - **`initializeRedisClient()`** - Inicializa cliente Redis compartilhado com retry strategy
 - **`createRateLimiter(options)`** - Factory para criar rate limiters customizados
 - **`getApiLimiter()`** - Rate limiter API-wide (100 reqs/15min por IP)
@@ -29,18 +31,21 @@
 #### Integrado em 3 serviços:
 
 **auth-service:**
+
 ```typescript
 app.use(getApiLimiter()); // Global
 app.post('/auth/login', getAuthLimiter(), ...); // Strict
 ```
 
 **webhook-service:**
+
 ```typescript
 app.use(getApiLimiter()); // Global
 app.use('/api/webhooks', getWebhookLimiter()); // Webhooks
 ```
 
 **tenant-service:**
+
 ```typescript
 app.use(getApiLimiter()); // Global
 const provisioningLimiter = createTenantAwareRateLimiter(10);
@@ -48,6 +53,7 @@ app.post('/provisioning/submit', provisioningLimiter, ...);
 ```
 
 #### Características:
+
 - ✅ Redis-backed (escalável para múltiplos servidores)
 - ✅ Diferentes limites por endpoint (auth vs api vs webhooks)
 - ✅ Tenant-aware (limita por tenant ID quando disponível)
@@ -57,6 +63,7 @@ app.post('/provisioning/submit', provisioningLimiter, ...);
 - ✅ Lazy-loaded para evitar inicialização desnecessária em testes
 
 #### Testes:
+
 ```
 ✅ auth-service: 4 tests passed
 ✅ webhook-service: 3 tests passed
@@ -71,6 +78,7 @@ app.post('/provisioning/submit', provisioningLimiter, ...);
 **Status:** INICIALIZADO E INTEGRADO ✅
 
 #### Instalado:
+
 ```
 ✅ @opentelemetry/api@1.9.0
 ✅ @opentelemetry/sdk-node@0.211.0
@@ -81,19 +89,19 @@ app.post('/provisioning/submit', provisioningLimiter, ...);
 ```
 
 #### Implementado em `packages/shared/src/tracing.ts`:
+
 - **`initializeTracing(serviceName)`** - Inicializa SDK com auto-instrumentation
   - OTLP exporter para http://localhost:4318 (configurável via env)
   - Auto-instruments: HTTP, Express, Database, Lambda
   - Resource metadata: serviço, versão, environment, região
   - Shutdown handler para graceful shutdown
-  
 - **`shutdownTracing()`** - Shutdown gracioso da instrumentação
-  
 - **`getTracer(name, version)`** - Acesso ao tracer para spans customizados
 
 #### Integrado em 3 serviços (inicialização PRIMEIRA coisa):
 
 **auth-service, webhook-service, tenant-service:**
+
 ```typescript
 // Initialize OpenTelemetry tracing (must be first)
 initializeTracing('service-name');
@@ -104,6 +112,7 @@ initSentry('service-name');
 ```
 
 #### Características:
+
 - ✅ Auto-instrumentação de HTTP, Express, Database, AWS SDK
 - ✅ Exporta traces via OTLP HTTP para coletores locais/remotos
 - ✅ Metadata automático: service name, version, environment, region
@@ -112,6 +121,7 @@ initSentry('service-name');
 - ✅ Pronto para CloudWatch, DataDog, Jaeger, Zipkin (qualquer OTLP-compatível)
 
 #### Logs iniciais:
+
 ```
 INFO: OpenTelemetry tracing initialized successfully
 INFO: Service registered
@@ -120,6 +130,7 @@ INFO: Shutting down OpenTelemetry SDK
 ```
 
 #### Testes:
+
 ```
 ✅ auth-service: 4 tests passed (3.63s)
 ✅ webhook-service: 3 tests passed (2.51s)
@@ -133,14 +144,14 @@ INFO: Shutting down OpenTelemetry SDK
 
 ### CRÍTICAS (6 itens)
 
-| # | Tecnologia | Status | Notas |
-|---|-----------|--------|-------|
-| 1 | API Documentation (Swagger) | ✅ COMPLETO | /api-docs em 3 serviços |
-| 2 | Rate Limiting (Redis-backed) | ✅ COMPLETO | 3 serviços, 4 tipos de limiters |
-| 3 | Request Validation (Zod) | ✅ COMPLETO | 9 schemas, 5 endpoints |
-| 4 | Distributed Tracing (OpenTelemetry) | ✅ COMPLETO | Auto-instrumentação, OTLP exporter |
-| 5 | Message Queue (Bull Queue) | ❌ FALTANDO | ~4-5 horas |
-| 6 | Database Migrations | ❌ FALTANDO | ~3-4 horas |
+| #   | Tecnologia                          | Status      | Notas                              |
+| --- | ----------------------------------- | ----------- | ---------------------------------- |
+| 1   | API Documentation (Swagger)         | ✅ COMPLETO | /api-docs em 3 serviços            |
+| 2   | Rate Limiting (Redis-backed)        | ✅ COMPLETO | 3 serviços, 4 tipos de limiters    |
+| 3   | Request Validation (Zod)            | ✅ COMPLETO | 9 schemas, 5 endpoints             |
+| 4   | Distributed Tracing (OpenTelemetry) | ✅ COMPLETO | Auto-instrumentação, OTLP exporter |
+| 5   | Message Queue (Bull Queue)          | ❌ FALTANDO | ~4-5 horas                         |
+| 6   | Database Migrations                 | ❌ FALTANDO | ~3-4 horas                         |
 
 **Semana 1:** 66.7% COMPLETO (4/6)
 
@@ -225,6 +236,7 @@ docker run -p 4318:4318 -p 16686:16686 \
 ## 🎯 RESUMO
 
 **Hoje implementamos:**
+
 1. ✅ Rate limiting Redis-backed completo (3 serviços, 4 tipos)
 2. ✅ Distributed tracing OpenTelemetry com auto-instrumentation
 3. ✅ Integração perfeita sem breaking changes

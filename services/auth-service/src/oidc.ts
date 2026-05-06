@@ -39,7 +39,11 @@ export class OidcService {
     return url.toString();
   }
 
-  async exchangeToken(params: { code?: string; refreshToken?: string; redirectUri?: string }): Promise<OidcTokenResponse> {
+  async exchangeToken(params: {
+    code?: string;
+    refreshToken?: string;
+    redirectUri?: string;
+  }): Promise<OidcTokenResponse> {
     const domain = process.env.COGNITO_DOMAIN || '';
     const clientId = process.env.COGNITO_CLIENT_ID || '';
     const clientSecret = process.env.COGNITO_CLIENT_SECRET || '';

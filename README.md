@@ -156,7 +156,9 @@ const results = await t3ck.catalog.search({ query: 'notebook' });
 
 // Criar pedido
 const order = await t3ck.checkout.create({
-  shippingAddress: { /* ... */ },
+  shippingAddress: {
+    /* ... */
+  },
   paymentMethod: 'credit_card',
 });
 ```

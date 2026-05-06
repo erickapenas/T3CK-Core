@@ -9,7 +9,9 @@ function request(port, path) {
   return new Promise((resolve, reject) => {
     const req = http.request({ hostname: 'localhost', port, path, method: 'GET' }, (res) => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           resolve({ status: res.statusCode, body: JSON.parse(data) });
@@ -104,7 +106,6 @@ async function main() {
     console.log('  - Media Service: Ready on port 3007');
     console.log('  - Edge Service: Ready on port 3008');
     console.log('  - All endpoints responding correctly\n');
-
   } catch (error) {
     console.error(`❌ Smoke test FAILED: ${error.message}\n`);
     process.exit(1);

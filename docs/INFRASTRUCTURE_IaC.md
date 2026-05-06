@@ -1,20 +1,22 @@
 # Infrastructure as Code (IaC) Implementation Guide
 
 ## Overview
+
 This document covers the infrastructure components implemented for T3CK production deployment, including Terraform modules for backend state management, WAF protection, auto-scaling, and load balancer configuration.
 
 ## 1. Terraform Remote Backend
 
 ### Purpose
+
 Secure, centralized state management with locking to prevent concurrent modifications.
 
 ### Components
+
 - **S3 Bucket** (`terraform-state-{environment}`)
   - Versioning enabled for rollback capability
   - KMS encryption with customer-managed key
   - Public access blocked
   - Access logging to separate bucket
-  
 - **DynamoDB Table** (`terraform-locks-{environment}`)
   - State locking prevents terraform race conditions
   - TTL enabled for automatic cleanup of stale locks
@@ -46,17 +48,20 @@ terraform {
 ### Migration Steps
 
 1. **Initialize local state** (if first time):
+
    ```bash
    terraform init
    ```
 
 2. **Create backend module**:
+
    ```bash
    cd infrastructure/terraform/modules/backend
    terraform init && terraform apply
    ```
 
 3. **Migrate to remote state**:
+
    ```bash
    # In root workspace
    terraform init -reconfigure \
@@ -65,12 +70,13 @@ terraform {
      -backend-config="region=us-east-1" \
      -backend-config="dynamodb_table=t3ck-terraform-locks" \
      -backend-config="encrypt=true"
-   
+
    # Confirm migration
    terraform state list
    ```
 
 ### Security Best Practices
+
 - ✅ KMS encryption at rest
 - ✅ TLS enforcement (SSL/TLS only)
 - ✅ Public access blocked
@@ -83,6 +89,7 @@ terraform {
 ## 2. AWS WAF (Web Application Firewall)
 
 ### Purpose
+
 Protect load balancer against common web attacks, rate limiting, and geographical restrictions.
 
 ### Rules Included
@@ -111,6 +118,7 @@ Protect load balancer against common web attacks, rate limiting, and geographica
    - Request URI pattern matching
 
 ### CloudWatch Monitoring
+
 - All rule matches logged to CloudWatch Logs
 - 30-day retention
 - Sampled requests captured for inspection
@@ -120,13 +128,13 @@ Protect load balancer against common web attacks, rate limiting, and geographica
 ```hcl
 module "waf" {
   source = "./modules/waf"
-  
+
   alb_arn                = aws_lb.main.arn
   rate_limit_threshold   = 2000
   enable_geo_blocking    = true
   blocked_countries      = ["CN", "KP"]    # China, North Korea
   blocked_ips            = ["203.0.113.0/24"]
-  
+
   environment = var.environment
 }
 ```
@@ -138,7 +146,7 @@ module "waf" {
 curl -X GET "https://api.example.com/api/users?id=1' OR '1'='1"
 
 # Rate limit test
-for i in {1..3000}; do 
+for i in {1..3000}; do
   curl https://api.example.com/api/data &
 done
 wait
@@ -152,6 +160,7 @@ aws logs tail /aws/waf/dev --follow
 ## 3. Auto Scaling Groups for ECS
 
 ### Purpose
+
 Automatically scale ECS service tasks based on CPU, memory, and request count metrics.
 
 ### Scaling Policies
@@ -174,19 +183,21 @@ Automatically scale ECS service tasks based on CPU, memory, and request count me
    - Evening scale-down: 6 PM UTC on weekdays
 
 ### Capacity Limits
+
 ```
 Production defaults:
   - Min tasks: 2 (ensures availability)
   - Max tasks: 10 (cost control)
-  
+
 Business hours:
   - Min: 3, Max: 20
-  
+
 Off-hours:
   - Min: 1, Max: 5
 ```
 
 ### CloudWatch Alarms
+
 - High CPU (>85%, trigger scale-up)
 - Low CPU (<25%, trigger scale-down)
 - Unhealthy hosts
@@ -197,19 +208,19 @@ Off-hours:
 ```hcl
 module "autoscaling" {
   source = "./modules/autoscaling"
-  
+
   ecs_cluster_name           = aws_ecs_cluster.main.name
   ecs_service_name           = aws_ecs_service.api.name
   cpu_target_value           = 70
   memory_target_value        = 80
   requests_per_target        = 1000
-  
+
   enable_scheduled_scaling   = true
   min_capacity_morning       = 3
   max_capacity_morning       = 20
   min_capacity_evening       = 1
   max_capacity_evening       = 5
-  
+
   notification_email         = "ops@example.com"
 }
 ```
@@ -234,11 +245,13 @@ aws application-autoscaling describe-scaling-activities \
 ## 4. Application Load Balancer (ALB) Advanced Config
 
 ### Purpose
+
 Distribute traffic across ECS tasks with SSL/TLS termination, health checks, and sticky sessions.
 
 ### Components
 
 #### Target Groups
+
 - **Main HTTP/2 Target Group**
   - Port: 3000 (configurable)
   - Protocol: HTTP (ALB handles TLS termination)
@@ -251,27 +264,30 @@ Distribute traffic across ECS tasks with SSL/TLS termination, health checks, and
   - Used for internal service-to-service RPC
 
 #### Listeners
+
 - **HTTPS (Port 443)**
   - TLS 1.2+ enforced
   - Certificate from ACM
   - Default target group: main
-  
 - **HTTP (Port 80)**
   - Redirects to HTTPS (301)
   - No content served
 
 #### Listener Rules (Priority Order)
+
 1. Health checks (path: `/health*`)
 2. API endpoints (path: `/api/*`)
 3. gRPC endpoints (path: `/grpc/*`)
 4. WebSocket upgrade support
 
 #### Security
+
 - WAF attached to ALB
 - Access logs to S3 (90-day retention)
 - VPC security groups restrict ingress
 
 ### Health Check Configuration
+
 ```
 Interval:             30 seconds
 Timeout:              5 seconds
@@ -282,6 +298,7 @@ Response matcher:     Status 200-299
 ```
 
 ### Access Logs
+
 - Bucket: `t3ck-alb-logs-{environment}-{account-id}`
 - Prefix: `alb-logs/`
 - Retention: 90 days
@@ -289,6 +306,7 @@ Response matcher:     Status 200-299
 - Encryption: SSE-S3
 
 ### CloudWatch Alarms
+
 - Unhealthy host count (>0)
 - Target response time (>1 second)
 
@@ -297,26 +315,27 @@ Response matcher:     Status 200-299
 ```hcl
 module "alb" {
   source = "./modules/alb"
-  
+
   alb_id               = aws_lb.main.id
   alb_arn              = aws_lb.main.arn
   alb_name             = aws_lb.main.name
   alb_security_group_id = aws_security_group.alb.id
-  
+
   vpc_id               = var.vpc_id
   target_port          = 3000
   target_protocol      = "HTTP"
   health_check_path    = "/health"
   enable_sticky_sessions = true
   ssl_certificate_arn  = aws_acm_certificate.main.arn
-  
+
   enable_grpc          = false
-  
+
   environment          = var.environment
 }
 ```
 
 ### Connection Handling
+
 - **Connection Timeout:** 60 seconds
 - **Idle Timeout:** 60 seconds
 - **Desynchronization Protection:** Enabled
@@ -376,6 +395,7 @@ module "alb" {
 ## Troubleshooting
 
 ### Terraform State Lock Stuck
+
 ```bash
 # List locks
 aws dynamodb scan --table-name t3ck-terraform-locks
@@ -385,17 +405,19 @@ terraform force-unlock <LOCK_ID>
 ```
 
 ### WAF Blocking Legitimate Traffic
+
 - Check CloudWatch logs: `/aws/waf/environment`
 - Review blocked requests in WAF console
 - Add rule exceptions or modify rule groups
 
 ### ECS Tasks Not Scaling
+
 - Verify cloudwatch metrics present
 - Check autoscaling activity logs
 - Review target group health
 
 ### ALB Returning 502
+
 - Check ECS task health
 - Verify security group rules (ALB → Tasks)
 - Review target group health check configuration
-

@@ -1,0 +1,247 @@
+.fiscal-module {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.fiscal-status-grid,
+.fiscal-form-grid,
+.fiscal-validation,
+.fiscal-section-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.fiscal-status-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.fiscal-status-grid article,
+.fiscal-panel {
+  background: rgba(26, 31, 58, 0.7);
+  border: 1px solid rgba(0, 212, 255, 0.16);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.fiscal-status-grid span,
+.fiscal-panel-head span,
+.fiscal-validation span,
+.fiscal-table-wrap th {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.fiscal-status-grid strong,
+.fiscal-validation strong {
+  display: block;
+  margin-top: 5px;
+  color: #f8fafc;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.fiscal-status.homologacao_ativa,
+.fiscal-status.producao_ativa,
+.fiscal-status.configurado {
+  color: #00ff41;
+}
+
+.fiscal-status.incompleto,
+.fiscal-status.nao_configurado {
+  color: #fed7aa;
+}
+
+.fiscal-status.erro_configuracao,
+.fiscal-status.certificado_invalido,
+.fiscal-status.credenciais_invalidas {
+  color: #fecaca;
+}
+
+.fiscal-alert,
+.fiscal-success,
+.fiscal-state {
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+.fiscal-alert {
+  background: rgba(127, 29, 29, 0.28);
+  border: 1px solid rgba(248, 113, 113, 0.34);
+  color: #fecaca;
+}
+
+.fiscal-success {
+  background: rgba(20, 83, 45, 0.24);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  color: #bbf7d0;
+}
+
+.fiscal-state {
+  background: rgba(10, 14, 39, 0.58);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+}
+
+.fiscal-wizard {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 14px;
+  min-width: 0;
+}
+
+.fiscal-steps {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.fiscal-steps button,
+.fiscal-actions button,
+.fiscal-panel-head button {
+  border: 1px solid rgba(0, 212, 255, 0.24);
+  border-radius: 6px;
+  background: rgba(0, 212, 255, 0.1);
+  color: #dff8ff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 10px;
+}
+
+.fiscal-steps button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: left;
+}
+
+.fiscal-steps button span {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.14);
+  color: #e0f2fe;
+}
+
+.fiscal-steps button.active {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.2);
+}
+
+.fiscal-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fiscal-form-grid.fiscal-compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fiscal-form-grid label,
+.fiscal-check {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.fiscal-check {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  background: rgba(10, 14, 39, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.fiscal-form-grid input,
+.fiscal-form-grid select,
+.fiscal-form-grid textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 6px;
+  background: rgba(10, 14, 39, 0.68);
+  color: #f8fafc;
+  padding: 9px 10px;
+}
+
+.fiscal-form-grid textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.fiscal-wide {
+  grid-column: 1 / -1;
+}
+
+.fiscal-validation {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.fiscal-errors {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-left: 18px;
+  color: #fecaca;
+  font-size: 12px;
+}
+
+.fiscal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.fiscal-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.fiscal-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.fiscal-panel-head h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 16px;
+}
+
+.fiscal-table-wrap {
+  overflow-x: auto;
+}
+
+.fiscal-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.fiscal-table-wrap th,
+.fiscal-table-wrap td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  color: #e2e8f0;
+  padding: 9px 8px;
+  text-align: left;
+}
+
+@media (max-width: 1180px) {
+  .fiscal-status-grid,
+  .fiscal-wizard,
+  .fiscal-form-grid,
+  .fiscal-form-grid.fiscal-compact,
+  .fiscal-validation {
+    grid-template-columns: 1fr;
+  }
+}

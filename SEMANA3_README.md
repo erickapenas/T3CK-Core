@@ -9,6 +9,7 @@ Todos os 8 itens obrigatórios implementados, testados e validados!
 ## 📚 Documentação Rápida
 
 ### Para Começar
+
 1. **[QUICKSTART.md](./docs/QUICKSTART.md)** ← Comece por aqui!
    - Setup em 5 minutos
    - Como rodar tudo
@@ -20,6 +21,7 @@ Todos os 8 itens obrigatórios implementados, testados e validados!
    - URLs dos dashboards
 
 ### Documentação Detalhada
+
 - **[docs/SEMANA3_SUMMARY.md](./docs/SEMANA3_SUMMARY.md)** - Relatório completo (arquitetura, API, testes)
 - **[docs/ADMIN_PANEL_GUIDE.md](./docs/ADMIN_PANEL_GUIDE.md)** - Como usar o painel administrativo
 - **[docs/API.md](./docs/API.md)** - Especificação da API REST
@@ -61,13 +63,13 @@ Abra: http://localhost:8080/ADMIN_PANEL.html
 
 ## 📊 Stats
 
-| Métrica | Valor |
-|---------|-------|
-| **Código escrito** | 3000+ linhas |
-| **Testes criados** | 36 testes |
-| **Taxa de sucesso** | 100% |
-| **Endpoints API** | 4 principais |
-| **Time para setup** | 5 minutos |
+| Métrica             | Valor        |
+| ------------------- | ------------ |
+| **Código escrito**  | 3000+ linhas |
+| **Testes criados**  | 36 testes    |
+| **Taxa de sucesso** | 100%         |
+| **Endpoints API**   | 4 principais |
+| **Time para setup** | 5 minutos    |
 
 ---
 
@@ -85,6 +87,7 @@ Metrics:        http://localhost:3003/metrics
 ## 📖 Próximo: Semana 4
 
 Melhorias e integrações avançadas:
+
 - [ ] Integração com DNS
 - [ ] Email notifications
 - [ ] Webhooks de eventos

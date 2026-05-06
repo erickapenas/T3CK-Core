@@ -13,33 +13,35 @@ const mimeTypes = {
   '.json': 'application/json',
   '.md': 'text/markdown',
   '.png': 'image/png',
-  '.svg': 'image/svg+xml'
+  '.svg': 'image/svg+xml',
 };
 
 // API endpoints
 const apiHandlers = {
   '/api/status': (req, res) => {
     try {
-      const commitsRaw = execSync('git log --oneline -10', { cwd: path.join(__dirname, '..') }).toString().trim();
+      const commitsRaw = execSync('git log --oneline -10', { cwd: path.join(__dirname, '..') })
+        .toString()
+        .trim();
       const commits = commitsRaw ? commitsRaw.split('\n') : [];
-      
+
       const payload = {
         timestamp: new Date().toISOString(),
         services: {
           'auth-service': { status: 'compiled', port: 3001 },
           'webhook-service': { status: 'compiled', port: 3002 },
-          'tenant-service': { status: 'compiled', port: 3003 }
+          'tenant-service': { status: 'compiled', port: 3003 },
         },
         builds: {
           '@t3ck/sdk': 'success',
           '@t3ck/shared': 'success',
           'auth-service': 'success',
           'webhook-service': 'success',
-          'tenant-service': 'success'
+          'tenant-service': 'success',
         },
         features_implemented: 8,
         completion_percentage: 100,
-        recent_commits: commits.slice(0, 5)
+        recent_commits: commits.slice(0, 5),
       };
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -59,7 +61,7 @@ const apiHandlers = {
       { id: 5, name: 'Tenant Provisioning', week: 1, status: 'production' },
       { id: 6, name: 'Webhook Management', week: 2, status: 'production' },
       { id: 7, name: 'Automated Backups', week: 2, status: 'production' },
-      { id: 8, name: 'Multi-Region Deployment', week: 2, status: 'production' }
+      { id: 8, name: 'Multi-Region Deployment', week: 2, status: 'production' },
     ];
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(features, null, 2));
@@ -76,13 +78,13 @@ const apiHandlers = {
       cicd: 'GitHub Actions',
       packages: [
         { name: '@t3ck/sdk', path: 'packages/sdk' },
-        { name: '@t3ck/shared', path: 'packages/shared' }
+        { name: '@t3ck/shared', path: 'packages/shared' },
       ],
       services: [
         { name: 'auth-service', path: 'services/auth-service', port: 3001 },
         { name: 'webhook-service', path: 'services/webhook-service', port: 3002 },
-        { name: 'tenant-service', path: 'services/tenant-service', port: 3003 }
-      ]
+        { name: 'tenant-service', path: 'services/tenant-service', port: 3003 },
+      ],
     };
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(arch, null, 2));
@@ -97,11 +99,11 @@ const apiHandlers = {
       security: 'docs/SECURITY_ENCRYPTION.md',
       backups: 'docs/BACKUPS_IMPLEMENTATION_COMPREHENSIVE.md',
       multiregion: 'docs/MULTI_REGION_DEPLOYMENT.md',
-      events: 'docs/EVENTS.md'
+      events: 'docs/EVENTS.md',
     };
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(docs, null, 2));
-  }
+  },
 };
 
 const server = http.createServer((req, res) => {
@@ -113,7 +115,10 @@ const server = http.createServer((req, res) => {
   }
 
   // Static files
-  let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'DEMO_FULL.html' : decodeURIComponent(pathname.replace(/^\//, '')));
+  let filePath = path.join(
+    PUBLIC_DIR,
+    pathname === '/' ? 'DEMO_FULL.html' : decodeURIComponent(pathname.replace(/^\//, ''))
+  );
 
   // Security check
   if (!filePath.startsWith(PUBLIC_DIR)) {

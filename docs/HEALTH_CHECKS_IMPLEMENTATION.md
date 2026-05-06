@@ -2,13 +2,14 @@
 
 **Status:** ✅ COMPLETO  
 **Data:** February 2, 2026  
-**Tempo Gasto:** 1.5 horas  
+**Tempo Gasto:** 1.5 horas
 
 ---
 
 ## 📋 O QUE FOI IMPLEMENTADO
 
 ### 1. Health Check Library (@godaddy/terminus)
+
 - ✅ Instalado em todos 3 serviços
 - ✅ Middleware configurado com graceful shutdown
 - ✅ Endpoints: `/health` (liveness) + `/ready` (readiness)
@@ -16,6 +17,7 @@
 ### 2. Endpoints Disponíveis
 
 #### **GET /health** - Liveness Probe
+
 ```bash
 # Verificar se o serviço está rodando
 curl http://localhost:3001/health
@@ -35,6 +37,7 @@ curl http://localhost:3001/health
 **Falha:** Retorna 200 apenas se o serviço está ativo
 
 #### **GET /ready** - Readiness Probe
+
 ```bash
 # Verificar se o serviço está pronto para receber requests
 curl http://localhost:3002/ready
@@ -103,6 +106,7 @@ services/
 ### Código - auth-service (Exemplo)
 
 **src/health.ts:**
+
 ```typescript
 import { Express, Request, Response } from 'express';
 import { createTerminus } from '@godaddy/terminus';
@@ -128,7 +132,7 @@ export function setupHealthChecks(app: Express): void {
       timestamp: new Date().toISOString(),
       uptime: Math.floor((Date.now() - startTime) / 1000),
       services: {},
-      version: process.env.VERSION
+      version: process.env.VERSION,
     });
   });
 
@@ -140,8 +144,8 @@ export function setupHealthChecks(app: Express): void {
       uptime: Math.floor((Date.now() - startTime) / 1000),
       services: {
         firebase: 'ok',
-        cache: 'ok'
-      }
+        cache: 'ok',
+      },
     };
 
     const statusCode = health.status === 'ok' ? 200 : 503;
@@ -156,8 +160,8 @@ export function setupHealthChecks(app: Express): void {
     onShutdown: async () => logger.info('Server closed'),
     healthChecks: {
       '/health': async () => ({ ok: true }),
-      '/ready': async () => ({ ok: true })
-    }
+      '/ready': async () => ({ ok: true }),
+    },
   });
 
   logger.info('Health checks initialized');
@@ -165,12 +169,13 @@ export function setupHealthChecks(app: Express): void {
 ```
 
 **src/index.ts (integração):**
+
 ```typescript
 import { setupHealthChecks } from './health';
 
 const app = express();
-setupHealthChecks(app);  // Setup probes
-app.use('/api', routes);  // API routes após health checks
+setupHealthChecks(app); // Setup probes
+app.use('/api', routes); // API routes após health checks
 
 app.listen(PORT, () => {
   logger.info(`Service running on port ${PORT}`);
@@ -193,28 +198,28 @@ spec:
   template:
     spec:
       containers:
-      - name: auth-service
-        image: auth-service:latest
-        
-        # Liveness probe - reinicia o pod se falhar
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3001
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
-        
-        # Readiness probe - remove do load balancer se falhar
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 3001
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 5
-          failureThreshold: 2
+        - name: auth-service
+          image: auth-service:latest
+
+          # Liveness probe - reinicia o pod se falhar
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          # Readiness probe - remove do load balancer se falhar
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 2
 ```
 
 ### AWS ECS (Task Definition)
@@ -232,10 +237,7 @@ spec:
         }
       ],
       "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "curl -f http://localhost:3001/health || exit 1"
-        ],
+        "command": ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"],
         "interval": 10,
         "timeout": 5,
         "retries": 3,
@@ -341,13 +343,16 @@ Status 503: { "status": "error", "services": {"firebase": "error", "cache": "err
 ## 🔄 PRÓXIMOS PASSOS
 
 ### Hoje (Semana 2 Dia 1):
+
 ✅ **Health Check Library** - COMPLETO
 
 ### Amanhã (Semana 2 Dia 2):
+
 - 🚀 Error Tracking com Sentry
 - 🚀 Começar Metrics & Monitoring
 
 ### Próxima Semana:
+
 - [ ] Integração com Prometheus
 - [ ] Setup Grafana dashboard
 - [ ] Alert rules em CloudWatch
@@ -357,12 +362,15 @@ Status 503: { "status": "error", "services": {"firebase": "error", "cache": "err
 ## 🐛 TROUBLESHOOTING
 
 ### Problema: `/ready` retorna 503
+
 **Solução:** Verificar conectividade com Firestore/Redis nos logs
 
 ### Problema: Liveness probe falha
+
 **Solução:** Aumentar `initialDelaySeconds` em Kubernetes config
 
 ### Problema: Graceful shutdown não funciona
+
 **Solução:** Garantir que `SIGTERM` está sendo enviado corretamente
 
 ---

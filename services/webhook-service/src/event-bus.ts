@@ -1,7 +1,4 @@
-import {
-  EventBridgeClient,
-  PutEventsCommand,
-} from '@aws-sdk/client-eventbridge';
+import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { Logger } from '@t3ck/shared';
 
 export interface EventSchema {
@@ -61,7 +58,7 @@ export const EventTypes = {
   ORDER_UPDATED: 'order.updated',
   ORDER_CANCELLED: 'order.cancelled',
   PAYMENT_COMPLETED: 'payment.completed',
-  PAYMENT_FAILED: "payment.failed",
+  PAYMENT_FAILED: 'payment.failed',
   SHIPMENT_CREATED: 'shipment.created',
   SHIPMENT_DELIVERED: 'shipment.delivered',
   CUSTOMER_CREATED: 'customer.created',

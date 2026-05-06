@@ -36,11 +36,14 @@ class ContextualLogger {
   }
 
   error(message: string, error?: Error | Record<string, unknown>) {
-    const errorData = error instanceof Error ? {
-      errorName: error.name,
-      errorMessage: error.message,
-      errorStack: error.stack,
-    } : error;
+    const errorData =
+      error instanceof Error
+        ? {
+            errorName: error.name,
+            errorMessage: error.message,
+            errorStack: error.stack,
+          }
+        : error;
 
     logger.error(message, {
       ...this.context,
@@ -271,11 +274,14 @@ export const handler: Handler = async (
       body: JSON.stringify(result),
     };
   } catch (error) {
-    const errorData = error instanceof Error ? {
-      statusCode: 500,
-      errorCode: error.name,
-      errorMessage: error.message,
-    } : error;
+    const errorData =
+      error instanceof Error
+        ? {
+            statusCode: 500,
+            errorCode: error.name,
+            errorMessage: error.message,
+          }
+        : error;
 
     logger.error('Handler execution failed', {
       error: errorData,
@@ -302,8 +308,14 @@ function isValidDomain(domain: string): boolean {
  */
 function isValidRegion(region: string): boolean {
   const validRegions = [
-    'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2',
-    'eu-west-1', 'eu-central-1', 'ap-southeast-1', 'ap-southeast-2',
+    'us-east-1',
+    'us-east-2',
+    'us-west-1',
+    'us-west-2',
+    'eu-west-1',
+    'eu-central-1',
+    'ap-southeast-1',
+    'ap-southeast-2',
   ];
   return validRegions.includes(region);
 }

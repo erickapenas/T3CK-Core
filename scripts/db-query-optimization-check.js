@@ -4,7 +4,12 @@ const { performance } = require('perf_hooks');
 function simulateQueryWorkload(iterations = 20000) {
   const rows = [];
   for (let i = 0; i < iterations; i += 1) {
-    rows.push({ id: i, tenantId: `tenant-${i % 10}`, amount: i % 500, status: i % 3 === 0 ? 'paid' : 'pending' });
+    rows.push({
+      id: i,
+      tenantId: `tenant-${i % 10}`,
+      amount: i % 500,
+      status: i % 3 === 0 ? 'paid' : 'pending',
+    });
   }
 
   const t0 = performance.now();

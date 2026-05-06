@@ -4,6 +4,7 @@ export interface ServiceRoute {
   upstreamBasePath?: string;
   version: string;
   requiresAuth: boolean;
+  requiredRoles?: string[];
   rateLimit?: {
     windowMs: number;
     max: number;

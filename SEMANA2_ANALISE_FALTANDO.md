@@ -9,6 +9,7 @@
 ## 🎯 RESUMO EXECUTIVO
 
 ### Status Atual
+
 ```
 SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ├─ ✅ COMPLETO (5 itens):
@@ -31,16 +32,19 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ## 📋 O QUE JÁ FOI IMPLEMENTADO (COMPLETO ✅)
 
 ### 1. **Health Check Library (@godaddy/terminus)** ✅
+
 **Status:** PRONTO PARA PRODUÇÃO  
 **Duração:** 1.5 horas (2h estimadas)  
 **Impacto:** Kubernetes/ECS readiness probes
 
 **Implementado em:**
+
 - ✅ auth-service `/health` e `/ready`
 - ✅ webhook-service `/health` e `/ready`
 - ✅ tenant-service `/health` e `/ready`
 
 **Recursos:**
+
 - ✅ Liveness probe (< 100ms)
 - ✅ Readiness probe (5-10s com timeout)
 - ✅ Graceful shutdown (SIGTERM 30s timeout)
@@ -49,6 +53,7 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 - ✅ Version tracking
 
 **Documentação:** ✅ `docs/HEALTH_CHECKS_IMPLEMENTATION.md` (200+ linhas)
+
 - Endpoints documentation
 - Kubernetes YAML examples
 - ECS task definition examples
@@ -59,16 +64,19 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ---
 
 ### 2. **Error Tracking (Sentry)** ✅
+
 **Status:** PRONTO PARA PRODUÇÃO  
 **Duração:** 1.5 horas (3h estimadas)  
 **Impacto:** Error visibility e context tracking
 
 **Implementado em:**
+
 - ✅ auth-service (3 integrações)
 - ✅ webhook-service (3 integrações)
 - ✅ tenant-service (3 integrações)
 
 **Recursos:**
+
 - ✅ Error capture com contexto completo
 - ✅ User tracking (anonymized)
 - ✅ Tenant tracking (for multi-tenancy)
@@ -85,16 +93,19 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ---
 
 ### 3. **Metrics & Monitoring (Prometheus)** ✅
+
 **Status:** PRONTO PARA PRODUÇÃO  
 **Duração:** 1.5 horas (4h estimadas)  
 **Impacto:** Real-time observability e Grafana dashboards
 
 **Implementado em:**
+
 - ✅ auth-service `/metrics` endpoint
 - ✅ webhook-service `/metrics` endpoint
 - ✅ tenant-service `/metrics` endpoint
 
 **Métricas Coletadas:**
+
 - ✅ HTTP requests (Counter: http_requests_total)
 - ✅ Response times (Histogram: http_request_duration_ms)
 - ✅ Error rates (Counter: http_errors_total)
@@ -103,12 +114,14 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 - ✅ Custom service metrics (por serviço)
 
 **Recursos:**
+
 - ✅ Middleware para auto-tracking
 - ✅ Prometheus text format output
 - ✅ Histogram buckets customizáveis
 - ✅ 5 exported functions: `initMetrics()`, `getMetrics()`, `recordHttpRequest()`, `recordError()`, `recordLatency()`
 
 **Documentação:** ✅ `docs/METRICS_MONITORING.md` (600+ linhas)
+
 - Prometheus queries (10+ exemplos)
 - Grafana dashboard JSON
 - AlertManager rules
@@ -118,16 +131,19 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ---
 
 ### 4. **Enhanced Caching (Redis with ioredis)** ✅
+
 **Status:** PRONTO PARA PRODUÇÃO  
 **Duração:** 1.5 horas (3h estimadas)  
 **Impacto:** Performance (10-100x mais rápido para reads)
 
 **Implementado em:**
+
 - ✅ auth-service (cache.ts)
 - ✅ webhook-service (cache.ts)
 - ✅ tenant-service (cache.ts)
 
 **Cache Patterns:**
+
 - ✅ Simple Get/Set
 - ✅ Cache-Aside (RECOMMENDED)
 - ✅ Rate Limiting
@@ -136,6 +152,7 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 - ✅ Counter Tracking
 
 **Recursos:**
+
 - ✅ ioredis connection pooling
 - ✅ Configurable TTL (default: 1 hour)
 - ✅ Automatic JSON serialization/deserialization
@@ -156,22 +173,26 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ---
 
 ### 5. **Config Management (AWS Parameter Store + Secrets Manager)** ✅
+
 **Status:** PRONTO PARA PRODUÇÃO  
 **Duração:** 1.5 horas (3h estimadas)  
 **Impacto:** Centralized configuration management
 
 **Implementado em:**
+
 - ✅ auth-service (config.ts)
 - ✅ webhook-service (config.ts)
 - ✅ tenant-service (config.ts)
 
 **Integrações AWS:**
+
 - ✅ AWS Systems Manager Parameter Store
 - ✅ AWS Secrets Manager
 - ✅ 5-minute caching layer
 - ✅ Environment-aware paths (/t3ck-core/{env}/...)
 
 **Recursos:**
+
 - ✅ `getParameter(name, decrypt?)`
 - ✅ `getSecret(secretName)`
 - ✅ `getConfig(key, defaultValue?, decrypt?)`
@@ -182,6 +203,7 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 - ✅ `close()`
 
 **Parameter Hierarchy:**
+
 ```
 /t3ck-core/
 ├─ development/
@@ -198,11 +220,13 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 ## ⏳ O QUE ESTÁ FALTANDO (PENDENTE)
 
 ### 1. **Service Discovery (AWS Cloud Map)** ❌
+
 **Status:** NÃO INICIADO  
 **Esforço:** 4 horas  
 **Impacto:** Automatic service registration e discovery
 
 **O que precisa ser feito:**
+
 ```
 [ ] Instalar @aws-sdk/client-cloud-map em 3 serviços
 [ ] Criar service-discovery.ts módulo
@@ -219,6 +243,7 @@ SEMANA 2 PROGRESSO: 62.5% (5/8 tecnologias)
 **Checklist Detalhado:**
 
 **Instalação:**
+
 ```bash
 # Não iniciado
 pnpm add @aws-sdk/client-cloud-map -F auth-service
@@ -227,6 +252,7 @@ pnpm add @aws-sdk/client-cloud-map -F tenant-service
 ```
 
 **Arquivos a Criar:**
+
 ```
 [ ] packages/shared/src/service-discovery.ts (300+ linhas)
    ├─ CloudMapClient initialization
@@ -247,6 +273,7 @@ pnpm add @aws-sdk/client-cloud-map -F tenant-service
 ```
 
 **Integração:**
+
 ```
 [ ] Update services/auth-service/src/index.ts
 [ ] Update services/webhook-service/src/index.ts
@@ -254,6 +281,7 @@ pnpm add @aws-sdk/client-cloud-map -F tenant-service
 ```
 
 **Documentação:**
+
 ```
 [ ] Criar docs/SERVICE_DISCOVERY.md (500+ linhas)
    ├─ Architecture overview
@@ -271,6 +299,7 @@ pnpm add @aws-sdk/client-cloud-map -F tenant-service
 ```
 
 **Testes:**
+
 ```
 [ ] Test service registration
 [ ] Test service discovery
@@ -283,11 +312,13 @@ pnpm add @aws-sdk/client-cloud-map -F tenant-service
 ---
 
 ### 2. **Automated Backups** ❌
+
 **Status:** NÃO INICIADO  
 **Esforço:** 3 horas  
 **Impacto:** Data protection e disaster recovery
 
 **O que precisa ser feito:**
+
 ```
 [ ] Instalar @aws-sdk/client-dynamodb (ou RDS/S3 backup SDK)
 [ ] Criar backup.ts módulo
@@ -304,6 +335,7 @@ pnpm add @aws-sdk/client-cloud-map -F tenant-service
 **Checklist Detalhado:**
 
 **Instalação:**
+
 ```bash
 # Não iniciado
 pnpm add @aws-sdk/client-rds (para RDS MySQL)
@@ -312,6 +344,7 @@ pnpm add node-cron (para scheduled tasks local)
 ```
 
 **Arquivos a Criar:**
+
 ```
 [ ] packages/shared/src/backup.ts (250+ linhas)
    ├─ Backup schedule management
@@ -330,6 +363,7 @@ pnpm add node-cron (para scheduled tasks local)
 ```
 
 **Integração:**
+
 ```
 [ ] Update CDK stack para Lambda scheduled backup
 [ ] Update EventBridge rules para trigger backups
@@ -337,6 +371,7 @@ pnpm add node-cron (para scheduled tasks local)
 ```
 
 **Documentação:**
+
 ```
 [ ] Criar docs/AUTOMATED_BACKUPS.md (500+ linhas)
    ├─ Backup architecture
@@ -353,6 +388,7 @@ pnpm add node-cron (para scheduled tasks local)
 ```
 
 **Testes:**
+
 ```
 [ ] Test backup creation
 [ ] Test backup validation
@@ -365,6 +401,7 @@ pnpm add node-cron (para scheduled tasks local)
 ---
 
 ### 3. **Multi-region Deployment (EXTRA)** ❌
+
 **Status:** NÃO INICIADO  
 **Esforço:** 6+ horas  
 **Impacto:** Global redundancy e low latency
@@ -372,6 +409,7 @@ pnpm add node-cron (para scheduled tasks local)
 **Status:** Este é um item "EXTRA" fora do escopo crítico da Semana 2. Pode ser adiado para Semana 3.
 
 **Requisitos:**
+
 ```
 [ ] Setup multiple AWS regions
 [ ] Configure cross-region database replication
@@ -389,19 +427,20 @@ pnpm add node-cron (para scheduled tasks local)
 
 ### Progresso vs Planejamento
 
-| Fase | Estimado | Gasto | Restante | % |
-|------|----------|-------|----------|-----|
-| Health Checks | 2h | 1.5h | 0h | ✅ |
-| Error Tracking | 3h | 1.5h | 0h | ✅ |
-| Metrics | 4h | 1.5h | 0h | ✅ |
-| Caching | 3h | 1.5h | 0h | ✅ |
-| Config Mgmt | 3h | 1.5h | 0h | ✅ |
-| **Service Discovery** | **4h** | **0h** | **4h** | ❌ |
-| **Automated Backups** | **3h** | **0h** | **3h** | ❌ |
-| **Multi-region** | **6h** | **0h** | **6h** | ⏳ EXTRA |
-| **TOTAL** | **28h** | **7.5h** | **20.5h** | **26.8%** |
+| Fase                  | Estimado | Gasto    | Restante  | %         |
+| --------------------- | -------- | -------- | --------- | --------- |
+| Health Checks         | 2h       | 1.5h     | 0h        | ✅        |
+| Error Tracking        | 3h       | 1.5h     | 0h        | ✅        |
+| Metrics               | 4h       | 1.5h     | 0h        | ✅        |
+| Caching               | 3h       | 1.5h     | 0h        | ✅        |
+| Config Mgmt           | 3h       | 1.5h     | 0h        | ✅        |
+| **Service Discovery** | **4h**   | **0h**   | **4h**    | ❌        |
+| **Automated Backups** | **3h**   | **0h**   | **3h**    | ❌        |
+| **Multi-region**      | **6h**   | **0h**   | **6h**    | ⏳ EXTRA  |
+| **TOTAL**             | **28h**  | **7.5h** | **20.5h** | **26.8%** |
 
 ### Velocidade de Desenvolvimento
+
 ```
 Velocidade Média Implementação: 1.5 horas por feature
 Estimativa Original: 2-4 horas por feature
@@ -413,6 +452,7 @@ Diferença: ⚡ 2.5-3.5x mais rápido!
 ## 🚨 BLOQUEADORES & DEPENDÊNCIAS
 
 ### Service Discovery
+
 - ✅ Não tem bloqueadores
 - ✅ Pode ser iniciado imediatamente
 - ✅ Independente das outras features
@@ -420,6 +460,7 @@ Diferença: ⚡ 2.5-3.5x mais rápido!
 - ⚠️ Requer IAM permissions para CloudMap
 
 ### Automated Backups
+
 - ✅ Não tem bloqueadores
 - ✅ Pode ser iniciado imediatamente
 - ⚠️ Requer RDS MySQL ou configuração de backup
@@ -427,6 +468,7 @@ Diferença: ⚡ 2.5-3.5x mais rápido!
 - ⚠️ Requer IAM permissions para RDS/S3
 
 ### Multi-region (EXTRA)
+
 - 🔴 Bloqueado: Service Discovery deve estar pronto primeiro
 - 🔴 Bloqueado: Config Management deve suportar múltiplas regiões
 - 🔴 Bloqueado: Database replication deve estar configurada
@@ -436,6 +478,7 @@ Diferença: ⚡ 2.5-3.5x mais rápido!
 ## 📈 PRÓXIMOS PASSOS (AÇÃO IMEDIATA)
 
 ### DIA 6-8: Service Discovery (AWS Cloud Map)
+
 ```
 ESTIMADO: 4 horas
 PRÓXIMO PASSO: Instalar SDK e criar módulo base
@@ -451,6 +494,7 @@ Ações:
 ```
 
 ### DIA 9-11: Automated Backups
+
 ```
 ESTIMADO: 3 horas
 PRÓXIMO PASSO: Setup backup infrastructure
@@ -466,6 +510,7 @@ Ações:
 ```
 
 ### SEMANA 3: Multi-region (Se houver tempo)
+
 ```
 ESTIMADO: 6+ horas
 STATUS: ADIADO PARA SEMANA 3
@@ -484,6 +529,7 @@ Aguardando:
 **Semana 2 será 100% sucesso se:**
 
 ### Obrigatório (Critical Path)
+
 - ✅ Health Checks → DONE
 - ✅ Error Tracking → DONE
 - ✅ Metrics & Monitoring → DONE
@@ -495,6 +541,7 @@ Aguardando:
 **Meta:** 7/8 = 87.5% até final de Dia 11 (Feb 9)
 
 ### Documentação
+
 - ✅ Health Checks docs → DONE
 - ✅ Error Tracking docs → DONE
 - ✅ Metrics docs → DONE
@@ -504,6 +551,7 @@ Aguardando:
 - ⏳ Automated Backups docs → PENDING
 
 ### Build & Tests
+
 - ✅ All 5 services building successfully
 - ✅ Zero TypeScript errors
 - ✅ No regression on existing tests
@@ -515,6 +563,7 @@ Aguardando:
 ## 💡 RECOMENDAÇÕES
 
 ### Curto Prazo (Hoje - Dia 5)
+
 1. **Iniciar Service Discovery HOJE**
    - Momentum está alto (1.5h por feature)
    - 4 horas é achievable antes do fim de dia 6
@@ -530,6 +579,7 @@ Aguardando:
    - Metrics + Prometheus queries
 
 ### Médio Prazo (Dias 7-11)
+
 1. **Priorizar Automated Backups**
    - Essencial para production
    - Menos complexo que Service Discovery
@@ -542,6 +592,7 @@ Aguardando:
    - Deixar 2-3 horas para testes e bug fixes
 
 ### Longo Prazo (Semana 3+)
+
 1. **Multi-region Architecture**
 2. **Performance Testing (k6)**
 3. **Chaos Engineering**
@@ -580,7 +631,8 @@ QUALIDADE
 ## 🎓 CONCLUSÃO
 
 ### Status Geral
-**Semana 2 está em excelente progresso!** 
+
+**Semana 2 está em excelente progresso!**
 
 - ✅ 5/8 features completadas (62.5%)
 - ✅ Tempo gasto: 7.5h (26.8% do orçamento)
@@ -589,6 +641,7 @@ QUALIDADE
 - ✅ Documentação: Completa para todos implementados
 
 ### Próximos Passos (Ação Imediata)
+
 1. **Iniciar Service Discovery TODAY** (Dia 6)
    - 4 horas de trabalho
    - Sem bloqueadores
@@ -605,6 +658,7 @@ QUALIDADE
    - Melhor em Semana 3 com mais tempo
 
 ### Visão Geral da Progressão
+
 ```
 Semana 1: ✅ COMPLETA (6/6 critical infrastructure items)
 Semana 2: ⏳ EM PROGRESSO (5/8 done, 3 pending)

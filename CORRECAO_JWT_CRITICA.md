@@ -11,6 +11,7 @@
 O projeto usa algoritmo RS256 (assimétrico) mas configura com secret string simples (simétrico).
 
 ### Código Atual (INCORRETO)
+
 ```typescript
 // services/auth-service/src/auth.ts:30
 constructor() {
@@ -52,13 +53,13 @@ async verifyJWT(token: string): Promise<TokenPayload> {
 
 ## POR QUE É PROBLEMA?
 
-| Aspecto | Situação Atual | Problema |
-|---------|----------------|----------|
-| **Algoritmo** | RS256 | Assimétrico, precisa de key pair |
-| **Configuração** | Secret string | Simétrico, apenas HS256 |
-| **Segurança** | Mismatch | Falha silenciosa ou erro em runtime |
+| Aspecto          | Situação Atual | Problema                                |
+| ---------------- | -------------- | --------------------------------------- |
+| **Algoritmo**    | RS256          | Assimétrico, precisa de key pair        |
+| **Configuração** | Secret string  | Simétrico, apenas HS256                 |
+| **Segurança**    | Mismatch       | Falha silenciosa ou erro em runtime     |
 | **Distribuição** | Sem public key | Não pode validar em serviços diferentes |
-| **Produção** | Crítico | Bloqueia múltiplos serviços |
+| **Produção**     | Crítico        | Bloqueia múltiplos serviços             |
 
 ---
 
@@ -94,6 +95,7 @@ JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJRR
 ```
 
 Ou usar multiline:
+
 ```bash
 JWT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA0Z8w...
@@ -140,33 +142,29 @@ export class AuthService {
 
   constructor() {
     this.logger = new Logger('auth-service');
-    
+
     // ✅ CORRETO: Validar private key existe
     if (!process.env.JWT_PRIVATE_KEY) {
       throw new Error(
         'JWT_PRIVATE_KEY is required for RS256 algorithm. ' +
-        'Generate with: openssl genrsa -out private.key 2048'
+          'Generate with: openssl genrsa -out private.key 2048'
       );
     }
 
     if (!process.env.JWT_PUBLIC_KEY) {
       throw new Error(
         'JWT_PUBLIC_KEY is required for token verification. ' +
-        'Generate with: openssl rsa -in private.key -pubout -out public.key'
+          'Generate with: openssl rsa -in private.key -pubout -out public.key'
       );
     }
 
     // ✅ CORRETO: Validar chaves estão em formato PEM
     if (!process.env.JWT_PRIVATE_KEY.includes('BEGIN RSA PRIVATE KEY')) {
-      throw new Error(
-        'JWT_PRIVATE_KEY must be in PEM format (-----BEGIN RSA PRIVATE KEY-----)'
-      );
+      throw new Error('JWT_PRIVATE_KEY must be in PEM format (-----BEGIN RSA PRIVATE KEY-----)');
     }
 
     if (!process.env.JWT_PUBLIC_KEY.includes('BEGIN PUBLIC KEY')) {
-      throw new Error(
-        'JWT_PUBLIC_KEY must be in PEM format (-----BEGIN PUBLIC KEY-----)'
-      );
+      throw new Error('JWT_PUBLIC_KEY must be in PEM format (-----BEGIN PUBLIC KEY-----)');
     }
 
     this.jwtPrivateKey = process.env.JWT_PRIVATE_KEY;
@@ -178,7 +176,7 @@ export class AuthService {
   async generateJWT(payload: TokenPayload): Promise<string> {
     try {
       return jwt.sign(payload, this.jwtPrivateKey, {
-        algorithm: 'RS256',  // ✅ RS256 assimétrico
+        algorithm: 'RS256', // ✅ RS256 assimétrico
         expiresIn: this.jwtExpiration,
         issuer: 't3ck',
         audience: 't3ck-api',
@@ -192,7 +190,8 @@ export class AuthService {
   // ✅ CORRETO: Usar public key para verify
   async verifyJWT(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(token, this.jwtPublicKey, {  // ✅ Public key
+      const decoded = jwt.verify(token, this.jwtPublicKey, {
+        // ✅ Public key
         algorithms: ['RS256'],
         issuer: 't3ck',
         audience: 't3ck-api',
@@ -218,7 +217,7 @@ export class AuthService {
       const newRefreshPayload = { ...payload, type: 'refresh' };
       const newRefreshToken = jwt.sign(newRefreshPayload, this.jwtPrivateKey, {
         algorithm: 'RS256',
-        expiresIn: '7d',  // 7 dias para refresh
+        expiresIn: '7d', // 7 dias para refresh
         issuer: 't3ck',
         audience: 't3ck-api',
       });
@@ -226,7 +225,7 @@ export class AuthService {
       return {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
-        idToken: refreshToken,  // Ou gerar novo
+        idToken: refreshToken, // Ou gerar novo
         expiresIn: parseInt(this.jwtExpiration, 10),
       };
     } catch (error) {
@@ -238,7 +237,7 @@ export class AuthService {
   async authenticateWithFirebase(idToken: string): Promise<TokenPayload> {
     try {
       const decodedToken = await admin.auth().verifyIdToken(idToken);
-      
+
       return {
         tenantId: decodedToken.tenant_id || '',
         userId: decodedToken.uid,
@@ -251,10 +250,7 @@ export class AuthService {
     }
   }
 
-  async authenticateWithCognito(
-    username: string,
-    password: string
-  ): Promise<AuthResult> {
+  async authenticateWithCognito(username: string, password: string): Promise<AuthResult> {
     // Implementação existente...
     // (mantém como está)
     throw new Error('Not implemented in this example');
@@ -300,7 +296,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...
 
       expect(token).toBeDefined();
       expect(typeof token).toBe('string');
-      expect(token.split('.')).toHaveLength(3);  // Header.Payload.Signature
+      expect(token.split('.')).toHaveLength(3); // Header.Payload.Signature
     });
 
     it('should include correct headers and claims', async () => {
@@ -312,7 +308,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...
       };
 
       const token = await authService.generateJWT(payload);
-      
+
       // Decodificar sem verificação para inspecionar
       const decoded = jwt.decode(token, { complete: true });
 
@@ -341,9 +337,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...
     });
 
     it('should reject invalid JWT', async () => {
-      await expect(authService.verifyJWT('invalid.token.here')).rejects.toThrow(
-        'Invalid token'
-      );
+      await expect(authService.verifyJWT('invalid.token.here')).rejects.toThrow('Invalid token');
     });
 
     it('should reject token signed with wrong key', async () => {
@@ -358,9 +352,7 @@ MIIEpAIBAAKCAQEA...different key...
         { algorithm: 'RS256' }
       );
 
-      await expect(authService.verifyJWT(wrongToken)).rejects.toThrow(
-        'Invalid token'
-      );
+      await expect(authService.verifyJWT(wrongToken)).rejects.toThrow('Invalid token');
     });
   });
 
@@ -419,8 +411,8 @@ app.post('/auth/login', async (req, res) => {
 
     if (provider === 'firebase' && token) {
       const payload = await authService.authenticateWithFirebase(token);
-      const jwtToken = await authService.generateJWT(payload);  // ✅ Usa RS256
-      
+      const jwtToken = await authService.generateJWT(payload); // ✅ Usa RS256
+
       res.json({
         accessToken: jwtToken,
         expiresIn: 3600,
@@ -437,7 +429,7 @@ app.post('/auth/login', async (req, res) => {
 app.post('/auth/verify', async (req, res) => {
   try {
     const { token } = req.body;
-    const payload = await authService.verifyJWT(token);  // ✅ Usa public key
+    const payload = await authService.verifyJWT(token); // ✅ Usa public key
     res.json({ valid: true, payload });
   } catch (error) {
     logger.error('Token verification failed', { error });
@@ -448,7 +440,7 @@ app.post('/auth/verify', async (req, res) => {
 app.post('/auth/refresh', async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    const result = await authService.refreshToken(refreshToken);  // ✅ Novo: Refresh rotation
+    const result = await authService.refreshToken(refreshToken); // ✅ Novo: Refresh rotation
     res.json(result);
   } catch (error) {
     logger.error('Token refresh failed', { error });
@@ -491,9 +483,7 @@ export function validateAuthEnvironment(): void {
 
   // Validar comprimento mínimo (RSA 2048 ~1700 chars)
   if (process.env.JWT_PRIVATE_KEY!.length < 1500) {
-    throw new Error(
-      'JWT_PRIVATE_KEY appears too short. Ensure it is RSA 2048-bit or larger'
-    );
+    throw new Error('JWT_PRIVATE_KEY appears too short. Ensure it is RSA 2048-bit or larger');
   }
 
   console.log('✅ Auth environment validated');
@@ -504,7 +494,7 @@ export function validateAuthEnvironment(): void {
 
 ## CHECKLIST DE IMPLEMENTAÇÃO
 
-- [x] Gerar RSA key pair com `openssl` *(fallback usado: `crypto.generateKeyPairSync` porque `openssl` não está disponível no terminal local)*
+- [x] Gerar RSA key pair com `openssl` _(fallback usado: `crypto.generateKeyPairSync` porque `openssl` não está disponível no terminal local)_
 - [x] Atualizar `.env.example` com instruções
 - [x] Atualizar `.env` local com chaves
 - [x] Modificar `services/auth-service/src/auth.ts`

@@ -50,7 +50,6 @@ async function configurarWebhooks() {
       events: ['order.created', 'payment.completed'],
     });
     console.log('Webhook atualizado:', updated.data);
-
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('❌ Erro:', error.response?.data || error.message);

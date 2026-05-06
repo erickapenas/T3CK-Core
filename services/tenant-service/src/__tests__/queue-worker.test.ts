@@ -1,6 +1,6 @@
 /**
  * Bull Queue Worker Tests
- * 
+ *
  * These tests verify the provisioning job worker behavior
  */
 describe('Provisioning Bull Queue Worker', () => {

@@ -6,6 +6,8 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled';
 
+export type PaymentStatus = 'AWAITING_PAYMENT' | 'PAID' | 'REFUNDED' | 'FAILED' | 'CHARGEBACK';
+
 export interface OrderItem {
   productId: string;
   name: string;
@@ -19,6 +21,8 @@ export interface Order {
   customerId: string;
   items: OrderItem[];
   status: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  paymentId?: string;
   subtotal: number;
   shippingCost: number;
   total: number;
@@ -55,6 +59,12 @@ export interface CreateOrderInput {
   items: OrderItem[];
   shippingCost?: number;
   notes?: string;
+}
+
+export interface PaymentStatusUpdateInput {
+  tenantId: string;
+  paymentId: string;
+  paymentStatus: PaymentStatus;
 }
 
 export interface ListOrderFilters {

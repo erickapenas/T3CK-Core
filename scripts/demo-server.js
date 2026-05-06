@@ -12,13 +12,16 @@ const mime = {
   '.json': 'application/json',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
-  '.md': 'text/markdown'
+  '.md': 'text/markdown',
 };
 
 const { execSync } = require('child_process');
 
 function sendFileSafe(reqPath, res) {
-  let filePath = path.join(PUBLIC_DIR, reqPath === '/' ? 'DEMO_DASHBOARD.html' : decodeURIComponent(reqPath.replace(/^\//, '')));
+  let filePath = path.join(
+    PUBLIC_DIR,
+    reqPath === '/' ? 'DEMO_DASHBOARD.html' : decodeURIComponent(reqPath.replace(/^\//, ''))
+  );
   // prevent path traversal
   if (!filePath.startsWith(PUBLIC_DIR)) {
     res.statusCode = 403;
@@ -40,12 +43,14 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/status') {
     // provide simple real data: recent git commits and progress from SEMANA2_CHECKLIST.md
     try {
-      const commitsRaw = execSync('git log --oneline -5', { cwd: path.join(__dirname, '..') }).toString().trim();
+      const commitsRaw = execSync('git log --oneline -5', { cwd: path.join(__dirname, '..') })
+        .toString()
+        .trim();
       const commits = commitsRaw ? commitsRaw.split('\n') : [];
       const checklist = fs.readFileSync(path.join(__dirname, '..', 'SEMANA2_CHECKLIST.md'), 'utf8');
       const progMatch = checklist.match(/\*\*Status:\*\*\s*([0-9,.%]+)\s*Completo/);
       const progressText = progMatch ? progMatch[1] + ' Completo' : 'Unknown';
-      const percentMatch = progMatch ? (progMatch[1].replace('%','').replace(',', '.')) : null;
+      const percentMatch = progMatch ? progMatch[1].replace('%', '').replace(',', '.') : null;
 
       const payload = {
         build: 'All packages compile',

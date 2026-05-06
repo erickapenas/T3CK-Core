@@ -7,55 +7,39 @@ export interface CacheOptions {
 
 export class CacheService {
   private redis: Redis | null = null;
-  private redisEnabled: boolean;
-  private readonly redisRequired: boolean;
-  private fallbackLogged = false;
-  private memoryStore = new Map<string, { value: string; expiresAt: number | null }>();
   private defaultTTL: number = 3600; // 1 hour
   private prefix: string = 'cache:';
   private hitCount: number = 0;
   private missCount: number = 0;
 
   constructor(options?: CacheOptions) {
-    this.redisRequired =
-      String(process.env.REDIS_REQUIRED || '').toLowerCase() === 'true' ||
-      process.env.NODE_ENV === 'production';
-    this.redisEnabled = process.env.REDIS_DISABLED !== 'true';
-
-    if (this.redisEnabled) {
-      this.redis = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD,
-        db: parseInt(process.env.REDIS_DB || '0'),
-        retryStrategy: (times) => {
-          if (!this.redisRequired && times > 1) {
-            return null;
-          }
-          return Math.min(times * 50, 2000);
-        },
-        enableReadyCheck: false,
-        maxRetriesPerRequest: null,
-        lazyConnect: true,
-        enableOfflineQueue: false,
-      });
-
-      this.redis.on('error', (err) => {
-        this.handleRedisFailure(err);
-      });
-
-      this.redis.on('connect', () => {
-        console.log('[CacheService] Connected to Redis');
-      });
-
-      this.redis.on('disconnect', () => {
-        if (this.redisEnabled) {
-          console.log('[CacheService] Disconnected from Redis');
-        }
-      });
-    } else {
-      console.warn('[CacheService] Redis disabled, using in-memory cache');
+    if (process.env.REDIS_DISABLED === 'true') {
+      throw new Error('Redis is required for auth cache persistence');
     }
+
+    this.redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+      db: parseInt(process.env.REDIS_DB || '0'),
+      retryStrategy: (times) => Math.min(times * 50, 2000),
+      enableReadyCheck: false,
+      maxRetriesPerRequest: 1,
+      lazyConnect: true,
+      enableOfflineQueue: false,
+    });
+
+    this.redis.on('error', (err) => {
+      console.error('[CacheService] Redis error:', err);
+    });
+
+    this.redis.on('connect', () => {
+      console.log('[CacheService] Connected to Redis');
+    });
+
+    this.redis.on('disconnect', () => {
+      console.log('[CacheService] Disconnected from Redis');
+    });
 
     if (options?.ttl) {
       this.defaultTTL = options.ttl;
@@ -71,12 +55,8 @@ export class CacheService {
   async get<T>(key: string): Promise<T | null> {
     const fullKey = this.getKey(key);
 
-    if (!this.redisEnabled || !this.redis) {
-      return this.getFromMemory<T>(fullKey);
-    }
-
     try {
-      const value = await this.redis.get(fullKey);
+      const value = await this.requireRedis().get(fullKey);
       if (value) {
         this.hitCount++;
         return JSON.parse(value) as T;
@@ -84,8 +64,7 @@ export class CacheService {
       this.missCount++;
       return null;
     } catch (error) {
-      this.handleRedisFailure(error);
-      return this.getFromMemory<T>(fullKey);
+      throw this.redisOperationError('get', error);
     }
   }
 
@@ -97,16 +76,10 @@ export class CacheService {
     const expiry = ttl || this.defaultTTL;
     const serialized = JSON.stringify(value);
 
-    if (!this.redisEnabled || !this.redis) {
-      this.setInMemory(fullKey, serialized, expiry);
-      return;
-    }
-
     try {
-      await this.redis.setex(fullKey, expiry, serialized);
+      await this.requireRedis().setex(fullKey, expiry, serialized);
     } catch (error) {
-      this.handleRedisFailure(error);
-      this.setInMemory(fullKey, serialized, expiry);
+      throw this.redisOperationError('set', error);
     }
   }
 
@@ -116,16 +89,10 @@ export class CacheService {
   async delete(key: string): Promise<void> {
     const fullKey = this.getKey(key);
 
-    if (!this.redisEnabled || !this.redis) {
-      this.memoryStore.delete(fullKey);
-      return;
-    }
-
     try {
-      await this.redis.del(fullKey);
+      await this.requireRedis().del(fullKey);
     } catch (error) {
-      this.handleRedisFailure(error);
-      this.memoryStore.delete(fullKey);
+      throw this.redisOperationError('delete', error);
     }
   }
 
@@ -135,22 +102,12 @@ export class CacheService {
   async deleteMany(keys: string[]): Promise<void> {
     const prefixedKeys = keys.map((key) => this.getKey(key));
 
-    if (!this.redisEnabled || !this.redis) {
-      for (const key of prefixedKeys) {
-        this.memoryStore.delete(key);
-      }
-      return;
-    }
-
     try {
       if (prefixedKeys.length > 0) {
-        await this.redis.del(...prefixedKeys);
+        await this.requireRedis().del(...prefixedKeys);
       }
     } catch (error) {
-      this.handleRedisFailure(error);
-      for (const key of prefixedKeys) {
-        this.memoryStore.delete(key);
-      }
+      throw this.redisOperationError('deleteMany', error);
     }
   }
 
@@ -158,19 +115,13 @@ export class CacheService {
    * Clear all cache keys with current prefix
    */
   async clear(): Promise<void> {
-    if (!this.redisEnabled || !this.redis) {
-      this.memoryStore.clear();
-      return;
-    }
-
     try {
-      const keys = await this.redis.keys(`${this.prefix}*`);
+      const keys = await this.requireRedis().keys(`${this.prefix}*`);
       if (keys.length > 0) {
-        await this.redis.del(...keys);
+        await this.requireRedis().del(...keys);
       }
     } catch (error) {
-      this.handleRedisFailure(error);
-      this.memoryStore.clear();
+      throw this.redisOperationError('clear', error);
     }
   }
 
@@ -180,47 +131,27 @@ export class CacheService {
   async exists(key: string): Promise<boolean> {
     const fullKey = this.getKey(key);
 
-    if (!this.redisEnabled || !this.redis) {
-      this.purgeIfExpired(fullKey);
-      return this.memoryStore.has(fullKey);
-    }
-
     try {
-      const result = await this.redis.exists(fullKey);
+      const result = await this.requireRedis().exists(fullKey);
       return result > 0;
     } catch (error) {
-      this.handleRedisFailure(error);
-      return false;
+      throw this.redisOperationError('exists', error);
     }
   }
 
   /**
    * Get or set value (cache-aside pattern)
    */
-  async getOrSet<T>(
-    key: string,
-    fn: () => Promise<T>,
-    ttl?: number,
-  ): Promise<T> {
-    try {
-      // Try to get from cache
-      const cached = await this.get<T>(key);
-      if (cached !== null) {
-        return cached;
-      }
-
-      // If not in cache, call function
-      const value = await fn();
-
-      // Store in cache
-      await this.set(key, value, ttl);
-
-      return value;
-    } catch (error) {
-      console.error(`[CacheService] GetOrSet error for key ${key}:`, error);
-      // If cache fails, still call function
-      return fn();
+  async getOrSet<T>(key: string, fn: () => Promise<T>, ttl?: number): Promise<T> {
+    const cached = await this.get<T>(key);
+    if (cached !== null) {
+      return cached;
     }
+
+    const value = await fn();
+    await this.set(key, value, ttl);
+
+    return value;
   }
 
   /**
@@ -229,21 +160,10 @@ export class CacheService {
   async increment(key: string, amount: number = 1): Promise<number> {
     const fullKey = this.getKey(key);
 
-    if (!this.redisEnabled || !this.redis) {
-      const current = await this.get<number>(key);
-      const next = (current || 0) + amount;
-      await this.set(fullKey.replace(`${this.prefix}`, ''), next);
-      return next;
-    }
-
     try {
-      return await this.redis.incrby(fullKey, amount);
+      return await this.requireRedis().incrby(fullKey, amount);
     } catch (error) {
-      this.handleRedisFailure(error);
-      const current = await this.get<number>(key);
-      const next = (current || 0) + amount;
-      await this.set(key, next);
-      return next;
+      throw this.redisOperationError('increment', error);
     }
   }
 
@@ -253,21 +173,10 @@ export class CacheService {
   async decrement(key: string, amount: number = 1): Promise<number> {
     const fullKey = this.getKey(key);
 
-    if (!this.redisEnabled || !this.redis) {
-      const current = await this.get<number>(key);
-      const next = (current || 0) - amount;
-      await this.set(key, next);
-      return next;
-    }
-
     try {
-      return await this.redis.decrby(fullKey, amount);
+      return await this.requireRedis().decrby(fullKey, amount);
     } catch (error) {
-      this.handleRedisFailure(error);
-      const current = await this.get<number>(key);
-      const next = (current || 0) - amount;
-      await this.set(key, next);
-      return next;
+      throw this.redisOperationError('decrement', error);
     }
   }
 
@@ -277,19 +186,10 @@ export class CacheService {
   async expire(key: string, seconds: number): Promise<void> {
     const fullKey = this.getKey(key);
 
-    if (!this.redisEnabled || !this.redis) {
-      const current = this.memoryStore.get(fullKey);
-      if (current) {
-        current.expiresAt = Date.now() + seconds * 1000;
-        this.memoryStore.set(fullKey, current);
-      }
-      return;
-    }
-
     try {
-      await this.redis.expire(fullKey, seconds);
+      await this.requireRedis().expire(fullKey, seconds);
     } catch (error) {
-      this.handleRedisFailure(error);
+      throw this.redisOperationError('expire', error);
     }
   }
 
@@ -312,16 +212,8 @@ export class CacheService {
    * Get cache size in bytes
    */
   async getSize(): Promise<number> {
-    if (!this.redisEnabled || !this.redis) {
-      let total = 0;
-      for (const entry of this.memoryStore.values()) {
-        total += Buffer.byteLength(entry.value, 'utf8');
-      }
-      return total;
-    }
-
     try {
-      const info = await this.redis.info('memory');
+      const info = await this.requireRedis().info('memory');
       const lines = info.split('\r\n');
       for (const line of lines) {
         if (line.startsWith('used_memory:')) {
@@ -331,8 +223,7 @@ export class CacheService {
       }
       return 0;
     } catch (error) {
-      this.handleRedisFailure(error);
-      return 0;
+      throw this.redisOperationError('getSize', error);
     }
   }
 
@@ -340,16 +231,10 @@ export class CacheService {
    * Get all keys matching pattern
    */
   async keys(pattern: string = '*'): Promise<string[]> {
-    if (!this.redisEnabled || !this.redis) {
-      const regex = new RegExp(`^${(this.prefix + pattern).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
-      return Array.from(this.memoryStore.keys()).filter((key) => regex.test(key));
-    }
-
     try {
-      return await this.redis.keys(`${this.prefix}${pattern}`);
+      return await this.requireRedis().keys(`${this.prefix}${pattern}`);
     } catch (error) {
-      this.handleRedisFailure(error);
-      return [];
+      throw this.redisOperationError('keys', error);
     }
   }
 
@@ -357,8 +242,7 @@ export class CacheService {
    * Gracefully close Redis connection
    */
   async close(): Promise<void> {
-    if (!this.redis || !this.redisEnabled) {
-      this.memoryStore.clear();
+    if (!this.redis) {
       return;
     }
 
@@ -366,8 +250,8 @@ export class CacheService {
       await this.redis.quit();
       console.log('[CacheService] Redis connection closed');
     } catch (error) {
-      this.handleRedisFailure(error);
       this.redis.disconnect();
+      throw this.redisOperationError('close', error);
     }
   }
 
@@ -378,48 +262,17 @@ export class CacheService {
     return `${this.prefix}${key}`;
   }
 
-  private purgeIfExpired(fullKey: string): void {
-    const value = this.memoryStore.get(fullKey);
-    if (!value) return;
-
-    if (value.expiresAt !== null && value.expiresAt <= Date.now()) {
-      this.memoryStore.delete(fullKey);
+  private requireRedis(): Redis {
+    if (!this.redis) {
+      throw new Error('Redis is required for cache operations');
     }
+
+    return this.redis;
   }
 
-  private getFromMemory<T>(fullKey: string): T | null {
-    this.purgeIfExpired(fullKey);
-    const value = this.memoryStore.get(fullKey);
-    if (!value) {
-      this.missCount++;
-      return null;
-    }
-
-    this.hitCount++;
-    return JSON.parse(value.value) as T;
-  }
-
-  private setInMemory(fullKey: string, serializedValue: string, ttlSeconds: number): void {
-    const expiresAt = ttlSeconds > 0 ? Date.now() + ttlSeconds * 1000 : null;
-    this.memoryStore.set(fullKey, { value: serializedValue, expiresAt });
-  }
-
-  private handleRedisFailure(error: unknown): void {
-    if (this.redisRequired) {
-      console.error('[CacheService] Redis error:', error);
-      return;
-    }
-
-    if (this.redisEnabled) {
-      this.redisEnabled = false;
-      this.redis?.disconnect();
-      this.redis = null;
-    }
-
-    if (!this.fallbackLogged) {
-      this.fallbackLogged = true;
-      console.warn('[CacheService] Redis unavailable, switched to in-memory cache');
-    }
+  private redisOperationError(operation: string, error: unknown): Error {
+    const message = error instanceof Error ? error.message : String(error);
+    return new Error(`Redis ${operation} failed: ${message}`);
   }
 }
 

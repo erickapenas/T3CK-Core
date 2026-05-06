@@ -7,7 +7,7 @@ IMPLEMENTADO ✅          →  MISSING ⏳                  →  FUTURO 🚀
 
 42 Tecnologias            20+ Tecnologias               Escalas de
 ✓ Production-ready        × Críticas para produção      crescimento
-✓ 7 Camadas              × Melhoram operacional        
+✓ 7 Camadas              × Melhoram operacional
 ✓ AWS 17 serviços        × Nice-to-have
 ```
 
@@ -64,6 +64,7 @@ IMPLEMENTADO ✅          →  MISSING ⏳                  →  FUTURO 🚀
 ## 📦 TECNOLOGIAS POR CATEGORIA
 
 ### 1️⃣ INFRAESTRUTURA & CLOUD (17 serviços AWS)
+
 ```
 ┌─ COMPUTE ────────────────────────┐
 │ ✅ ECS (Fargate)                 │ Container orchestration
@@ -102,6 +103,7 @@ IMPLEMENTADO ✅          →  MISSING ⏳                  →  FUTURO 🚀
 ```
 
 ### 2️⃣ LENGUAGES & RUNTIMES (6)
+
 ```
 ✅ TypeScript 5.3.3      (Main language - strict mode)
 ✅ Node.js 20.x          (Runtime)
@@ -114,6 +116,7 @@ IMPLEMENTADO ✅          →  MISSING ⏳                  →  FUTURO 🚀
 ```
 
 ### 3️⃣ FRAMEWORKS & LIBRARIES (15)
+
 ```
 BACKEND:
 ✅ Express.js 4.18.2         (Web framework)
@@ -139,6 +142,7 @@ IaC:
 ```
 
 ### 4️⃣ CODE QUALITY (7)
+
 ```
 ✅ ESLint 8.56.0                    (Linting)
 ✅ @typescript-eslint/parser        (TS parser)
@@ -152,6 +156,7 @@ IaC:
 ```
 
 ### 5️⃣ CI/CD & AUTOMATION (10)
+
 ```
 GITHUB ACTIONS:
 ✅ ci-cd.yml             (Main pipeline)
@@ -170,6 +175,7 @@ GITHUB ACTIONS:
 ```
 
 ### 6️⃣ INFRASTRUCTURE AS CODE (2)
+
 ```
 ✅ AWS CDK 2.100.0       (TypeScript-based IaC)
   ├─ VPC, Subnets
@@ -192,6 +198,7 @@ GITHUB ACTIONS:
 ```
 
 ### 7️⃣ DATABASE & CACHING (3)
+
 ```
 ✅ Firestore          (NoSQL - primary data)
   ├─ Security Rules v2
@@ -214,6 +221,7 @@ GITHUB ACTIONS:
 ```
 
 ### 8️⃣ CONTAINERIZATION (2)
+
 ```
 ✅ Docker              (Container images)
   ├─ 3 Dockerfiles
@@ -231,6 +239,7 @@ GITHUB ACTIONS:
 ```
 
 ### 9️⃣ OBSERVABILITY (3)
+
 ```
 ✅ CloudWatch         (Logs + Metrics)
   ├─ /aws/ecs/* logs
@@ -253,6 +262,7 @@ GITHUB ACTIONS:
 ```
 
 ### 🔟 SECURITY (3)
+
 ```
 ✅ Firebase Auth      (OAuth2/OIDC)
 ✅ AWS IAM            (Access control)
@@ -269,25 +279,26 @@ GITHUB ACTIONS:
 
 ## 📊 MATRIX: IMPLEMENTADO vs MISSING
 
-| Camada | Implementado | Missing | Progresso |
-|--------|------------|---------|-----------|
-| Cloud/Infrastructure | 17/20 | 3 | 85% |
-| Languages & Runtimes | 6/6 | 0 | 100% |
-| Frameworks & Libs | 15/22 | 7 | 68% |
-| Code Quality | 7/10 | 3 | 70% |
-| CI/CD | 10/12 | 2 | 83% |
-| IaC | 2/2 | 0 | 100% |
-| Database & Caching | 3/7 | 4 | 43% |
-| Containerization | 2/3 | 1 | 67% |
-| Observability | 3/8 | 5 | 37% |
-| Security | 3/8 | 5 | 37% |
-| **TOTAL** | **68/98** | **30** | **69%** |
+| Camada               | Implementado | Missing | Progresso |
+| -------------------- | ------------ | ------- | --------- |
+| Cloud/Infrastructure | 17/20        | 3       | 85%       |
+| Languages & Runtimes | 6/6          | 0       | 100%      |
+| Frameworks & Libs    | 15/22        | 7       | 68%       |
+| Code Quality         | 7/10         | 3       | 70%       |
+| CI/CD                | 10/12        | 2       | 83%       |
+| IaC                  | 2/2          | 0       | 100%      |
+| Database & Caching   | 3/7          | 4       | 43%       |
+| Containerization     | 2/3          | 1       | 67%       |
+| Observability        | 3/8          | 5       | 37%       |
+| Security             | 3/8          | 5       | 37%       |
+| **TOTAL**            | **68/98**    | **30**  | **69%**   |
 
 ---
 
 ## 🎯 MISSING BY PRIORITY
 
 ### 🔴 CRÍTICAS (Must-have para produção)
+
 ```
 1. API Documentation       → Swagger/OpenAPI
 2. Rate Limiting          → express-rate-limit
@@ -298,6 +309,7 @@ GITHUB ACTIONS:
 ```
 
 ### 🟡 IMPORTANTES (Melhoram operacional)
+
 ```
 7. Health Check Library   → @godaddy/terminus
 8. Metrics Collection     → Prometheus/prom-client
@@ -310,6 +322,7 @@ GITHUB ACTIONS:
 ```
 
 ### 🟢 NICE-TO-HAVE (Escalas de crescimento)
+
 ```
 15. Feature Flags         → LaunchDarkly
 16. GraphQL API          → Apollo Server

@@ -72,7 +72,7 @@ export const cacheSize = new Gauge({
 export function setupMetricsMiddleware(app: any): void {
   app.use((req: any, res: any, next: any) => {
     const start = Date.now();
-    
+
     // Increment active connections
     activeConnections.inc();
 
@@ -85,7 +85,7 @@ export function setupMetricsMiddleware(app: any): void {
 
       httpRequestDuration.observe(
         { method: req.method, route: req.route?.path || req.path, status_code: status },
-        duration,
+        duration
       );
       httpRequestTotal.inc({
         method: req.method,
@@ -120,7 +120,11 @@ export function trackWebhookReceived(eventType: string): void {
   webhookEventsReceived.inc({ event_type: eventType });
 }
 
-export function trackWebhookProcessed(eventType: string, success: boolean, durationMs: number): void {
+export function trackWebhookProcessed(
+  eventType: string,
+  success: boolean,
+  durationMs: number
+): void {
   const status = success ? 'success' : 'failure';
   webhookEventsProcessed.inc({ event_type: eventType, status });
   webhookProcessingDuration.observe({ event_type: eventType, status }, durationMs / 1000);
@@ -130,10 +134,14 @@ export function trackWebhookRetry(eventType: string, reason: string): void {
   webhookRetries.inc({ event_type: eventType, reason });
 }
 
-export function trackFirestoreOperation(operation: string, durationMs: number, success: boolean): void {
+export function trackFirestoreOperation(
+  operation: string,
+  durationMs: number,
+  success: boolean
+): void {
   firestoreOperationsDuration.observe(
     { operation, status: success ? 'success' : 'failure' },
-    durationMs / 1000,
+    durationMs / 1000
   );
 }
 

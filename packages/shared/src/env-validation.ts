@@ -4,7 +4,9 @@ export function validateAuthEnvironment(): void {
   const hasKeyPair = Boolean(process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY);
 
   if (!hasKeySetJson && !hasKeySetSecret && !hasKeyPair) {
-    throw new Error('Missing JWT key material. Provide JWT_PRIVATE_KEY/JWT_PUBLIC_KEY or JWT_KEY_SET_JSON or JWT_KEY_SET_SECRET_NAME');
+    throw new Error(
+      'Missing JWT key material. Provide JWT_PRIVATE_KEY/JWT_PUBLIC_KEY or JWT_KEY_SET_JSON or JWT_KEY_SET_SECRET_NAME'
+    );
   }
 
   if (hasKeyPair) {

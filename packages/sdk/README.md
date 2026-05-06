@@ -30,7 +30,9 @@ const product = await t3ck.catalog.getProduct('prod-123');
 
 // Checkout
 const order = await t3ck.checkout.create({
-  shippingAddress: { /* ... */ },
+  shippingAddress: {
+    /* ... */
+  },
   paymentMethod: 'credit_card',
 });
 

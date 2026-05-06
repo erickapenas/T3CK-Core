@@ -60,6 +60,7 @@ pnpm add @aws-sdk/client-ssm @aws-sdk/client-secrets-manager
 ```
 
 **Versions**:
+
 - `@aws-sdk/client-ssm`: ^3.0.0+
 - `@aws-sdk/client-secrets-manager`: ^3.0.0+
 
@@ -145,6 +146,7 @@ const cacheEnabled = await config.getConfigBoolean('cache-enabled', true);
 ### 2. Parameter Store Hierarchy
 
 **Create Parameters in AWS Console:**
+
 ```bash
 aws ssm put-parameter \
   --name /t3ck-core/production/redis-host \
@@ -164,6 +166,7 @@ aws ssm put-parameter \
 ```
 
 **Use in Application:**
+
 ```typescript
 const redisHost = await config.getConfig('redis-host');
 const rateLimit = await config.getConfigNumber('api-rate-limit');
@@ -173,6 +176,7 @@ const dbPassword = await config.getConfig('database-password', undefined, true);
 ### 3. Secrets Manager Integration
 
 **Create Secret:**
+
 ```bash
 aws secretsmanager create-secret \
   --name t3ck-core/production/firebase \
@@ -184,6 +188,7 @@ aws secretsmanager create-secret \
 ```
 
 **Use in Application:**
+
 ```typescript
 const firebaseSecret = await config.getSecret('t3ck-core/production/firebase');
 const projectId = firebaseSecret?.project_id;
@@ -198,7 +203,7 @@ const env = process.env.NODE_ENV || 'development';
 
 initializeConfig({
   parameterPrefix: '/t3ck-core',
-  environment: env,  // Automatically adds to path
+  environment: env, // Automatically adds to path
 });
 
 // Automatically uses:
@@ -320,25 +325,17 @@ aws ssm delete-parameter \
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "ssm:GetParameter",
-        "ssm:GetParameters",
-        "ssm:GetParametersByPath"
-      ],
+      "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"],
       "Resource": "arn:aws:ssm:*:ACCOUNT_ID:parameter/t3ck-core/*"
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue"
-      ],
+      "Action": ["secretsmanager:GetSecretValue"],
       "Resource": "arn:aws:secretsmanager:*:ACCOUNT_ID:secret:t3ck-core/*"
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "kms:Decrypt"
-      ],
+      "Action": ["kms:Decrypt"],
       "Resource": "arn:aws:kms:*:ACCOUNT_ID:key/*",
       "Condition": {
         "StringEquals": {
@@ -394,10 +391,10 @@ CMD ["node", "dist/index.js"]
     {
       "name": "auth-service",
       "image": "ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/t3ck-auth:latest",
-      "portMappings": [{"containerPort": 3001}],
+      "portMappings": [{ "containerPort": 3001 }],
       "environment": [
-        {"name": "AWS_REGION", "value": "us-east-1"},
-        {"name": "NODE_ENV", "value": "production"}
+        { "name": "AWS_REGION", "value": "us-east-1" },
+        { "name": "NODE_ENV", "value": "production" }
       ]
     }
   ]
@@ -412,8 +409,8 @@ kind: ConfigMap
 metadata:
   name: t3ck-config
 data:
-  AWS_REGION: "us-east-1"
-  NODE_ENV: "production"
+  AWS_REGION: 'us-east-1'
+  NODE_ENV: 'production'
 
 ---
 apiVersion: v1
@@ -427,9 +424,9 @@ kind: Role
 metadata:
   name: t3ck-ssm-access
 rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get"]
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get']
 
 ---
 apiVersion: apps/v1
@@ -442,16 +439,16 @@ spec:
     spec:
       serviceAccountName: t3ck-services
       containers:
-      - name: auth-service
-        image: auth-service:latest
-        envFrom:
-        - configMapRef:
-            name: t3ck-config
-        env:
-        - name: AWS_ROLE_ARN
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.annotations['iam.amazonaws.com/role']
+        - name: auth-service
+          image: auth-service:latest
+          envFrom:
+            - configMapRef:
+                name: t3ck-config
+          env:
+            - name: AWS_ROLE_ARN
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['iam.amazonaws.com/role']
 ```
 
 ## Performance & Optimization
@@ -498,6 +495,7 @@ const normalValue = await config.getParameter('normal-value', false);
 ## Best Practices
 
 ✅ **DO**:
+
 - Use environment variables for optional config
 - Store secrets in Secrets Manager (not Parameter Store)
 - Use SecureString for sensitive parameters
@@ -508,6 +506,7 @@ const normalValue = await config.getParameter('normal-value', false);
 - Regularly rotate secrets and credentials
 
 ❌ **DON'T**:
+
 - Store secrets in Parameter Store plaintext
 - Make parameter calls on every request
 - Use hardcoded values
@@ -615,16 +614,19 @@ config_parameter_accesses_total
 ## Maintenance
 
 **Daily**:
+
 - Monitor parameter access logs
 - Check for failed retrievals
 - Verify cache is functioning
 
 **Weekly**:
+
 - Review parameter usage
 - Update stale configurations
 - Check access logs for unauthorized attempts
 
 **Monthly**:
+
 - Rotate secrets and credentials
 - Review parameter hierarchy
 - Audit access policies

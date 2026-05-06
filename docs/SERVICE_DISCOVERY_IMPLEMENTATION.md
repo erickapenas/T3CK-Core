@@ -33,6 +33,7 @@ Service Registration Flow:
 **Location**: `packages/shared/src/service-discovery.ts`
 
 **Key Responsibilities**:
+
 - Register/deregister service instances
 - Discover instances by service name
 - Automatic health checking (HTTP GET, 30s interval)
@@ -61,26 +62,27 @@ services/
 
 ```typescript
 interface ServiceInstance {
-  id: string;                      // Unique ID (hostname-port)
-  name: string;                    // Service name (t3ck-auth)
-  host: string;                    // IP or hostname
-  port: number;                    // Port number
-  scheme: 'http' | 'https';        // Protocol
-  metadata?: Record<string, string>;  // Custom metadata
-  healthCheckUrl?: string;         // Health check path
-  tags?: string[];                 // Service tags
-  lastHeartbeat?: Date;            // Last health check time
-  weight?: number;                 // Load balancing weight
+  id: string; // Unique ID (hostname-port)
+  name: string; // Service name (t3ck-auth)
+  host: string; // IP or hostname
+  port: number; // Port number
+  scheme: 'http' | 'https'; // Protocol
+  metadata?: Record<string, string>; // Custom metadata
+  healthCheckUrl?: string; // Health check path
+  tags?: string[]; // Service tags
+  lastHeartbeat?: Date; // Last health check time
+  weight?: number; // Load balancing weight
 }
 ```
 
 ### ServiceRegistry Class
 
 **Singleton Pattern**:
+
 ```typescript
 class ServiceRegistry {
   private static instance: ServiceRegistry;
-  
+
   static getInstance(): ServiceRegistry {
     if (!ServiceRegistry.instance) {
       ServiceRegistry.instance = new ServiceRegistry();
@@ -91,6 +93,7 @@ class ServiceRegistry {
 ```
 
 **Core Methods**:
+
 ```typescript
 // Registration
 async register(instance: ServiceInstance): Promise<void>
@@ -115,18 +118,18 @@ async close(): Promise<void>
 // Every 30 seconds per instance:
 setInterval(async () => {
   const url = `${instance.scheme}://${instance.host}:${instance.port}${instance.healthCheckUrl}`;
-  
+
   // 5 second timeout using AbortController
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
-  
+
   try {
     const response = await fetch(url, { signal: controller.signal });
     // Log success/failure
   } finally {
     clearTimeout(timeoutId);
   }
-}, 30000);  // 30 second interval
+}, 30000); // 30 second interval
 ```
 
 ## Usage Guide
@@ -209,9 +212,9 @@ export async function initializeServiceRegistry(
   metadata?: Record<string, string>
 ): Promise<void> {
   const registry = getServiceRegistry();
-  
+
   await registry.registerInstance(serviceName, port, metadata);
-  
+
   process.on('SIGTERM', async () => {
     await registry.deregisterInstance(serviceName);
     await registry.close();
@@ -222,17 +225,19 @@ export async function initializeServiceRegistry(
 ## Prometheus Metrics
 
 **Counters** (for monitoring):
+
 ```typescript
-service_registry_register_attempts_total      // Total registration attempts
-service_registry_register_failures_total      // Total registration failures
-service_registry_deregister_attempts_total    // Total deregister attempts
-service_registry_deregister_failures_total    // Total deregister failures
+service_registry_register_attempts_total; // Total registration attempts
+service_registry_register_failures_total; // Total registration failures
+service_registry_deregister_attempts_total; // Total deregister attempts
+service_registry_deregister_failures_total; // Total deregister failures
 ```
 
 **Example Queries**:
+
 ```promql
 # Registration success rate
-rate(service_registry_register_attempts_total[5m]) 
+rate(service_registry_register_attempts_total[5m])
   - rate(service_registry_register_failures_total[5m])
 
 # Current failure rate
@@ -246,9 +251,9 @@ rate(service_registry_register_failures_total[5m])
 ```typescript
 interface RegistryConfig {
   registryType: 'in-memory' | 'cloud-map' | 'consul' | 'kubernetes';
-  environment: string;                    // 'development', 'staging', 'production'
-  healthCheckInterval?: number;           // ms between checks (default: 30000)
-  healthCheckTimeout?: number;            // timeout ms (default: 5000)
+  environment: string; // 'development', 'staging', 'production'
+  healthCheckInterval?: number; // ms between checks (default: 30000)
+  healthCheckTimeout?: number; // timeout ms (default: 5000)
 }
 ```
 
@@ -269,17 +274,18 @@ AWS_REGION=us-east-1                 # AWS region
 ## Load Balancing
 
 **Round-Robin Strategy**:
+
 ```typescript
 private lastIndex: Map<string, number> = new Map();
 
 getInstance(name: string): ServiceInstance | null {
   const instances = this.services.get(name);
   if (!instances?.length) return null;
-  
+
   const lastIdx = this.lastIndex.get(name) ?? -1;
   const nextIdx = (lastIdx + 1) % instances.length;
   this.lastIndex.set(name, nextIdx);
-  
+
   return instances[nextIdx];  // Return next instance in rotation
 }
 ```
@@ -342,11 +348,11 @@ Each service implements SIGTERM handler:
 ```typescript
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully...');
-  
+
   const registry = getServiceRegistry();
   await registry.deregister(serviceName, instanceId);
   await registry.close();
-  
+
   server.close(() => {
     process.exit(0);
   });
@@ -386,8 +392,8 @@ spec:
   selector:
     app: auth-service
   ports:
-  - port: 3001
-    targetPort: 3001
+    - port: 3001
+      targetPort: 3001
 ```
 
 ### 4. Error Handling & Fallback
@@ -437,10 +443,11 @@ try {
 
 **Cause**: Service not registered yet or name mismatch  
 **Solution**:
+
 ```typescript
 // Check service is registered
 const instances = registry.discover('t3ck-auth');
-console.log(instances);  // Should have at least 1 instance
+console.log(instances); // Should have at least 1 instance
 
 // Verify exact service name
 // Common issue: 't3ck-auth' vs 't3ck_auth'
@@ -450,6 +457,7 @@ console.log(instances);  // Should have at least 1 instance
 
 **Cause**: Health endpoint slow or unresponsive  
 **Solution**:
+
 ```bash
 # Test health endpoint directly
 curl http://localhost:3001/health
@@ -463,6 +471,7 @@ curl http://localhost:3001/health
 
 **Cause**: Ungraceful shutdown  
 **Solution**:
+
 ```typescript
 // Ensure SIGTERM handler exists
 process.on('SIGTERM', async () => {
@@ -482,14 +491,14 @@ process.on('SIGTERM', async () => {
 ✅ **Graceful Shutdown**: SIGTERM handler with deregistration  
 ✅ **Monitoring**: Prometheus metrics + Winston logging  
 ✅ **Extensible**: Ready for Cloud Map, Consul, Kubernetes  
-✅ **Tested**: All services compile successfully  
+✅ **Tested**: All services compile successfully
 
 **Build Status**: ✅ Complete  
 **Test Status**: ✅ Ready for integration testing  
-**Performance**: < 1ms discovery lookup  
-
+**Performance**: < 1ms discovery lookup
 
 Notes:
+
 - Use a consistent service identifier (Cloud Map ServiceId or human-friendly name depending on your Cloud Map setup).
 - Provide metadata keys like `environment`, `version`, `region` to help routing/monitoring.
 
@@ -499,17 +508,17 @@ Grant the task/instance role permission to register and deregister instances and
 
 ```json
 {
-  "Version":"2012-10-17",
-  "Statement":[
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      "Effect":"Allow",
-      "Action":[
+      "Effect": "Allow",
+      "Action": [
         "servicediscovery:RegisterInstance",
         "servicediscovery:DeregisterInstance",
         "servicediscovery:GetInstance",
         "servicediscovery:ListInstances"
       ],
-      "Resource":"arn:aws:servicediscovery:*:ACCOUNT_ID:service/*"
+      "Resource": "arn:aws:servicediscovery:*:ACCOUNT_ID:service/*"
     }
   ]
 }

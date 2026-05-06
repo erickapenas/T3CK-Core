@@ -39,7 +39,7 @@ export class T3CKClient {
       (response) => response,
       async (error: AxiosError) => {
         const apiError = this.handleError(error);
-        
+
         // Retry logic com exponential backoff
         if (this.shouldRetry(error) && this.retries > 0) {
           this.retries--;

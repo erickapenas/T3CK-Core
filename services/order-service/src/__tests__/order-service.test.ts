@@ -14,9 +14,7 @@ describe('OrderService', () => {
       tenantId,
       customerId,
       shippingCost: 10,
-      items: [
-        { productId: 'p1', name: 'Produto 1', quantity: 2, unitPrice: 50 },
-      ],
+      items: [{ productId: 'p1', name: 'Produto 1', quantity: 2, unitPrice: 50 }],
     });
 
     expect(order.id).toBeDefined();

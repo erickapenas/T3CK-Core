@@ -1,11 +1,41 @@
 import jwt from 'jsonwebtoken';
 import { generateKeyPairSync } from 'crypto';
 import { AuthService, TokenPayload } from '../auth';
+import { KeyManager } from '../key-manager';
+import { TokenStore } from '../token-store';
+import type { CacheService } from '../cache';
+
+function createCacheMock(): CacheService {
+  const values = new Map<string, { value: unknown; expiresAt: number }>();
+
+  return {
+    async set<T>(key: string, value: T, ttl?: number): Promise<void> {
+      values.set(key, {
+        value,
+        expiresAt: ttl ? Date.now() + ttl * 1000 : Number.POSITIVE_INFINITY,
+      });
+    },
+    async exists(key: string): Promise<boolean> {
+      const entry = values.get(key);
+      if (!entry) {
+        return false;
+      }
+      if (entry.expiresAt <= Date.now()) {
+        values.delete(key);
+        return false;
+      }
+      return true;
+    },
+    async delete(key: string): Promise<void> {
+      values.delete(key);
+    },
+  } as unknown as CacheService;
+}
 
 describe('AuthService JWT RS256', () => {
   let authService: AuthService;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     const { privateKey, publicKey } = generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {
@@ -23,7 +53,11 @@ describe('AuthService JWT RS256', () => {
     process.env.JWT_EXPIRATION = '3600';
     process.env.JWT_REFRESH_EXPIRATION = '604800';
 
-    authService = new AuthService();
+    const keyManager = await KeyManager.create();
+    const tokenStore = new TokenStore(createCacheMock(), keyManager, {
+      refreshTtlSeconds: Number(process.env.JWT_REFRESH_EXPIRATION),
+    });
+    authService = new AuthService(keyManager, tokenStore);
   });
 
   const payload: TokenPayload = {
@@ -65,12 +99,9 @@ describe('AuthService JWT RS256', () => {
   });
 
   it('refreshes JWT tokens using RS256 flow', async () => {
-    const refreshSourceToken = await authService.generateJWT({
-      ...payload,
-      tokenType: 'refresh',
-    });
+    const issued = await authService.issueTokens(payload);
 
-    const refreshed = await authService.refreshToken(refreshSourceToken);
+    const refreshed = await authService.refreshToken(issued.refreshToken);
 
     expect(refreshed.accessToken).toBeDefined();
     expect(refreshed.refreshToken).toBeDefined();

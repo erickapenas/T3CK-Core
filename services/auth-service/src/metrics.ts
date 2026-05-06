@@ -66,7 +66,7 @@ export const cacheSize = new Gauge({
 export function setupMetricsMiddleware(app: any): void {
   app.use((req: any, res: any, next: any) => {
     const start = Date.now();
-    
+
     // Increment active connections
     activeConnections.inc();
 
@@ -78,13 +78,24 @@ export function setupMetricsMiddleware(app: any): void {
       const status = res.statusCode;
 
       // Record request metrics
-      httpRequestDuration.observe({ method: req.method, route: req.route?.path || req.path, status_code: status }, duration);
-      httpRequestTotal.inc({ method: req.method, route: req.route?.path || req.path, status_code: status });
+      httpRequestDuration.observe(
+        { method: req.method, route: req.route?.path || req.path, status_code: status },
+        duration
+      );
+      httpRequestTotal.inc({
+        method: req.method,
+        route: req.route?.path || req.path,
+        status_code: status,
+      });
 
       // Record errors
       if (status >= 400) {
         const errorType = status >= 500 ? 'server_error' : 'client_error';
-        httpRequestErrors.inc({ method: req.method, route: req.route?.path || req.path, error_type: errorType });
+        httpRequestErrors.inc({
+          method: req.method,
+          route: req.route?.path || req.path,
+          error_type: errorType,
+        });
       }
     });
 
@@ -116,10 +127,14 @@ export function trackTokenValidation(tokenType: string, durationMs: number): voi
   authTokenValidationDuration.observe({ token_type: tokenType }, durationMs / 1000);
 }
 
-export function trackFirebaseOperation(operation: string, durationMs: number, success: boolean): void {
+export function trackFirebaseOperation(
+  operation: string,
+  durationMs: number,
+  success: boolean
+): void {
   firebaseOperationsDuration.observe(
     { operation, status: success ? 'success' : 'failure' },
-    durationMs / 1000,
+    durationMs / 1000
   );
 }
 

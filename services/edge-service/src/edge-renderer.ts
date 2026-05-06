@@ -20,7 +20,12 @@ export class EdgeRenderer {
     totalGenerationTime: 0,
   };
 
-  async render(tenantId: string, resourceType: string, resourceId: string, force = false): Promise<PreRenderedPage> {
+  async render(
+    tenantId: string,
+    resourceType: string,
+    resourceId: string,
+    force = false
+  ): Promise<PreRenderedPage> {
     const cacheKey = this.getCacheKey(tenantId, resourceType, resourceId);
     this.stats.totalRequests++;
 
@@ -64,7 +69,7 @@ export class EdgeRenderer {
 
   async preRender(config: PreRenderConfig): Promise<string> {
     const jobId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const job: PreRenderJob = {
       id: jobId,
       config,
@@ -107,9 +112,9 @@ export class EdgeRenderer {
       job.status = 'completed';
       job.completedAt = Date.now();
 
-      logger.info('PreRender job completed', { 
-        jobId: job.id, 
-        duration: job.completedAt - job.createdAt 
+      logger.info('PreRender job completed', {
+        jobId: job.id,
+        duration: job.completedAt - job.createdAt,
       });
     } catch (error: any) {
       job.status = 'failed';
@@ -119,7 +124,11 @@ export class EdgeRenderer {
     }
   }
 
-  private async generatePage(tenantId: string, resourceType: string, resourceId: string): Promise<PreRenderedPage> {
+  private async generatePage(
+    tenantId: string,
+    resourceType: string,
+    resourceId: string
+  ): Promise<PreRenderedPage> {
     // Fetch data from backend services
     const data = await this.fetchResourceData(tenantId, resourceType, resourceId);
 
@@ -146,7 +155,11 @@ export class EdgeRenderer {
     };
   }
 
-  private async fetchResourceData(tenantId: string, resourceType: string, resourceId: string): Promise<any> {
+  private async fetchResourceData(
+    tenantId: string,
+    resourceType: string,
+    resourceId: string
+  ): Promise<any> {
     // Mock: In production, call actual services
     const serviceUrls: Record<string, string> = {
       product: process.env.PRODUCT_SERVICE_URL || 'http://localhost:3001',
@@ -167,11 +180,11 @@ export class EdgeRenderer {
 
       return response.data;
     } catch (error: any) {
-      logger.error('Failed to fetch resource data', { 
-        tenantId, 
-        resourceType, 
-        resourceId, 
-        error: error.message 
+      logger.error('Failed to fetch resource data', {
+        tenantId,
+        resourceType,
+        resourceId,
+        error: error.message,
       });
 
       // Return mock data for development
@@ -264,7 +277,12 @@ export class EdgeRenderer {
     return age > revalidateThreshold;
   }
 
-  private revalidateInBackground(cacheKey: string, tenantId: string, resourceType: string, resourceId: string): void {
+  private revalidateInBackground(
+    cacheKey: string,
+    tenantId: string,
+    resourceType: string,
+    resourceId: string
+  ): void {
     logger.debug('Revalidating page in background', { cacheKey });
 
     // Non-blocking revalidation
@@ -288,7 +306,10 @@ export class EdgeRenderer {
 
   updateISRConfig(config: ISRConfig): void {
     this.isrConfig = config;
-    logger.info('ISR config updated', { enabled: config.enabled, revalidateInterval: config.revalidateInterval });
+    logger.info('ISR config updated', {
+      enabled: config.enabled,
+      revalidateInterval: config.revalidateInterval,
+    });
   }
 
   getISRConfig(): ISRConfig {
@@ -300,16 +321,21 @@ export class EdgeRenderer {
       totalRequests: this.stats.totalRequests,
       cacheHits: this.stats.cacheHits,
       cacheMisses: this.stats.cacheMisses,
-      cacheHitRate: this.stats.cacheHits + this.stats.cacheMisses > 0
-        ? ((this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) * 100).toFixed(2) + '%'
-        : '0%',
-      averageGenerationTime: this.stats.cacheMisses > 0
-        ? Math.round(this.stats.totalGenerationTime / this.stats.cacheMisses)
-        : 0,
+      cacheHitRate:
+        this.stats.cacheHits + this.stats.cacheMisses > 0
+          ? (
+              (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
+              100
+            ).toFixed(2) + '%'
+          : '0%',
+      averageGenerationTime:
+        this.stats.cacheMisses > 0
+          ? Math.round(this.stats.totalGenerationTime / this.stats.cacheMisses)
+          : 0,
       preRenderedPages: this.cache.size,
       totalJobs: this.jobs.size,
-      completedJobs: Array.from(this.jobs.values()).filter(j => j.status === 'completed').length,
-      failedJobs: Array.from(this.jobs.values()).filter(j => j.status === 'failed').length,
+      completedJobs: Array.from(this.jobs.values()).filter((j) => j.status === 'completed').length,
+      failedJobs: Array.from(this.jobs.values()).filter((j) => j.status === 'failed').length,
     };
   }
 

@@ -1,15 +1,32 @@
 import { Logger } from '@t3ck/shared';
 import { Counter } from 'prom-client';
+import {
+  DeregisterInstanceCommand,
+  RegisterInstanceCommand,
+  ServiceDiscoveryClient,
+} from '@aws-sdk/client-servicediscovery';
 
 const logger = new Logger('service-registry');
 
-const registerAttempts = new Counter({ name: 'service_registry_register_attempts_total', help: 'Service registry register attempts' });
-const registerFailures = new Counter({ name: 'service_registry_register_failures_total', help: 'Service registry register failures' });
-const deregisterAttempts = new Counter({ name: 'service_registry_deregister_attempts_total', help: 'Service registry deregister attempts' });
-const deregisterFailures = new Counter({ name: 'service_registry_deregister_failures_total', help: 'Service registry deregister failures' });
+const registerAttempts = new Counter({
+  name: 'service_registry_register_attempts_total',
+  help: 'Service registry register attempts',
+});
+const registerFailures = new Counter({
+  name: 'service_registry_register_failures_total',
+  help: 'Service registry register failures',
+});
+const deregisterAttempts = new Counter({
+  name: 'service_registry_deregister_attempts_total',
+  help: 'Service registry deregister attempts',
+});
+const deregisterFailures = new Counter({
+  name: 'service_registry_deregister_failures_total',
+  help: 'Service registry deregister failures',
+});
 
 interface ServiceInstance {
-  instanceId?: string;
+  instanceId: string;
   serviceId: string;
   port: number;
   ipAddress?: string;
@@ -20,10 +37,13 @@ class ServiceRegistry {
   private static instance: ServiceRegistry;
   private registeredInstances: Map<string, ServiceInstance> = new Map();
   private isHealthy = true;
+  private client: ServiceDiscoveryClient;
 
   private constructor() {
-    // Registry initialized - works in-memory or with AWS when configured
-    logger.info('ServiceRegistry initialized (in-memory mode)');
+    this.client = new ServiceDiscoveryClient({
+      region: process.env.AWS_REGION || 'us-east-1',
+    });
+    logger.info('ServiceRegistry initialized (Cloud Map mode)');
   }
 
   static getInstance(): ServiceRegistry {
@@ -46,9 +66,9 @@ class ServiceRegistry {
   ): Promise<string> {
     registerAttempts.inc();
     try {
-      // Generate instance ID from hostname + port if not provided
       const hostname = process.env.HOSTNAME || 'localhost';
       const instanceId = `${hostname}-${port}`;
+      const registryServiceId = this.getCloudMapServiceId(serviceName);
 
       const serviceInstance: ServiceInstance = {
         instanceId,
@@ -63,7 +83,20 @@ class ServiceRegistry {
         },
       };
 
+      await this.client.send(
+        new RegisterInstanceCommand({
+          ServiceId: registryServiceId,
+          InstanceId: instanceId,
+          Attributes: {
+            ...serviceInstance.metadata,
+            AWS_INSTANCE_IPV4: serviceInstance.ipAddress || '127.0.0.1',
+            AWS_INSTANCE_PORT: String(port),
+          },
+        })
+      );
+
       this.registeredInstances.set(serviceName, serviceInstance);
+      this.isHealthy = true;
 
       logger.info(`Service registered: ${serviceName}`, {
         instanceId,
@@ -81,9 +114,10 @@ class ServiceRegistry {
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // Don't throw - allow graceful degradation
       this.isHealthy = false;
-      return `${process.env.HOSTNAME || 'localhost'}-${port}-fallback`;
+      throw new Error(
+        `Failed to register service instance: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -100,8 +134,14 @@ class ServiceRegistry {
         return;
       }
 
-      this.registeredInstances.delete(serviceName);
+      await this.client.send(
+        new DeregisterInstanceCommand({
+          ServiceId: this.getCloudMapServiceId(serviceName),
+          InstanceId: instance.instanceId,
+        })
+      );
 
+      this.registeredInstances.delete(serviceName);
       logger.info(`Service deregistered: ${serviceName}`, {
         instanceId: instance.instanceId,
         timestamp: new Date().toISOString(),
@@ -112,6 +152,9 @@ class ServiceRegistry {
         serviceName,
         error: error instanceof Error ? error.message : String(error),
       });
+      throw new Error(
+        `Failed to deregister service instance: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -143,12 +186,19 @@ class ServiceRegistry {
   async close(): Promise<void> {
     try {
       this.registeredInstances.clear();
+      this.client.destroy();
       logger.info('ServiceRegistry closed');
     } catch (error) {
       logger.error('Error closing ServiceRegistry', {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  private getCloudMapServiceId(serviceName: string): string {
+    return (
+      process.env.CLOUD_MAP_SERVICE_ID || process.env.SERVICE_DISCOVERY_SERVICE_ID || serviceName
+    );
   }
 }
 

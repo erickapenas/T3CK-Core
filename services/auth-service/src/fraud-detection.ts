@@ -121,11 +121,11 @@ export class FraudDetectionService {
         // Revogar todas as sessões
         const userSessionsKey = `user_sessions:${userId}`;
         const sessions = await this.redis.smembers(userSessionsKey);
-        
+
         for (const sessionKey of sessions) {
           await this.redis.del(sessionKey);
         }
-        
+
         await this.redis.del(userSessionsKey);
       }
     } catch (error) {

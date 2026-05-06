@@ -17,30 +17,220 @@ service cloud.firestore {
       return isAuthenticated() && request.resource.data.tenantId == request.auth.token.tenant_id;
     }
 
-    function isTenantAdmin() {
-      return isAuthenticated() && request.auth.token.roles.hasAny(['admin', 'manager', 'owner']);
+    function hasAnyRole(roles) {
+      return isAuthenticated() &&
+        (
+          (request.auth.token.roles is list && request.auth.token.roles.hasAny(roles)) ||
+          (request.auth.token.role is string && request.auth.token.role in roles)
+        );
     }
 
-    // Regras de segurança multi-tenant
-    match /tenants/{tenantId}/** {
-      allow read, write: if tenantMatchesClaim(tenantId);
+    function isTenantAdmin() {
+      return hasAnyRole(['admin', 'manager', 'owner', 'cto', 'staff']);
     }
-    
-    // Regras para orders
+
+    function hasStoreTenant(storeId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/lojas/$(storeId)) &&
+        tenantMatchesClaim(get(/databases/$(database)/documents/lojas/$(storeId)).data.tenantId);
+    }
+
+    function isStoreCustomer(storeId, customerId) {
+      return hasStoreTenant(storeId) && request.auth.uid == customerId;
+    }
+
+    function isStoreAdmin(storeId) {
+      return hasStoreTenant(storeId) && isTenantAdmin();
+    }
+
+    match /tenants/{tenantId} {
+      allow read: if tenantMatchesClaim(tenantId);
+      allow write: if tenantMatchesClaim(tenantId) && isTenantAdmin();
+    }
+
+    match /tenants/{tenantId}/admin/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/{collection}/{document=**} {
+      allow read, write: if tenantMatchesClaim(tenantId) && collection != 'admin';
+    }
+
+    match /lojas/{storeId} {
+      allow read: if hasStoreTenant(storeId);
+      allow write: if isStoreAdmin(storeId);
+
+      match /configuracoes/{documentId} {
+        allow read: if hasStoreTenant(storeId);
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /produtos/{productId} {
+        allow read: if true;
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /categorias/{categoryId} {
+        allow read: if true;
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /sessoesChat/{sessionId}/mensagens/{messageId} {
+        allow read, write: if hasStoreTenant(storeId);
+      }
+
+      match /preferenciasChat/{sessionId} {
+        allow read, write: if hasStoreTenant(storeId);
+      }
+
+      match /memoriasChat/{sessionId} {
+        allow read, write: if hasStoreTenant(storeId);
+      }
+
+      match /eventosChatbot/{eventId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /handoffsChatbot/{handoffId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /interacoesClientes/{interactionId} {
+        allow read: if isStoreAdmin(storeId);
+        allow write: if hasStoreTenant(storeId);
+      }
+
+      match /snapshotsPersonalizacao/{customerId} {
+        allow read: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /clientes/{customerId} {
+        allow read, write: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+
+        match /enderecos/{addressId} {
+          allow read, write: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+        }
+
+        match /wishlist/{wishlistItemId} {
+          allow read, write: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+        }
+
+        match /notificacoesPedidos/{notificationId} {
+          allow read, write: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+        }
+
+        match /ticketsSuporte/{ticketId} {
+          allow read, write: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+        }
+
+        match /trocasDevolucoes/{requestId} {
+          allow read, write: if isStoreCustomer(storeId, customerId) || isStoreAdmin(storeId);
+        }
+      }
+
+      match /carrinhos/{cartId} {
+        allow read, write: if hasStoreTenant(storeId);
+      }
+
+      match /perfisRecuperacao/{customerId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /sugestoesRecuperacao/{suggestionId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /sinaisComportamento/{signalId} {
+        allow read, write: if hasStoreTenant(storeId);
+      }
+
+      match /cupons/{couponId} {
+        allow read: if hasStoreTenant(storeId);
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /auditoriasCupons/{auditId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /regrasFrete/{ruleId} {
+        allow read: if hasStoreTenant(storeId);
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /configuracoesTransportadora/{configId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /snapshotsAnalytics/{snapshotId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /relatoriosVendas/{reportId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /pdfsRelatoriosVendas/{exportId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /clientesCrm/{customerId} {
+        allow read, write: if isStoreAdmin(storeId);
+
+        match /timeline/{eventId} {
+          allow read, write: if isStoreAdmin(storeId);
+        }
+      }
+
+      match /segmentosCrm/{segmentId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /rascunhosCampanhasEmail/{draftId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /campanhasEmail/{campaignId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /regrasFiscais/{ruleId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /notasFiscais/{invoiceId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /perfisJuridicos/{profileId} {
+        allow read, write: if isStoreAdmin(storeId);
+      }
+
+      match /documentosLegais/{documentId} {
+        allow read: if true;
+        allow write: if isStoreAdmin(storeId);
+      }
+
+      match /aceitesLegais/{acceptanceId} {
+        allow read: if isStoreAdmin(storeId);
+        allow create: if hasStoreTenant(storeId);
+        allow update, delete: if false;
+      }
+    }
+
     match /orders/{orderId} {
       allow read: if resourceTenantMatchesClaim();
       allow create: if requestTenantMatchesClaim();
       allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
     }
-    
-    // Regras para produtos
+
     match /products/{productId} {
       allow read: if resourceTenantMatchesClaim();
       allow create: if requestTenantMatchesClaim() && isTenantAdmin();
       allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
     }
-    
-    // Regras para webhooks
+
     match /webhooks/{webhookId} {
       allow read: if resourceTenantMatchesClaim();
       allow create: if requestTenantMatchesClaim();
@@ -51,6 +241,26 @@ service cloud.firestore {
       allow read: if resourceTenantMatchesClaim();
       allow create: if requestTenantMatchesClaim() && isTenantAdmin();
       allow update, delete: if resourceTenantMatchesClaim() && isTenantAdmin();
+    }
+
+    match /integrations/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /marketplace_accounts/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /marketplace_orders/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /integration_logs/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /pagespeed_reports/{documentId} {
+      allow read, write: if false;
     }
 
     match /users/{userId} {

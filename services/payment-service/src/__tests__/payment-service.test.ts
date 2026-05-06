@@ -25,6 +25,7 @@ describe('PaymentService', () => {
         },
       }),
       refund: jest.fn().mockResolvedValue('refunded'),
+      getPaymentStatus: jest.fn().mockResolvedValue('paid'),
     } as unknown as AbacatePayClient;
   };
 
@@ -62,11 +63,21 @@ describe('PaymentService', () => {
     const mapped = service.processWebhookUpdate({
       tenantId: baseRequest.tenantId,
       paymentId: created.paymentId,
+      eventId: 'evt-paid-1',
+      providerStatus: 'paid',
+      rawPayload: { externalStatus: 'paid' },
+    });
+    const replay = service.processWebhookUpdate({
+      tenantId: baseRequest.tenantId,
+      paymentId: created.paymentId,
+      eventId: 'evt-paid-1',
       providerStatus: 'paid',
       rawPayload: { externalStatus: 'paid' },
     });
 
-    expect(mapped).toBe('PAID');
+    expect(mapped.status).toBe('PAID');
+    expect(mapped.duplicate).toBe(false);
+    expect(replay.duplicate).toBe(true);
     expect(service.getPayment(created.paymentId)?.status).toBe('PAID');
   });
 
@@ -75,6 +86,13 @@ describe('PaymentService', () => {
     const service = new PaymentService(provider);
 
     const created = await service.createPayment(baseRequest, 'idem-key-4');
+    service.processWebhookUpdate({
+      tenantId: baseRequest.tenantId,
+      paymentId: created.paymentId,
+      providerStatus: 'paid',
+      rawPayload: { externalStatus: 'paid' },
+    });
+
     const refunded = await service.refund({
       tenantId: baseRequest.tenantId,
       paymentId: created.paymentId,
@@ -85,6 +103,53 @@ describe('PaymentService', () => {
     expect(refunded.status).toBe('REFUNDED');
     expect((provider.refund as jest.Mock).mock.calls.length).toBe(1);
     expect(service.getPayment(created.paymentId)?.status).toBe('REFUNDED');
+  });
+
+  it('syncs status from provider without exposing provider credentials', async () => {
+    const provider = createProvider();
+    const service = new PaymentService(provider);
+
+    const created = await service.createPayment(baseRequest, 'idem-key-status');
+    const status = await service.syncPaymentStatus(created.paymentId, baseRequest.tenantId);
+
+    expect(status).toBe('PAID');
+    expect((provider.getPaymentStatus as jest.Mock).mock.calls).toEqual([['prov_123', 'pix']]);
+    expect(service.getPayment(created.paymentId)?.status).toBe('PAID');
+  });
+
+  it('creates hosted checkout for card without receiving card data', async () => {
+    const provider = createProvider();
+    (provider.createPayment as jest.Mock).mockResolvedValueOnce({
+      providerPaymentId: 'bill_123',
+      status: 'PENDING',
+      hostedCheckout: {
+        url: 'https://app.abacatepay.com/pay/bill_123',
+        returnUrl: 'https://store.test/return',
+        completionUrl: 'https://store.test/success',
+      },
+    });
+    const service = new PaymentService(provider);
+
+    const created = await service.createPayment(
+      {
+        ...baseRequest,
+        method: 'card',
+        checkoutItems: [{ id: 'prod_123', quantity: 1 }],
+        returnUrl: 'https://store.test/return',
+        completionUrl: 'https://store.test/success',
+      },
+      'idem-key-hosted'
+    );
+
+    expect(created.hostedCheckout?.url).toContain('/pay/bill_123');
+    expect(provider.createPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: 'card',
+        checkoutItems: [{ id: 'prod_123', quantity: 1 }],
+        metadata: expect.objectContaining({ paymentId: created.paymentId }),
+      }),
+      expect.any(Object)
+    );
   });
 
   it('handles chargeback and reflects it in financial summary', async () => {

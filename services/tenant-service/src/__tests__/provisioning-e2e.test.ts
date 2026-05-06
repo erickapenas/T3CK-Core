@@ -1,6 +1,6 @@
 /**
  * End-to-End (E2E) Tests for Provisioning Workflow
- * 
+ *
  * These tests verify the complete flow from submission to activation
  */
 describe('E2E Provisioning Workflow', () => {

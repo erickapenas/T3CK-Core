@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Logger } from '@t3ck/shared/logger';
+import { Logger } from '@t3ck/shared';
 import { TenantOffboardingService, OffboardingRequest } from './offboarding';
 
 interface TenantOffboardingRouter {
@@ -68,10 +68,7 @@ export function createOffboardingRouter(
         });
       }
 
-      const exportResult = await offboardingService.exportTenantData(
-        tenantId,
-        format || 'json'
-      );
+      const exportResult = await offboardingService.exportTenantData(tenantId, format || 'json');
 
       res.json({
         success: true,

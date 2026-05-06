@@ -5,7 +5,9 @@ import {
   OrderAnalytics,
   OrderStatus,
   OrderStatusEvent,
+  PaymentStatus,
 } from './types';
+import { OrderStateStore } from './order-state-store';
 
 const randomId = (prefix: string): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 const now = (): string => new Date().toISOString();
@@ -22,6 +24,23 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 export class OrderService {
   private readonly orders = new Map<string, Order>();
   private readonly history: OrderStatusEvent[] = [];
+
+  constructor(private readonly stateStore?: OrderStateStore) {
+    const snapshot = this.stateStore?.load();
+    if (snapshot) {
+      for (const order of snapshot.orders) {
+        this.orders.set(order.id, order);
+      }
+      this.history.push(...snapshot.history);
+    }
+  }
+
+  private persist(): void {
+    this.stateStore?.save({
+      orders: Array.from(this.orders.values()),
+      history: this.history,
+    });
+  }
 
   createOrder(input: CreateOrderInput): Order {
     const subtotal = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
@@ -50,6 +69,7 @@ export class OrderService {
       to: 'created',
       at: timestamp,
     });
+    this.persist();
 
     return order;
   }
@@ -106,12 +126,37 @@ export class OrderService {
       reason,
       at: updated.updatedAt,
     });
+    this.persist();
 
     return updated;
   }
 
   cancelOrder(tenantId: string, orderId: string, reason: string): Order {
     return this.updateStatus(tenantId, orderId, 'cancelled', reason);
+  }
+
+  updatePaymentStatus(
+    tenantId: string,
+    orderId: string,
+    paymentId: string,
+    paymentStatus: PaymentStatus
+  ): Order {
+    const current = this.requireOrder(tenantId, orderId);
+
+    if (current.paymentId === paymentId && current.paymentStatus === paymentStatus) {
+      return current;
+    }
+
+    const updated: Order = {
+      ...current,
+      paymentId,
+      paymentStatus,
+      updatedAt: now(),
+    };
+
+    this.orders.set(orderId, updated);
+    this.persist();
+    return updated;
   }
 
   getOrderHistory(tenantId: string, orderId: string): OrderStatusEvent[] {

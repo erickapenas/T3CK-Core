@@ -370,5 +370,3 @@ export function getBackupManager(): BackupManager {
 }
 
 export { BackupManager };
-
-

@@ -213,7 +213,9 @@ class MultiRegionManager {
         latency,
         lastCheck: new Date(),
         failureReason: healthy ? undefined : failureReason,
-        consecutiveFailures: healthy ? 0 : (this.healthChecks.get(regionName)?.consecutiveFailures || 0) + 1,
+        consecutiveFailures: healthy
+          ? 0
+          : (this.healthChecks.get(regionName)?.consecutiveFailures || 0) + 1,
       };
 
       this.healthChecks.set(regionName, result);
@@ -275,11 +277,11 @@ class MultiRegionManager {
    */
   async triggerFailover(): Promise<void> {
     const availableSecondary = this.failoverStatus.secondaryRegions
-      .map(region => ({
+      .map((region) => ({
         region,
         health: this.healthChecks.get(region),
       }))
-      .filter(r => r.health?.healthy)
+      .filter((r) => r.health?.healthy)
       .sort((a, b) => (a.health?.latency || 0) - (b.health?.latency || 0))[0];
 
     if (!availableSecondary) {
@@ -329,7 +331,7 @@ class MultiRegionManager {
    */
   async updateRoute53ForFailover(targetRegion: string): Promise<void> {
     const route53Config = Array.from(this.route53Configs.values()).find(
-      config => config.setIdentifier === targetRegion
+      (config) => config.setIdentifier === targetRegion
     );
 
     if (!route53Config) {
@@ -499,7 +501,8 @@ export async function initializeMultiRegion(): Promise<void> {
     provider: (process.env.PRIMARY_PROVIDER as 'aws' | 'gcp') || 'aws',
     primary: true,
     endpoint: process.env.PRIMARY_ENDPOINT || `https://api-${primaryRegion}.example.com`,
-    healthCheckUrl: process.env.PRIMARY_HEALTH_CHECK || `https://api-${primaryRegion}.example.com/health`,
+    healthCheckUrl:
+      process.env.PRIMARY_HEALTH_CHECK || `https://api-${primaryRegion}.example.com/health`,
     failoverPriority: 1,
     environment: {
       region: primaryRegion,
@@ -514,7 +517,9 @@ export async function initializeMultiRegion(): Promise<void> {
       provider: (process.env.SECONDARY_PROVIDER as 'aws' | 'gcp') || 'aws',
       primary: false,
       endpoint: process.env[`SECONDARY_ENDPOINT_${index}`] || `https://api-${region}.example.com`,
-      healthCheckUrl: process.env[`SECONDARY_HEALTH_CHECK_${index}`] || `https://api-${region}.example.com/health`,
+      healthCheckUrl:
+        process.env[`SECONDARY_HEALTH_CHECK_${index}`] ||
+        `https://api-${region}.example.com/health`,
       failoverPriority: index + 2,
       environment: {
         region,
@@ -534,4 +539,11 @@ export async function initializeMultiRegion(): Promise<void> {
   });
 }
 
-export type { RegionConfig, Route53Config, DatabaseReplicationConfig, FailoverStatus, DisasterRecoveryPlan, HealthCheckResult };
+export type {
+  RegionConfig,
+  Route53Config,
+  DatabaseReplicationConfig,
+  FailoverStatus,
+  DisasterRecoveryPlan,
+  HealthCheckResult,
+};

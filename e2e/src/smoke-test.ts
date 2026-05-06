@@ -330,7 +330,9 @@ export class SmokeTestSuite {
     for (const result of this.results) {
       const emoji = result.failed === 0 ? '✅' : '❌';
       console.log(`${emoji} ${result.category}`);
-      console.log(`   Passed: ${result.passed}/${result.tests.length} | Duration: ${result.duration}ms`);
+      console.log(
+        `   Passed: ${result.passed}/${result.tests.length} | Duration: ${result.duration}ms`
+      );
 
       for (const test of result.tests) {
         const testEmoji = test.status === 'pass' ? '  ✓' : '  ✗';
@@ -344,7 +346,11 @@ export class SmokeTestSuite {
 
     const summary = this.getSummary();
     console.log('╔════════════════════════════════════════════════════════════════╗');
-    console.log(`║ Total: ${summary.total} | Passed: ${summary.passed} | Failed: ${summary.failed}`.padEnd(63) + '║');
+    console.log(
+      `║ Total: ${summary.total} | Passed: ${summary.passed} | Failed: ${summary.failed}`.padEnd(
+        63
+      ) + '║'
+    );
     console.log('╚════════════════════════════════════════════════════════════════╝\n');
   }
 }

@@ -16,17 +16,18 @@ O **Admin Panel** é uma interface web moderna para gerenciar o provisionamento 
 
 Permite criar um novo tenant com os seguintes campos:
 
-| Campo | Tipo | Validação | Obrigatório |
-|-------|------|-----------|------------|
-| **Tenant ID** | Texto | Alfanumérico + hífens (3-50 chars) | ✅ |
-| **Empresa** | Texto | Mín. 3 caracteres | ✅ |
-| **Domain** | Texto | Formato válido (ex: empresa.t3ck.com) | ✅ |
-| **Email Contato** | Email | RFC 5322 | ✅ |
-| **Nome Contato** | Texto | Qualquer texto | ✅ |
-| **Assentos** | Número | 1-10000 | ✅ |
-| **Região** | Select | us-east-1, us-west-2, eu-west-1, ap-southeast-1 | ✅ |
+| Campo             | Tipo   | Validação                                       | Obrigatório |
+| ----------------- | ------ | ----------------------------------------------- | ----------- |
+| **Tenant ID**     | Texto  | Alfanumérico + hífens (3-50 chars)              | ✅          |
+| **Empresa**       | Texto  | Mín. 3 caracteres                               | ✅          |
+| **Domain**        | Texto  | Formato válido (ex: empresa.t3ck.com)           | ✅          |
+| **Email Contato** | Email  | RFC 5322                                        | ✅          |
+| **Nome Contato**  | Texto  | Qualquer texto                                  | ✅          |
+| **Assentos**      | Número | 1-10000                                         | ✅          |
+| **Região**        | Select | us-east-1, us-west-2, eu-west-1, ap-southeast-1 | ✅          |
 
 **Fluxo de Submissão**:
+
 ```
 Usuário preenche formulário
       ↓
@@ -67,6 +68,7 @@ Permite consultar o status de um tenant específico:
    - Job ID
 
 **Exemplo de Status**:
+
 ```
 ID: empresa-acme-001
 Empresa: ACME Corp
@@ -79,6 +81,7 @@ Job: job-uuid-12345
 ### 4. 📋 Lista de Tenants
 
 Exibe todos os tenants cadastrados com:
+
 - Nome da empresa
 - ID
 - Domain
@@ -91,6 +94,7 @@ Exibe todos os tenants cadastrados com:
 ## 🎨 Design e Interface
 
 ### Cores
+
 - **Fundo**: Branco limpo
 - **Tema Principal**: Roxo (gradient)
 - **Sucesso**: Verde (#28a745)
@@ -98,12 +102,14 @@ Exibe todos os tenants cadastrados com:
 - **Info**: Azul (#007bff)
 
 ### Responsividade
+
 - ✅ Mobile (480px+)
 - ✅ Tablet (768px+)
 - ✅ Desktop (1024px+)
 - ✅ Large (1920px+)
 
 ### Componentes
+
 - Cards com sombra e hover
 - Badges coloridos por status
 - Input com validação visual
@@ -181,6 +187,7 @@ Exibe todos os tenants cadastrados com:
 O Admin Panel faz requisições para:
 
 #### 1. POST /provisioning/submit
+
 ```javascript
 fetch('http://localhost:3003/provisioning/submit', {
   method: 'POST',
@@ -192,27 +199,29 @@ fetch('http://localhost:3003/provisioning/submit', {
     contactEmail: 'admin@acme.com',
     contactName: 'João Silva',
     numberOfSeats: 100,
-    region: 'us-east-1'
-  })
-})
+    region: 'us-east-1',
+  }),
+});
 ```
 
 #### 2. GET /queue/stats
+
 ```javascript
 fetch('http://localhost:3003/queue/stats')
-  .then(r => r.json())
-  .then(data => {
+  .then((r) => r.json())
+  .then((data) => {
     // { waiting: 3, active: 1, completed: 127, failed: 2 }
-  })
+  });
 ```
 
 #### 3. GET /provisioning/:tenantId/status
+
 ```javascript
 fetch('http://localhost:3003/provisioning/acme-corp-001/status')
-  .then(r => r.json())
-  .then(data => {
+  .then((r) => r.json())
+  .then((data) => {
     // { success: true, data: { tenantId, status, ... } }
-  })
+  });
 ```
 
 ---
@@ -235,10 +244,12 @@ Se receber erro de CORS, configurar no backend:
 
 ```javascript
 // services/tenant-service/src/index.ts
-app.use(cors({
-  origin: 'http://localhost:8080',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:8080',
+    credentials: true,
+  })
+);
 ```
 
 ---
@@ -250,6 +261,7 @@ app.use(cors({
 **Problema**: Não consegue conectar ao servidor
 
 **Solução**:
+
 ```bash
 # Verificar se servidor está rodando
 curl http://localhost:3003/health
@@ -264,6 +276,7 @@ pnpm start
 **Problema**: Stats não carregam
 
 **Solução**:
+
 1. Abrir Console do navegador (F12)
 2. Verificar mensagens de erro
 3. Garantir que `/queue/stats` retorna JSON válido
@@ -274,6 +287,7 @@ pnpm start
 **Problema**: Busca retorna vazio
 
 **Solução**:
+
 - Verificar ID do tenant (case-sensitive)
 - Garantir que tenant foi criado (check no banco)
 - Tentar ID de um tenant que você sabe que existe
@@ -283,6 +297,7 @@ pnpm start
 **Problema**: Campo permite entrada inválida
 
 **Solução**:
+
 1. F12 → Console
 2. Verificar se validação está rodando
 3. Testar valores de exemplo:
@@ -390,11 +405,11 @@ pnpm start
 
 ### Atalhos de Teclado
 
-| Tecla | Ação |
-|-------|------|
-| `Enter` | Enviar formulário ou buscar status |
-| `F12` | Abrir Developer Tools |
-| `Ctrl+Shift+K` | Abrir Console |
+| Tecla          | Ação                               |
+| -------------- | ---------------------------------- |
+| `Enter`        | Enviar formulário ou buscar status |
+| `F12`          | Abrir Developer Tools              |
+| `Ctrl+Shift+K` | Abrir Console                      |
 
 ### Desenvolvimento Local
 
@@ -417,13 +432,13 @@ curl -X POST http://localhost:3003/provisioning/submit \
 
 ```javascript
 // No console do navegador (F12)
-console.log(API_BASE_URL)
+console.log(API_BASE_URL);
 // Verifica se API_BASE_URL está correto
 
 // Testar fetch
 fetch('http://localhost:3003/queue/stats')
-  .then(r => r.json())
-  .then(console.log)
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 ---
@@ -444,7 +459,7 @@ fetch('http://localhost:3003/queue/stats')
 
 ```html
 <!-- Servir via CloudFront/Cloudflare -->
-<link rel="stylesheet" href="https://cdn.t3ck.com/admin-panel.css">
+<link rel="stylesheet" href="https://cdn.t3ck.com/admin-panel.css" />
 <script src="https://cdn.t3ck.com/admin-panel.js"></script>
 ```
 

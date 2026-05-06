@@ -4,21 +4,25 @@ import { RateLimitConfig } from '../types';
 
 const isRateLimitDisabled = () => {
   const explicitDisable = String(process.env.RATE_LIMIT_DISABLED || '').toLowerCase() === 'true';
-  return explicitDisable || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+  return explicitDisable || process.env.NODE_ENV === 'development';
 };
 
 const isLocalRequest = (req: Request): boolean => {
   const origin = String(req.headers.origin || '');
   const host = String(req.headers.host || '');
-  const forwardedFor = String(req.headers['x-forwarded-for'] || '');
   const remoteAddress = String(req.ip || req.socket?.remoteAddress || '');
 
-  const localHints = [origin, host, forwardedFor, remoteAddress].join(' ');
+  const localHints = [origin, host, remoteAddress].join(' ');
   return /localhost|127\.0\.0\.1|::1/i.test(localHints);
 };
 
 const shouldSkipRateLimit = (req: Request): boolean => {
-  return isRateLimitDisabled() || isLocalRequest(req);
+  const allowLocalBypass =
+    String(process.env.RATE_LIMIT_ALLOW_LOCAL_BYPASS || '').toLowerCase() === 'true';
+  return (
+    isRateLimitDisabled() ||
+    (allowLocalBypass && process.env.NODE_ENV !== 'production' && isLocalRequest(req))
+  );
 };
 
 /**
@@ -101,7 +105,7 @@ export const createRateLimiter = (options: Partial<RateLimitConfig>) => {
  */
 export const tenantRateLimit = (req: Request, res: Response, next: any) => {
   const tenantId = req.headers['x-tenant-id'] as string;
-  
+
   if (!tenantId) {
     return next();
   }
@@ -125,9 +129,9 @@ export const createRedisRateLimiter = () => {
   // TODO: Implement Redis store for distributed rate limiting
   // import RedisStore from 'rate-limit-redis';
   // import Redis from 'ioredis';
-  
+
   // const redis = new Redis(process.env.REDIS_URL);
-  
+
   // return rateLimit({
   //   store: new RedisStore({
   //     client: redis,
@@ -136,6 +140,6 @@ export const createRedisRateLimiter = () => {
   //   windowMs: 60 * 1000,
   //   max: 100,
   // });
-  
+
   return globalRateLimit;
 };

@@ -94,11 +94,7 @@ export class ProvisioningFormService {
     };
   }
 
-  updateTenantStatus(
-    tenant: Tenant,
-    status: ProvisioningStatus,
-    error?: string
-  ): Tenant {
+  updateTenantStatus(tenant: Tenant, status: ProvisioningStatus, error?: string): Tenant {
     return {
       ...tenant,
       status,

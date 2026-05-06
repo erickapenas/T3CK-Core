@@ -220,7 +220,7 @@ class ServiceRegistry {
         const url = `${instance.scheme}://${instance.host}:${instance.port}${instance.healthCheckUrl}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
+
         try {
           const response = await fetch(url, { signal: controller.signal });
 

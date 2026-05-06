@@ -25,7 +25,7 @@ export class EncryptionService {
       });
 
       const response = await this.kmsClient.send(command);
-      
+
       if (!response.CiphertextBlob) {
         throw new Error('Encryption failed');
       }
@@ -48,7 +48,7 @@ export class EncryptionService {
       });
 
       const response = await this.kmsClient.send(command);
-      
+
       if (!response.Plaintext) {
         throw new Error('Decryption failed');
       }

@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
 
 @Entity('tenants')
 @Index(['domain'], { unique: true })
@@ -21,7 +28,11 @@ export class Tenant {
   @Column({ type: 'int', default: 50 })
   numberOfSeats!: number;
 
-  @Column({ type: 'enum', enum: ['PENDING', 'PROVISIONING', 'ACTIVE', 'SUSPENDED', 'DELETED'], default: 'PENDING' })
+  @Column({
+    type: 'enum',
+    enum: ['PENDING', 'PROVISIONING', 'ACTIVE', 'SUSPENDED', 'DELETED'],
+    default: 'PENDING',
+  })
   status!: 'PENDING' | 'PROVISIONING' | 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 
   @Column({ type: 'text', nullable: true })

@@ -44,9 +44,8 @@ export class AuthService {
     this.tokenStore = tokenStore;
 
     const parsedExpiration = Number(process.env.JWT_EXPIRATION || 3600);
-    this.jwtExpirationSeconds = Number.isFinite(parsedExpiration) && parsedExpiration > 0
-      ? parsedExpiration
-      : 3600;
+    this.jwtExpirationSeconds =
+      Number.isFinite(parsedExpiration) && parsedExpiration > 0 ? parsedExpiration : 3600;
 
     // Refresh expiration is handled by TokenStore
   }
@@ -54,9 +53,14 @@ export class AuthService {
   async authenticateWithFirebase(idToken: string): Promise<TokenPayload> {
     try {
       const decodedToken = await admin.auth().verifyIdToken(idToken);
-      
+      const tenantId = String(decodedToken.tenant_id || '').trim();
+
+      if (!tenantId) {
+        throw new Error('Firebase token missing tenant_id claim');
+      }
+
       return {
-        tenantId: decodedToken.tenant_id || '',
+        tenantId,
         userId: decodedToken.uid,
         email: decodedToken.email || '',
         roles: decodedToken.roles || [],
@@ -70,7 +74,7 @@ export class AuthService {
   async authenticateWithCognito(username: string, password: string): Promise<AuthResult> {
     try {
       const clientId = process.env.COGNITO_CLIENT_ID || '';
-      
+
       const command = new InitiateAuthCommand({
         AuthFlow: 'USER_PASSWORD_AUTH',
         ClientId: clientId,
@@ -100,7 +104,7 @@ export class AuthService {
 
   async generateJWT(payload: TokenPayload): Promise<string> {
     const normalizedPayload: TokenPayload = {
-      ...payload,
+      ...this.requireValidTenantPayload(payload),
       tokenType: payload.tokenType || 'access',
     };
 
@@ -145,7 +149,7 @@ export class AuthService {
 
     try {
       const clientId = process.env.COGNITO_CLIENT_ID || '';
-      
+
       const command = new InitiateAuthCommand({
         AuthFlow: 'REFRESH_TOKEN_AUTH',
         ClientId: clientId,
@@ -177,14 +181,37 @@ export class AuthService {
   }
 
   async issueTokens(payload: TokenPayload): Promise<AuthResult> {
-    const accessToken = await this.tokenStore.issueAccessToken(payload, this.jwtExpirationSeconds);
-    const refreshToken = await this.tokenStore.issueRefreshToken(payload);
+    const validPayload = this.requireValidTenantPayload(payload);
+    const accessToken = await this.tokenStore.issueAccessToken(
+      validPayload,
+      this.jwtExpirationSeconds
+    );
+    const refreshToken = await this.tokenStore.issueRefreshToken(validPayload);
 
     return {
       accessToken,
       refreshToken,
       idToken: '',
       expiresIn: this.jwtExpirationSeconds,
+    };
+  }
+
+  private requireValidTenantPayload(payload: TokenPayload): TokenPayload {
+    const tenantId = String(payload.tenantId || '').trim();
+    const userId = String(payload.userId || '').trim();
+
+    if (!tenantId) {
+      throw new Error('tenantId is required to issue tokens');
+    }
+    if (!userId) {
+      throw new Error('userId is required to issue tokens');
+    }
+
+    return {
+      ...payload,
+      tenantId,
+      userId,
+      roles: Array.isArray(payload.roles) ? payload.roles : [],
     };
   }
 
@@ -198,7 +225,11 @@ export class AuthService {
     };
   }
 
-  async verifyMfa(accessToken: string, userCode: string, enableMfa: boolean): Promise<{ status: string }> {
+  async verifyMfa(
+    accessToken: string,
+    userCode: string,
+    enableMfa: boolean
+  ): Promise<{ status: string }> {
     const command = new VerifySoftwareTokenCommand({
       AccessToken: accessToken,
       UserCode: userCode,

@@ -1,6 +1,10 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-import { SecretsManagerClient, GetSecretValueCommand, PutSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+  PutSecretValueCommand,
+} from '@aws-sdk/client-secrets-manager';
 import { Logger } from '@t3ck/shared';
 
 export interface KeyMaterial {
@@ -46,9 +50,7 @@ export class KeyManager {
         region: process.env.AWS_REGION || 'us-east-1',
       });
 
-      const secretValue = await client.send(
-        new GetSecretValueCommand({ SecretId: secretName })
-      );
+      const secretValue = await client.send(new GetSecretValueCommand({ SecretId: secretName }));
 
       if (secretValue.SecretString) {
         const parsed = JSON.parse(secretValue.SecretString) as KeySet;

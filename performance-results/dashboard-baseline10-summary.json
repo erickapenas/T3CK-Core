@@ -1,0 +1,281 @@
+{
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": {
+      "dashboard initial load - optimized overview": {
+        "name": "dashboard initial load - optimized overview",
+        "path": "::dashboard initial load - optimized overview",
+        "id": "bb34bb87b5dc9d57580a17d7d2fe976a",
+        "groups": {},
+        "checks": {
+          "overview status is expected": {
+            "id": "c05ad1efc88cace32bdb55e1e1bfbaab",
+            "passes": 255,
+            "fails": 0,
+            "name": "overview status is expected",
+            "path": "::dashboard initial load - optimized overview::overview status is expected"
+          },
+          "overview returns a body": {
+            "name": "overview returns a body",
+            "path": "::dashboard initial load - optimized overview::overview returns a body",
+            "id": "e1cd843cd668d03cefb35ac0d523d666",
+            "passes": 255,
+            "fails": 0
+          }
+        }
+      },
+      "dashboard tab navigation - paginated lists": {
+        "path": "::dashboard tab navigation - paginated lists",
+        "id": "ec4cd516fdcaecc4bf8b9eb63a4d2ea1",
+        "groups": {},
+        "checks": {
+          "tab_products status is expected": {
+            "id": "5bb3553fc5edd7968b345ff489a207d5",
+            "passes": 255,
+            "fails": 0,
+            "name": "tab_products status is expected",
+            "path": "::dashboard tab navigation - paginated lists::tab_products status is expected"
+          },
+          "tab_products returns a body": {
+            "fails": 0,
+            "name": "tab_products returns a body",
+            "path": "::dashboard tab navigation - paginated lists::tab_products returns a body",
+            "id": "ab998ceb90a30bf6eae73cb637e8f23a",
+            "passes": 255
+          },
+          "tab_orders status is expected": {
+            "id": "edefb3d57f8cda928c4f52eff8535c6b",
+            "passes": 255,
+            "fails": 0,
+            "name": "tab_orders status is expected",
+            "path": "::dashboard tab navigation - paginated lists::tab_orders status is expected"
+          },
+          "tab_orders returns a body": {
+            "name": "tab_orders returns a body",
+            "path": "::dashboard tab navigation - paginated lists::tab_orders returns a body",
+            "id": "bf85900035690cffe1661a0b37e65bc3",
+            "passes": 255,
+            "fails": 0
+          },
+          "tab_customers status is expected": {
+            "name": "tab_customers status is expected",
+            "path": "::dashboard tab navigation - paginated lists::tab_customers status is expected",
+            "id": "ccd8d0fb586b6d533f56225ec51a72f3",
+            "passes": 255,
+            "fails": 0
+          },
+          "tab_customers returns a body": {
+            "path": "::dashboard tab navigation - paginated lists::tab_customers returns a body",
+            "id": "66295bd099f347a3a0dcd7ca46e27ed5",
+            "passes": 255,
+            "fails": 0,
+            "name": "tab_customers returns a body"
+          },
+          "tab_audit_logs status is expected": {
+            "name": "tab_audit_logs status is expected",
+            "path": "::dashboard tab navigation - paginated lists::tab_audit_logs status is expected",
+            "id": "8f64e2350e0d5a1cb227824551808f64",
+            "passes": 255,
+            "fails": 0
+          },
+          "tab_audit_logs returns a body": {
+            "name": "tab_audit_logs returns a body",
+            "path": "::dashboard tab navigation - paginated lists::tab_audit_logs returns a body",
+            "id": "cb599ccbdca83d3a666ef1c42c83a8cd",
+            "passes": 255,
+            "fails": 0
+          },
+          "provisioning_status status is expected": {
+            "name": "provisioning_status status is expected",
+            "path": "::dashboard tab navigation - paginated lists::provisioning_status status is expected",
+            "id": "cf760b72c85c00fa86eaf43690532d75",
+            "passes": 255,
+            "fails": 0
+          },
+          "provisioning_status returns a body": {
+            "id": "f89d31e7e47235d5147f573ae24e98cb",
+            "passes": 255,
+            "fails": 0,
+            "name": "provisioning_status returns a body",
+            "path": "::dashboard tab navigation - paginated lists::provisioning_status returns a body"
+          }
+        },
+        "name": "dashboard tab navigation - paginated lists"
+      }
+    },
+    "checks": {}
+  },
+  "metrics": {
+    "dashboard_initial_load_duration": {
+      "max": 2,
+      "p(90)": 1,
+      "p(95)": 1,
+      "p(99)": 2,
+      "avg": 0.5568627450980392,
+      "min": 0,
+      "med": 1,
+      "thresholds": {
+        "p(95)<1200": false
+      }
+    },
+    "http_reqs": {
+      "count": 1531,
+      "rate": 50.90456192952083
+    },
+    "http_req_blocked": {
+      "p(90)": 0,
+      "p(95)": 0,
+      "p(99)": 0.5006700000000001,
+      "avg": 0.022992488569562385,
+      "min": 0,
+      "med": 0,
+      "max": 3.6458
+    },
+    "http_req_sending": {
+      "max": 1.0022,
+      "p(90)": 0,
+      "p(95)": 0,
+      "p(99)": 0.5008,
+      "avg": 0.01392103200522535,
+      "min": 0,
+      "med": 0
+    },
+    "iteration_duration": {
+      "avg": 1002.4433568627443,
+      "min": 1001.4509,
+      "med": 1002.3642,
+      "max": 1005.3151,
+      "p(90)": 1003.2259,
+      "p(95)": 1003.4569,
+      "p(99)": 1004.566638
+    },
+    "iterations": {
+      "count": 255,
+      "rate": 8.47855211758838
+    },
+    "dashboard_failures": {
+      "passes": 0,
+      "fails": 1530,
+      "thresholds": {
+        "rate<0.02": false
+      },
+      "value": 0
+    },
+    "dashboard_requests": {
+      "count": 1530,
+      "rate": 50.871312705530286
+    },
+    "data_sent": {
+      "count": 249014,
+      "rate": 8279.522262780993
+    },
+    "http_req_failed": {
+      "passes": 0,
+      "fails": 1531,
+      "thresholds": {
+        "rate<0.02": false
+      },
+      "value": 0
+    },
+    "http_req_tls_handshaking": {
+      "med": 0,
+      "max": 0,
+      "p(90)": 0,
+      "p(95)": 0,
+      "p(99)": 0,
+      "avg": 0,
+      "min": 0
+    },
+    "data_received": {
+      "count": 5471490,
+      "rate": 181922.7965720143
+    },
+    "http_req_duration": {
+      "p(90)": 1.002,
+      "p(95)": 1.1914500000000001,
+      "p(99)": 1.9829,
+      "avg": 0.6245376224689747,
+      "min": 0,
+      "med": 0.5005,
+      "max": 4.0026,
+      "thresholds": {
+        "p(95)<800": false,
+        "p(99)<1500": false
+      }
+    },
+    "http_req_waiting": {
+      "avg": 0.5764659046374925,
+      "min": 0,
+      "med": 0.5003,
+      "max": 4.0026,
+      "p(90)": 1.0009,
+      "p(95)": 1.0705,
+      "p(99)": 1.9829
+    },
+    "group_duration": {
+      "avg": 1.0055280392156873,
+      "min": 0,
+      "med": 1.0003,
+      "max": 4.0028,
+      "p(90)": 1.6764599999999998,
+      "p(95)": 1.721734999999999,
+      "p(99)": 2.500246
+    },
+    "vus": {
+      "value": 1,
+      "min": 1,
+      "max": 10
+    },
+    "http_req_receiving": {
+      "p(95)": 0.49935,
+      "p(99)": 0.5014,
+      "avg": 0.03415068582625734,
+      "min": 0,
+      "med": 0,
+      "max": 0.9997,
+      "p(90)": 0
+    },
+    "http_req_duration{expected_response:true}": {
+      "max": 4.0026,
+      "p(90)": 1.002,
+      "p(95)": 1.1914500000000001,
+      "p(99)": 1.9829,
+      "avg": 0.6245376224689747,
+      "min": 0,
+      "med": 0.5005
+    },
+    "vus_max": {
+      "value": 10,
+      "min": 10,
+      "max": 10
+    },
+    "dashboard_tab_load_duration": {
+      "p(99)": 3,
+      "avg": 1.1764705882352942,
+      "min": 0,
+      "med": 1,
+      "max": 4,
+      "p(90)": 2,
+      "p(95)": 2,
+      "thresholds": {
+        "p(95)<800": false
+      }
+    },
+    "http_req_connecting": {
+      "p(90)": 0,
+      "p(95)": 0,
+      "p(99)": 0.4999,
+      "avg": 0.009283670803396473,
+      "min": 0,
+      "med": 0,
+      "max": 1.0042
+    },
+    "checks": {
+      "passes": 3060,
+      "fails": 0,
+      "value": 1
+    }
+  }
+}

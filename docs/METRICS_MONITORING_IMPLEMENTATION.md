@@ -73,12 +73,14 @@ pnpm add prom-client
 ### auth-service
 
 **Standard HTTP Metrics**:
+
 - `http_request_duration_seconds` - Request latency by endpoint
 - `http_requests_total` - Total requests by method/route/status
 - `http_requests_errors_total` - Error requests by type
 - `active_connections` - Current open connections
 
 **Authentication Metrics**:
+
 - `auth_attempts_total` - Auth attempts by provider (success/failure)
 - `auth_tokens_issued_total` - Tokens issued by type (access/refresh/id)
 - `auth_token_validation_duration_seconds` - Token validation latency
@@ -87,6 +89,7 @@ pnpm add prom-client
 - `cache_size_bytes` - Current cache size
 
 **Example Usage**:
+
 ```typescript
 import { trackAuthAttempt, trackTokenIssued } from './metrics';
 
@@ -100,12 +103,14 @@ trackTokenIssued('access_token');
 ### webhook-service
 
 **Standard HTTP Metrics**:
+
 - `http_request_duration_seconds` - Request latency
 - `http_requests_total` - Total requests
 - `http_requests_errors_total` - Error requests
 - `active_connections` - Active connections
 
 **Webhook-Specific Metrics**:
+
 - `webhook_events_received_total` - Events received by type
 - `webhook_events_processed_total` - Events processed (success/failure/retry)
 - `webhook_processing_duration_seconds` - Processing time by event type
@@ -115,6 +120,7 @@ trackTokenIssued('access_token');
 - `cache_size_bytes` - Cache size
 
 **Example Usage**:
+
 ```typescript
 import { trackWebhookReceived, trackWebhookProcessed } from './metrics';
 
@@ -134,12 +140,14 @@ try {
 ### tenant-service
 
 **Standard HTTP Metrics**:
+
 - `http_request_duration_seconds` - Request latency
 - `http_requests_total` - Total requests
 - `http_requests_errors_total` - Error requests
 - `active_connections` - Active connections
 
 **Provisioning Metrics**:
+
 - `provisioning_requests_total` - Requests by status (pending/in_progress/completed/failed)
 - `provisioning_duration_seconds` - Total provisioning duration
 - `tenants_active_total` - Number of active tenants
@@ -150,6 +158,7 @@ try {
 - `cache_size_bytes` - Cache size
 
 **Example Usage**:
+
 ```typescript
 import { trackProvisioningRequest, trackProvisioningStep } from './metrics';
 
@@ -291,11 +300,13 @@ docker run -d -p 3000:3000 grafana/grafana
 ### Dashboard Queries
 
 **Request Rate (req/s)**:
+
 ```promql
 rate(http_requests_total[1m])
 ```
 
 **Error Rate (%)**:
+
 ```promql
 100 * (
   rate(http_requests_errors_total[5m])
@@ -305,16 +316,19 @@ rate(http_requests_total[1m])
 ```
 
 **P95 Latency (ms)**:
+
 ```promql
 histogram_quantile(0.95, http_request_duration_seconds) * 1000
 ```
 
 **Active Connections**:
+
 ```promql
 active_connections
 ```
 
 **Auth Success Rate**:
+
 ```promql
 100 * (
   rate(auth_attempts_total{status="success"}[5m])
@@ -324,6 +338,7 @@ active_connections
 ```
 
 **Provisioning Queue Depth**:
+
 ```promql
 provisioning_queue_size
 ```
@@ -350,7 +365,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High error rate detected ({{ $value | humanizePercentage }})"
+          summary: 'High error rate detected ({{ $value | humanizePercentage }})'
 
       - alert: HighLatency
         expr: |
@@ -359,7 +374,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High P95 latency detected ({{ $value | humanizeDuration }})"
+          summary: 'High P95 latency detected ({{ $value | humanizeDuration }})'
 
       - alert: ProvisioningBacklog
         expr: |
@@ -368,7 +383,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Provisioning queue backlog ({{ $value }} items)"
+          summary: 'Provisioning queue backlog ({{ $value }} items)'
 
       - alert: LowAuthSuccessRate
         expr: |
@@ -377,7 +392,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Low auth success rate ({{ $value | humanizePercentage }})"
+          summary: 'Low auth success rate ({{ $value | humanizePercentage }})'
 ```
 
 ### Integration with Alertmanager
@@ -411,13 +426,13 @@ Custom buckets by metric type:
 
 ```typescript
 // Fast endpoints (API calls)
-buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1];
 
 // Medium endpoints (DB operations)
-buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5]
+buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5];
 
 // Slow endpoints (Provisioning)
-buckets: [0.1, 0.5, 1, 5, 10, 30, 60, 300]
+buckets: [0.1, 0.5, 1, 5, 10, 30, 60, 300];
 ```
 
 ### Label Cardinality
@@ -425,16 +440,18 @@ buckets: [0.1, 0.5, 1, 5, 10, 30, 60, 300]
 ⚠️ **Warning**: High cardinality labels cause memory issues
 
 ✅ **Good**:
+
 ```typescript
 // Limited values: only 2-3 possible values
-labels: ['status']  // success, failure
-labels: ['provider'] // firebase, cognito, okta
+labels: ['status']; // success, failure
+labels: ['provider']; // firebase, cognito, okta
 ```
 
 ❌ **Bad**:
+
 ```typescript
 // Too many combinations: avoid user_id as label
-labels: ['user_id']  // millions of unique values!
+labels: ['user_id']; // millions of unique values!
 ```
 
 ### Recording Rules
@@ -499,7 +516,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
@@ -508,7 +525,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
@@ -517,17 +534,17 @@ services:
   auth-service:
     build: ./services/auth-service
     ports:
-      - "3001:3001"
+      - '3001:3001'
 
   webhook-service:
     build: ./services/webhook-service
     ports:
-      - "3002:3002"
+      - '3002:3002'
 
   tenant-service:
     build: ./services/tenant-service
     ports:
-      - "3003:3003"
+      - '3003:3003'
 ```
 
 ### Kubernetes
@@ -574,11 +591,13 @@ spec:
 ### Metrics Not Appearing
 
 1. **Check endpoint is accessible**:
+
    ```bash
    curl http://localhost:3001/metrics
    ```
 
 2. **Verify Prometheus scrape config**:
+
    ```yaml
    scrape_configs:
      - job_name: 'auth-service'
@@ -606,6 +625,7 @@ spec:
 ## Best Practices
 
 ✅ **DO**:
+
 - Name metrics clearly (http_requests_total, not req_count)
 - Use appropriate metric types (Counter, Gauge, Histogram)
 - Keep label cardinality low (< 10 unique values per label)
@@ -614,6 +634,7 @@ spec:
 - Monitor the monitors (alert on scrape failures)
 
 ❌ **DON'T**:
+
 - Use high-cardinality labels (user_id, request_id, etc.)
 - Create too many metrics (< 100 per service)
 - Use Gauges for monotonically increasing values
@@ -631,16 +652,19 @@ spec:
 ## Maintenance
 
 **Daily**:
+
 - Monitor alert status in Grafana
 - Check error rates and latencies
 - Review service health
 
 **Weekly**:
+
 - Review metric dashboards for anomalies
 - Check Prometheus storage usage
 - Validate alert thresholds
 
 **Monthly**:
+
 - Review and optimize recording rules
 - Analyze metric cardinality
 - Plan capacity upgrades

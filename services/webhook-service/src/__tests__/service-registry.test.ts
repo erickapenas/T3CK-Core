@@ -7,7 +7,9 @@ describe('ServiceRegistry - webhook-service', () => {
     jest.mock('@aws-sdk/client-servicediscovery', () => {
       const sendMock = jest.fn().mockResolvedValue({ OperationId: 'op-123' });
       return {
-        ServiceDiscoveryClient: jest.fn().mockImplementation(() => ({ send: sendMock, destroy: jest.fn() })),
+        ServiceDiscoveryClient: jest
+          .fn()
+          .mockImplementation(() => ({ send: sendMock, destroy: jest.fn() })),
         RegisterInstanceCommand: jest.fn(),
         DeregisterInstanceCommand: jest.fn(),
       };
@@ -26,7 +28,9 @@ describe('ServiceRegistry - webhook-service', () => {
     jest.resetModules();
     const sendMock = jest.fn().mockResolvedValue({ OperationId: 'op-456' });
     jest.mock('@aws-sdk/client-servicediscovery', () => ({
-      ServiceDiscoveryClient: jest.fn().mockImplementation(() => ({ send: sendMock, destroy: jest.fn() })),
+      ServiceDiscoveryClient: jest
+        .fn()
+        .mockImplementation(() => ({ send: sendMock, destroy: jest.fn() })),
       RegisterInstanceCommand: jest.fn(),
       DeregisterInstanceCommand: jest.fn(),
     }));
@@ -39,19 +43,22 @@ describe('ServiceRegistry - webhook-service', () => {
     expect(registry.getInstanceInfo('svc-abc')).toBeUndefined();
   });
 
-  test('registerInstance handles failures gracefully', async () => {
+  test('registerInstance throws when Cloud Map registration fails', async () => {
     jest.resetModules();
     const sendMock = jest.fn().mockRejectedValue(new Error('API error'));
     jest.mock('@aws-sdk/client-servicediscovery', () => ({
-      ServiceDiscoveryClient: jest.fn().mockImplementation(() => ({ send: sendMock, destroy: jest.fn() })),
+      ServiceDiscoveryClient: jest
+        .fn()
+        .mockImplementation(() => ({ send: sendMock, destroy: jest.fn() })),
       RegisterInstanceCommand: jest.fn(),
       DeregisterInstanceCommand: jest.fn(),
     }));
 
     const { getServiceRegistry } = require('../service-registry');
     const registry = getServiceRegistry();
-    const instanceId = await registry.registerInstance('svc-fail', 5000);
-    expect(instanceId).toMatch(/fallback/);
+    await expect(registry.registerInstance('svc-fail', 5000)).rejects.toThrow(
+      'Failed to register service instance'
+    );
     expect(registry.isAllRegistered()).toBe(false);
   });
 });

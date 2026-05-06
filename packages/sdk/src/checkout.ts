@@ -10,6 +10,61 @@ export interface CheckoutRequest {
   metadata?: Record<string, unknown>;
 }
 
+export interface CheckoutPaymentRequest {
+  tenantId: string;
+  orderId: string;
+  customerId: string;
+  amount: number;
+  currency: string;
+  method: 'pix' | 'boleto' | 'card' | 'checkout';
+  description?: string;
+  dueMinutes?: number;
+  checkoutItems?: Array<{
+    id: string;
+    quantity: number;
+  }>;
+  checkoutMethods?: Array<'PIX' | 'CARD'>;
+  returnUrl?: string;
+  completionUrl?: string;
+  coupons?: string[];
+  maxInstallments?: number;
+  upSellProductId?: string;
+  customer?: {
+    name: string;
+    email?: string;
+    taxId: string;
+    cellphone?: string;
+  };
+  metadata?: Record<string, unknown>;
+}
+
+export interface CheckoutPaymentResult {
+  paymentId: string;
+  providerPaymentId: string;
+  status: 'AWAITING_PAYMENT' | 'PAID' | 'REFUNDED' | 'FAILED' | 'CHARGEBACK';
+  amount: number;
+  currency: string;
+  method: 'pix' | 'boleto' | 'card' | 'checkout';
+  pix?: {
+    qrCode: string;
+    copyPasteCode: string;
+    expiresAt: string;
+    expiresInSeconds: number;
+  };
+  boleto?: {
+    barcode: string;
+    dueDate: string;
+    pdfUrl?: string;
+  };
+  hostedCheckout?: {
+    url: string;
+    returnUrl?: string;
+    completionUrl?: string;
+  };
+  userMessage: string;
+  createdAt: string;
+}
+
 export interface Address {
   street: string;
   city: string;
@@ -46,6 +101,59 @@ export class CheckoutModule {
     });
   }
 
+  async createPayment(
+    request: CheckoutPaymentRequest,
+    idempotencyKey: string
+  ): Promise<CheckoutPaymentResult> {
+    if (!idempotencyKey) {
+      throw new Error('Idempotency key is required');
+    }
+
+    return this.client.post<CheckoutPaymentResult>('/payments', request, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+  }
+
+  async getPaymentStatus(
+    paymentId: string,
+    tenantId: string
+  ): Promise<{ paymentId: string; status: CheckoutPaymentResult['status'] }> {
+    if (!paymentId) {
+      throw new Error('Payment ID is required');
+    }
+    if (!tenantId) {
+      throw new Error('Tenant ID is required');
+    }
+
+    return this.client.get<{ paymentId: string; status: CheckoutPaymentResult['status'] }>(
+      `/payments/${paymentId}/status?tenantId=${encodeURIComponent(tenantId)}`
+    );
+  }
+
+  async confirmPayment(
+    paymentId: string,
+    tenantId: string
+  ): Promise<{
+    paymentId: string;
+    providerPaymentId: string;
+    orderId: string;
+    status: CheckoutPaymentResult['status'];
+  }> {
+    if (!paymentId) {
+      throw new Error('Payment ID is required');
+    }
+    if (!tenantId) {
+      throw new Error('Tenant ID is required');
+    }
+
+    return this.client.post<{
+      paymentId: string;
+      providerPaymentId: string;
+      orderId: string;
+      status: CheckoutPaymentResult['status'];
+    }>(`/payments/${paymentId}/confirm`, { tenantId });
+  }
+
   async getOrders(filters?: {
     status?: OrderStatus;
     startDate?: string;
@@ -75,7 +183,13 @@ export class CheckoutModule {
     }
 
     const address = request.shippingAddress;
-    if (!address.street || !address.city || !address.state || !address.zipCode || !address.country) {
+    if (
+      !address.street ||
+      !address.city ||
+      !address.state ||
+      !address.zipCode ||
+      !address.country
+    ) {
       throw new Error('Shipping address is incomplete');
     }
   }

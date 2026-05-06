@@ -1,7 +1,9 @@
 import { Logger } from '@t3ck/shared';
+import { randomUUID } from 'crypto';
 import { AbacatePayClient } from './abacatepay-client';
-import { IdempotencyStore } from './idempotency-store';
+import { IdempotencySnapshotEntry, IdempotencyStore } from './idempotency-store';
 import { ImmutableTransactionLog } from './immutable-transaction-log';
+import { PaymentStateStore } from './payment-state-store';
 import { buildFriendlyMessage, mapProviderStatus } from './status-mapper';
 import {
   ChargebackEvent,
@@ -26,6 +28,9 @@ interface PersistedPayment {
   createdAt: string;
   updatedAt: string;
   pixExpiresAt?: string;
+  pixCopyPasteCode?: string;
+  hostedCheckoutUrl?: string;
+  refundedAmount?: number;
 }
 
 export class PaymentService {
@@ -33,8 +38,34 @@ export class PaymentService {
   private readonly idempotency = new IdempotencyStore();
   private readonly txLog = new ImmutableTransactionLog();
   private readonly payments = new Map<string, PersistedPayment>();
+  private readonly processedWebhookEvents = new Set<string>();
 
-  constructor(private readonly provider: AbacatePayClient) {}
+  constructor(
+    private readonly provider: AbacatePayClient,
+    private readonly stateStore?: PaymentStateStore
+  ) {
+    const snapshot = this.stateStore?.load<PersistedPayment, IdempotencySnapshotEntry>();
+    if (snapshot) {
+      for (const payment of snapshot.payments) {
+        this.payments.set(payment.paymentId, payment);
+      }
+      this.processedWebhookEvents.clear();
+      for (const eventId of snapshot.processedWebhookEvents) {
+        this.processedWebhookEvents.add(eventId);
+      }
+      this.idempotency.load(snapshot.idempotency);
+      this.txLog.load(snapshot.transactionLog);
+    }
+  }
+
+  private persist(): void {
+    this.stateStore?.save<PersistedPayment, IdempotencySnapshotEntry>({
+      payments: Array.from(this.payments.values()),
+      processedWebhookEvents: Array.from(this.processedWebhookEvents.values()),
+      idempotency: this.idempotency.dump(),
+      transactionLog: this.txLog.dump(),
+    });
+  }
 
   async createPayment(request: PaymentRequest, idempotencyKey: string): Promise<PaymentResult> {
     const existing = this.idempotency.get<PaymentResult>(idempotencyKey, request);
@@ -48,8 +79,25 @@ export class PaymentService {
       merchantName: process.env.CHECKOUT_MERCHANT_NAME || 'T3CK Store',
     };
 
-    const providerResult = await this.provider.createPayment(request, branding);
-    const paymentId = `pay_${Date.now()}`;
+    const activePayment = Array.from(this.payments.values()).find(
+      (payment) =>
+        payment.tenantId === request.tenantId &&
+        payment.orderId === request.orderId &&
+        (payment.status === 'AWAITING_PAYMENT' || payment.status === 'PAID')
+    );
+    if (activePayment) {
+      throw new Error('Pedido ja possui pagamento ativo.');
+    }
+
+    const paymentId = `pay_${randomUUID()}`;
+    const providerRequest: PaymentRequest = {
+      ...request,
+      metadata: {
+        ...(request.metadata ?? {}),
+        paymentId,
+      },
+    };
+    const providerResult = await this.provider.createPayment(providerRequest, branding);
     const mappedStatus = mapProviderStatus(providerResult.status);
     const now = new Date().toISOString();
 
@@ -81,6 +129,13 @@ export class PaymentService {
               pdfUrl: providerResult.boleto.pdfUrl,
             }
           : undefined,
+      hostedCheckout: providerResult.hostedCheckout
+        ? {
+            url: providerResult.hostedCheckout.url,
+            returnUrl: providerResult.hostedCheckout.returnUrl,
+            completionUrl: providerResult.hostedCheckout.completionUrl,
+          }
+        : undefined,
       checkout: branding,
       userMessage: buildFriendlyMessage(mappedStatus, request.method),
       createdAt: now,
@@ -100,6 +155,9 @@ export class PaymentService {
       createdAt: now,
       updatedAt: now,
       pixExpiresAt: providerResult.pix?.expiresAt,
+      pixCopyPasteCode: providerResult.pix?.copyPasteCode,
+      hostedCheckoutUrl: providerResult.hostedCheckout?.url,
+      refundedAmount: 0,
     });
 
     this.txLog.append({
@@ -115,6 +173,7 @@ export class PaymentService {
     });
 
     this.idempotency.set(idempotencyKey, request, result);
+    this.persist();
     return result;
   }
 
@@ -122,15 +181,61 @@ export class PaymentService {
     return this.payments.get(paymentId) ?? null;
   }
 
-  async refund(request: RefundRequest): Promise<{ status: InternalPaymentStatus; message: string }> {
+  async syncPaymentStatus(paymentId: string, tenantId: string): Promise<PaymentResult['status']> {
+    const payment = this.payments.get(paymentId);
+    if (!payment || payment.tenantId !== tenantId) {
+      throw new Error('Pagamento não encontrado para este tenant.');
+    }
+
+    const providerStatus = await this.provider.getPaymentStatus(
+      payment.providerPaymentId,
+      payment.method
+    );
+    const mapped = mapProviderStatus(providerStatus);
+
+    payment.status = mapped;
+    payment.providerStatus = providerStatus;
+    payment.updatedAt = new Date().toISOString();
+
+    this.txLog.append({
+      tenantId,
+      paymentId,
+      type: 'PAYMENT_UPDATED',
+      payload: {
+        providerPaymentId: payment.providerPaymentId,
+        providerStatus,
+      },
+    });
+    this.persist();
+
+    return mapped;
+  }
+
+  async refund(
+    request: RefundRequest
+  ): Promise<{ status: InternalPaymentStatus; message: string }> {
     const payment = this.payments.get(request.paymentId);
     if (!payment || payment.tenantId !== request.tenantId) {
       throw new Error('Pagamento não encontrado para este tenant.');
     }
 
-    const providerStatus = await this.provider.refund(payment.providerPaymentId, request.amount);
+    if (payment.status !== 'PAID' && payment.status !== 'REFUNDED') {
+      throw new Error('Somente pagamentos aprovados podem ser estornados.');
+    }
+
+    const alreadyRefunded = payment.refundedAmount ?? 0;
+    const amountToRefund = request.amount ?? payment.amount - alreadyRefunded;
+    if (amountToRefund <= 0) {
+      throw new Error('Valor de estorno invalido.');
+    }
+    if (alreadyRefunded + amountToRefund > payment.amount) {
+      throw new Error('Valor de estorno excede o valor pago.');
+    }
+
+    const providerStatus = await this.provider.refund(payment.providerPaymentId, amountToRefund);
     const mapped = mapProviderStatus(providerStatus);
-    payment.status = mapped;
+    payment.refundedAmount = alreadyRefunded + amountToRefund;
+    payment.status = payment.refundedAmount >= payment.amount ? mapped : 'PAID';
     payment.providerStatus = providerStatus;
     payment.updatedAt = new Date().toISOString();
 
@@ -140,9 +245,10 @@ export class PaymentService {
       type: 'PAYMENT_REFUNDED',
       payload: {
         reason: request.reason,
-        amount: request.amount ?? payment.amount,
+        amount: amountToRefund,
       },
     });
+    this.persist();
 
     return {
       status: mapped,
@@ -151,13 +257,37 @@ export class PaymentService {
   }
 
   processWebhookUpdate(input: {
-    tenantId: string;
-    paymentId: string;
+    tenantId?: string;
+    paymentId?: string;
+    providerPaymentId?: string;
+    orderId?: string;
+    eventId?: string;
     providerStatus: string;
     rawPayload: Record<string, unknown>;
-  }): InternalPaymentStatus {
-    const payment = this.payments.get(input.paymentId);
-    if (!payment || payment.tenantId !== input.tenantId) {
+  }): {
+    status: InternalPaymentStatus;
+    paymentId: string;
+    tenantId: string;
+    orderId: string;
+    duplicate: boolean;
+  } {
+    if (input.eventId && this.processedWebhookEvents.has(input.eventId)) {
+      const existing = this.findWebhookPayment(input);
+      if (!existing) {
+        throw new Error('Pagamento não encontrado para atualização de webhook.');
+      }
+
+      return {
+        status: existing.status,
+        paymentId: existing.paymentId,
+        tenantId: existing.tenantId,
+        orderId: existing.orderId,
+        duplicate: true,
+      };
+    }
+
+    const payment = this.findWebhookPayment(input);
+    if (!payment) {
       throw new Error('Pagamento não encontrado para atualização de webhook.');
     }
 
@@ -167,16 +297,52 @@ export class PaymentService {
     payment.updatedAt = new Date().toISOString();
 
     this.txLog.append({
-      tenantId: input.tenantId,
-      paymentId: input.paymentId,
+      tenantId: payment.tenantId,
+      paymentId: payment.paymentId,
       type: 'WEBHOOK_RECEIVED',
       payload: {
+        eventId: input.eventId,
         providerStatus: input.providerStatus,
         rawPayload: input.rawPayload,
       },
     });
 
-    return mapped;
+    if (input.eventId) {
+      this.processedWebhookEvents.add(input.eventId);
+    }
+    this.persist();
+
+    return {
+      status: mapped,
+      paymentId: payment.paymentId,
+      tenantId: payment.tenantId,
+      orderId: payment.orderId,
+      duplicate: false,
+    };
+  }
+
+  private findWebhookPayment(input: {
+    tenantId?: string;
+    paymentId?: string;
+    providerPaymentId?: string;
+    orderId?: string;
+  }): PersistedPayment | null {
+    if (input.paymentId) {
+      const byPaymentId = this.payments.get(input.paymentId);
+      if (byPaymentId && (!input.tenantId || byPaymentId.tenantId === input.tenantId)) {
+        return byPaymentId;
+      }
+    }
+
+    const payments = Array.from(this.payments.values());
+    return (
+      payments.find(
+        (payment) =>
+          (!input.tenantId || payment.tenantId === input.tenantId) &&
+          ((!!input.providerPaymentId && payment.providerPaymentId === input.providerPaymentId) ||
+            (!!input.orderId && payment.orderId === input.orderId))
+      ) ?? null
+    );
   }
 
   handleChargeback(event: ChargebackEvent): void {
@@ -206,6 +372,7 @@ export class PaymentService {
       paymentId: event.paymentId,
       disputeId: event.providerDisputeId,
     });
+    this.persist();
   }
 
   createInvoice(paymentId: string): { invoiceId: string; url: string } {
@@ -233,6 +400,7 @@ export class PaymentService {
       type: 'RECEIPT_SENT',
       payload: { email },
     });
+    this.persist();
 
     return { sent: true, message: `Recibo enviado para ${email}` };
   }
@@ -251,10 +419,12 @@ export class PaymentService {
       (item) => item.tenantId === tenantId && new Date(item.createdAt) >= from
     );
 
-    const totalPaid = data.filter((item) => item.status === 'PAID').reduce((sum, item) => sum + item.amount, 0);
+    const totalPaid = data
+      .filter((item) => item.status === 'PAID')
+      .reduce((sum, item) => sum + item.amount, 0);
     const totalRefunded = data
       .filter((item) => item.status === 'REFUNDED')
-      .reduce((sum, item) => sum + item.amount, 0);
+      .reduce((sum, item) => sum + (item.refundedAmount ?? item.amount), 0);
     const totalChargeback = data
       .filter((item) => item.status === 'CHARGEBACK')
       .reduce((sum, item) => sum + item.amount, 0);
@@ -289,8 +459,9 @@ export class PaymentService {
     const secondsLeft = Math.floor((new Date(payment.pixExpiresAt).getTime() - Date.now()) / 1000);
     if (secondsLeft <= 0 && payment.status === 'AWAITING_PAYMENT') {
       payment.status = 'FAILED';
-      payment.providerStatus = 'failed';
+      payment.providerStatus = 'EXPIRED';
       payment.updatedAt = new Date().toISOString();
+      this.persist();
     }
 
     return {

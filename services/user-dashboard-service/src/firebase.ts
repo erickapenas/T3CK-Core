@@ -1,0 +1,76 @@
+import * as admin from 'firebase-admin';
+import { existsSync } from 'fs';
+import path from 'path';
+import { Logger } from '@t3ck/shared';
+
+const logger = new Logger('user-dashboard-firestore');
+
+let initialized = false;
+let firestore: admin.firestore.Firestore | null = null;
+
+const serviceAccountCandidates = [
+  process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH,
+  path.resolve(process.cwd(), '.keys', 'firebase-service-account.json'),
+  'C:\\Users\\erick\\Downloads\\t3ck-core-78a6f-firebase-adminsdk-fbsvc-4cf2b9ba2a.json',
+  'C:\\Users\\erick\\Downloads\\t3ck-core-78a6f-firebase-adminsdk-fbsvc-1d58970990.json',
+].filter((candidate): candidate is string => Boolean(candidate));
+
+function resolveServiceAccountPath(): string | null {
+  return serviceAccountCandidates.find((candidate) => existsSync(candidate)) || null;
+}
+
+export function initializeFirestore(): admin.firestore.Firestore | null {
+  if (firestore) {
+    return firestore;
+  }
+
+  try {
+    if (!initialized) {
+      const appName = 'user-dashboard-service';
+      const existingApp = admin.apps.find((app): app is admin.app.App => {
+        if (!app) {
+          return false;
+        }
+        return app.name === appName;
+      });
+
+      if (existingApp) {
+        initialized = true;
+      } else if (resolveServiceAccountPath()) {
+        const credentialPath = resolveServiceAccountPath() as string;
+        const serviceAccount = require(credentialPath);
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }, appName);
+        initialized = true;
+      } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }, appName);
+        initialized = true;
+      } else {
+        admin.initializeApp({ credential: admin.credential.applicationDefault() }, appName);
+        initialized = true;
+      }
+    }
+
+    const app =
+      admin.apps.find((item): item is admin.app.App => {
+        if (!item) {
+          return false;
+        }
+        return item.name === 'user-dashboard-service';
+      }) || admin.app();
+    firestore = app.firestore();
+    firestore.settings({ ignoreUndefinedProperties: true });
+    logger.info('Firestore initialized for user-dashboard-service');
+    return firestore;
+  } catch (error) {
+    logger.error('Firestore unavailable for user-dashboard-service', {
+      error: (error as Error).message,
+    });
+    firestore = null;
+    return null;
+  }
+}
+
+export function getFirestore(): admin.firestore.Firestore | null {
+  return firestore || initializeFirestore();
+}

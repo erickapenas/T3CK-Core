@@ -22,9 +22,7 @@ describe('Validation Middleware', () => {
         res.json({ success: true });
       });
 
-      const response = await request(app)
-        .post('/test')
-        .send({ name: 'John', age: 25 });
+      const response = await request(app).post('/test').send({ name: 'John', age: 25 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -40,9 +38,7 @@ describe('Validation Middleware', () => {
         res.json({ success: true });
       });
 
-      const response = await request(app)
-        .post('/test')
-        .send({ name: 'Jo', age: 15 });
+      const response = await request(app).post('/test').send({ name: 'Jo', age: 15 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Validation Error');
@@ -59,9 +55,7 @@ describe('Validation Middleware', () => {
         res.json({ success: true });
       });
 
-      const response = await request(app)
-        .get('/test')
-        .query({ search: "'; DROP TABLE users; --" });
+      const response = await request(app).get('/test').query({ search: "'; DROP TABLE users; --" });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid input detected');
@@ -72,9 +66,7 @@ describe('Validation Middleware', () => {
         res.json({ success: true });
       });
 
-      const response = await request(app)
-        .get('/test')
-        .query({ search: 'legitimate search' });
+      const response = await request(app).get('/test').query({ search: 'legitimate search' });
 
       expect(response.status).toBe(200);
     });

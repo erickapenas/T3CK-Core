@@ -26,9 +26,7 @@ export class Observability extends Construct {
 
     // Subscrições de email
     if (props?.alertEmail) {
-      this.alertTopic.addSubscription(
-        new subscriptions.EmailSubscription(props.alertEmail)
-      );
+      this.alertTopic.addSubscription(new subscriptions.EmailSubscription(props.alertEmail));
     }
 
     // Subscrição Slack (se configurado)
@@ -103,12 +101,8 @@ export class Observability extends Construct {
     });
 
     // Adicionar ações aos alarmes
-    errorAlarm.addAlarmAction(
-      new cloudwatch_actions.SnsAction(this.alertTopic)
-    );
-    responseTimeAlarm.addAlarmAction(
-      new cloudwatch_actions.SnsAction(this.alertTopic)
-    );
+    errorAlarm.addAlarmAction(new cloudwatch_actions.SnsAction(this.alertTopic));
+    responseTimeAlarm.addAlarmAction(new cloudwatch_actions.SnsAction(this.alertTopic));
 
     // Log Groups
     const authLogGroup = new logs.LogGroup(this, 'AuthLogGroup', {

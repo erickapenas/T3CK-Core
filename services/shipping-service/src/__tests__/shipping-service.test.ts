@@ -50,8 +50,20 @@ describe('ShippingService', () => {
       serviceLevel: 'standard',
     });
 
-    service.updateTracking(tenantId, shipment.shipmentId, 'in_transit', 'São Paulo', 'Saiu da central');
-    service.updateTracking(tenantId, shipment.shipmentId, 'out_for_delivery', 'Campinas', 'Em rota');
+    service.updateTracking(
+      tenantId,
+      shipment.shipmentId,
+      'in_transit',
+      'São Paulo',
+      'Saiu da central'
+    );
+    service.updateTracking(
+      tenantId,
+      shipment.shipmentId,
+      'out_for_delivery',
+      'Campinas',
+      'Em rota'
+    );
 
     const tracking = service.getTracking(tenantId, shipment.shipmentId);
     expect(tracking.length).toBeGreaterThanOrEqual(3);

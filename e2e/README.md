@@ -48,5 +48,6 @@ pnpm test:coverage
 ## GitHub Actions Integration
 
 The E2E tests run automatically:
+
 - After staging deployment (develop → staging)
 - Before production deployment (main → production)

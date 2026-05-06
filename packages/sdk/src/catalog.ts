@@ -121,11 +121,17 @@ export class CatalogModule {
     return this.client.get<ApiResponse<Category[]>>('/api/categories');
   }
 
-  async addVariant(productId: string, input: ProductVariantCreateInput): Promise<ApiResponse<ProductVariant>> {
+  async addVariant(
+    productId: string,
+    input: ProductVariantCreateInput
+  ): Promise<ApiResponse<ProductVariant>> {
     if (!productId) {
       throw new Error('Product ID is required');
     }
-    return this.client.post<ApiResponse<ProductVariant>>(`/api/products/${productId}/variants`, input);
+    return this.client.post<ApiResponse<ProductVariant>>(
+      `/api/products/${productId}/variants`,
+      input
+    );
   }
 
   async updateVariant(
@@ -142,7 +148,10 @@ export class CatalogModule {
     );
   }
 
-  async removeVariant(productId: string, variantId: string): Promise<ApiResponse<{ deleted: boolean }>> {
+  async removeVariant(
+    productId: string,
+    variantId: string
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
     if (!productId || !variantId) {
       throw new Error('Product ID and Variant ID are required');
     }
@@ -150,14 +159,20 @@ export class CatalogModule {
     return { success: true, data: { deleted: true } };
   }
 
-  async addImage(productId: string, input: ProductImageCreateInput): Promise<ApiResponse<ProductImage>> {
+  async addImage(
+    productId: string,
+    input: ProductImageCreateInput
+  ): Promise<ApiResponse<ProductImage>> {
     if (!productId) {
       throw new Error('Product ID is required');
     }
     return this.client.post<ApiResponse<ProductImage>>(`/api/products/${productId}/images`, input);
   }
 
-  async removeImage(productId: string, imageId: string): Promise<ApiResponse<{ deleted: boolean }>> {
+  async removeImage(
+    productId: string,
+    imageId: string
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
     if (!productId || !imageId) {
       throw new Error('Product ID and Image ID are required');
     }
@@ -169,7 +184,9 @@ export class CatalogModule {
     if (!productId) {
       throw new Error('Product ID is required');
     }
-    return this.client.get<ApiResponse<Product[]>>(`/api/products/${productId}/recommendations?limit=${limit}`);
+    return this.client.get<ApiResponse<Product[]>>(
+      `/api/products/${productId}/recommendations?limit=${limit}`
+    );
   }
 
   async getInventory(productId: string): Promise<ApiResponse<InventorySnapshot>> {
@@ -179,17 +196,29 @@ export class CatalogModule {
     return this.client.get<ApiResponse<InventorySnapshot>>(`/api/inventory/${productId}`);
   }
 
-  async adjustInventory(productId: string, input: InventoryAdjustInput): Promise<ApiResponse<InventoryUpdateResult>> {
+  async adjustInventory(
+    productId: string,
+    input: InventoryAdjustInput
+  ): Promise<ApiResponse<InventoryUpdateResult>> {
     if (!productId) {
       throw new Error('Product ID is required');
     }
-    return this.client.post<ApiResponse<InventoryUpdateResult>>(`/api/inventory/${productId}/adjust`, input);
+    return this.client.post<ApiResponse<InventoryUpdateResult>>(
+      `/api/inventory/${productId}/adjust`,
+      input
+    );
   }
 
-  async setInventory(productId: string, input: InventorySetInput): Promise<ApiResponse<InventoryUpdateResult>> {
+  async setInventory(
+    productId: string,
+    input: InventorySetInput
+  ): Promise<ApiResponse<InventoryUpdateResult>> {
     if (!productId) {
       throw new Error('Product ID is required');
     }
-    return this.client.put<ApiResponse<InventoryUpdateResult>>(`/api/inventory/${productId}/set`, input);
+    return this.client.put<ApiResponse<InventoryUpdateResult>>(
+      `/api/inventory/${productId}/set`,
+      input
+    );
   }
 }

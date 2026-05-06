@@ -10,12 +10,14 @@ O T3CK implementa dois níveis de testes de validação:
 ## E2E Tests (Staging)
 
 ### O que testa
+
 - ✅ Health Endpoints - Disponibilidade dos serviços
 - ✅ Authentication Flow - Login e validação de tokens
 - ✅ Webhook Connectivity - Processamento de eventos
 - ✅ Service Stability - Consistência de saúde ao longo do tempo
 
 ### Rodando localmente
+
 ```bash
 # Staging (default)
 pnpm test:e2e:staging
@@ -31,6 +33,7 @@ pnpm test:e2e:coverage
 ```
 
 ### Configuração
+
 ```bash
 # .env.staging
 ENVIRONMENT=staging
@@ -40,6 +43,7 @@ TEST_PASSWORD=password123
 ```
 
 ### No CI/CD
+
 ```yaml
 e2e-tests:
   runs-on: ubuntu-latest
@@ -53,6 +57,7 @@ e2e-tests:
 ## Smoke Tests (Production)
 
 ### O que testa
+
 1. Health Endpoints - Main health check
 2. Auth Service - /auth/health
 3. Webhook Service - /api/webhooks (OPTIONS)
@@ -61,6 +66,7 @@ e2e-tests:
 6. Service Stability - 3 health checks over 30 segundos
 
 ### Rodando localmente
+
 ```bash
 # Linux/macOS
 bash scripts/smoke-tests.sh
@@ -74,6 +80,7 @@ PROD_URL=https://api.t3ck.io bash scripts/smoke-tests.sh
 ```
 
 ### No CI/CD
+
 ```yaml
 deploy-production:
   steps:
@@ -87,6 +94,7 @@ deploy-production:
 ## Test Results Interpretation
 
 ### E2E Tests Output
+
 ```
 ✅ Health Endpoints
    Passed: 4/4 | Duration: 1243ms
@@ -114,6 +122,7 @@ Total: 11 | Passed: 11 | Failed: 0
 ```
 
 ### Smoke Tests Output
+
 ```
 🧪 Starting production smoke tests...
 Target: https://api.t3ck.io
@@ -138,6 +147,7 @@ Failed:      0
 ## Troubleshooting
 
 ### E2E Tests Fail with "Service unhealthy"
+
 ```
 Problem: Health check returned error
 Solutions:
@@ -148,6 +158,7 @@ Solutions:
 ```
 
 ### E2E Tests Timeout
+
 ```
 Problem: Tests taking too long
 Solutions:
@@ -157,6 +168,7 @@ Solutions:
 ```
 
 ### Smoke Tests Fail with "FAILED"
+
 ```
 Problem: Production endpoint not responding
 Solutions:
@@ -168,6 +180,7 @@ Solutions:
 ```
 
 ### "Invalid credentials" in smoke tests
+
 ```
 Problem: Test user doesn't exist in production
 Solutions:
@@ -179,12 +192,14 @@ Solutions:
 ## Best Practices
 
 ### For Developers
+
 - 🔄 Always run E2E locally before pushing to develop
 - 📊 Monitor E2E results in CI/CD Actions tab
 - 🧪 Add new test cases to smoke-test.ts when adding features
 - 🔍 Check CloudWatch logs if tests fail
 
 ### For Deployments
+
 - ⏱️ E2E tests run immediately after staging deploy
 - 🟢 Wait for all tests to pass (green checks)
 - 🟠 If any test fails, staging rollback happens automatically
@@ -193,6 +208,7 @@ Solutions:
 - ⚠️ Automatic rollback if any smoke test fails
 
 ### For Production Incidents
+
 ```bash
 # Quick health check
 curl -s https://api.t3ck.io/health | jq .
@@ -212,13 +228,13 @@ aws logs tail /aws/ecs/t3ck-cluster --follow
 
 ## Test Coverage Goals
 
-| Category | Coverage | Priority |
-|----------|----------|----------|
-| Health Endpoints | 100% | Critical |
-| Authentication | 95% | Critical |
-| Webhook Events | 90% | High |
-| Service Stability | 100% | Critical |
-| Error Handling | 80% | Medium |
+| Category          | Coverage | Priority |
+| ----------------- | -------- | -------- |
+| Health Endpoints  | 100%     | Critical |
+| Authentication    | 95%      | Critical |
+| Webhook Events    | 90%      | High     |
+| Service Stability | 100%     | Critical |
+| Error Handling    | 80%      | Medium   |
 
 ## Integration with CI/CD
 

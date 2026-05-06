@@ -9,7 +9,9 @@
 ## 📖 QUAL DOCUMENTO QUER LER?
 
 ### ⚡ Muito Ocupado? (2 MINUTOS)
+
 **Leia:** `SEMANA2_RESUMO_RAPIDO.md`
+
 - Status atual: 62.5% completo (5/8 features)
 - O que falta: Service Discovery (4h), Backups (3h)
 - Próximos passos: Iniciar hoje
@@ -18,7 +20,9 @@
 ---
 
 ### 📊 Gerenciador/Lead? (10 MINUTOS)
+
 **Leia:** `SEMANA2_DASHBOARD.md`
+
 - Visual overview com gráficos
 - Progresso por feature
 - Timeline e blockers
@@ -27,7 +31,9 @@
 ---
 
 ### 🛠️ Desenvolvedor/Técnico? (15 MINUTOS)
+
 **Leia:** `SEMANA2_CHECKLIST.md`
+
 - Checklist detalhado item-por-item
 - 25+ tarefas para Service Discovery
 - 20+ tarefas para Automated Backups
@@ -36,7 +42,9 @@
 ---
 
 ### 🔬 Análise Profunda? (20+ MINUTOS)
+
 **Leia:** `SEMANA2_ANALISE_FALTANDO.md` (DOCUMENTO PRINCIPAL)
+
 - Análise completa: 62% feito, 38% faltando
 - Detalhes técnicos de cada feature
 - Estimativas por tarefa
@@ -59,7 +67,7 @@ SEMANA 2 STATUS: 62.5% COMPLETO (5/8 features)
 ⏳ FALTANDO (7 horas):
   6. Service Discovery (4h) ← PRÓXIMO
   7. Automated Backups (3h)
-  
+
 🚀 EXTRA (adiado para Semana 3):
   8. Multi-region (6h+)
 
@@ -72,18 +80,19 @@ PRÓXIMO PASSO:
 
 ## 📊 DOCUMENTO COMPARISON
 
-| Documento | Tamanho | Público | Caso de Uso |
-|-----------|---------|---------|------------|
-| **RESUMO_RAPIDO.md** | 📄 Curto | Gerentes | "Qual é o status?" |
-| **DASHBOARD.md** | 📊 Médio | Leads | Visão visual do progresso |
-| **CHECKLIST.md** | 📋 Longo | Devs | "O que fazer agora?" |
-| **ANALISE_FALTANDO.md** | 📚 Completo | Arquitetos | Análise técnica profunda |
+| Documento               | Tamanho     | Público    | Caso de Uso               |
+| ----------------------- | ----------- | ---------- | ------------------------- |
+| **RESUMO_RAPIDO.md**    | 📄 Curto    | Gerentes   | "Qual é o status?"        |
+| **DASHBOARD.md**        | 📊 Médio    | Leads      | Visão visual do progresso |
+| **CHECKLIST.md**        | 📋 Longo    | Devs       | "O que fazer agora?"      |
+| **ANALISE_FALTANDO.md** | 📚 Completo | Arquitetos | Análise técnica profunda  |
 
 ---
 
 ## 🚀 FLUXO RECOMENDADO DE LEITURA
 
 ### Se você é GERENTE
+
 ```
 1. Leia DASHBOARD.md (10 min) → entender status visual
 2. Pule para "MEMORANDO EXECUTIVO" seção
@@ -91,6 +100,7 @@ PRÓXIMO PASSO:
 ```
 
 ### Se você é DESENVOLVEDOR
+
 ```
 1. Leia RESUMO_RAPIDO.md (5 min) → contexto rápido
 2. Leia CHECKLIST.md (15 min) → tarefas de hoje
@@ -98,6 +108,7 @@ PRÓXIMO PASSO:
 ```
 
 ### Se você é ARQUITETO/TECH LEAD
+
 ```
 1. Leia ANALISE_FALTANDO.md (20 min) → tudo detalhado
 2. Revise CHECKLIST.md → validar estimativas
@@ -105,6 +116,7 @@ PRÓXIMO PASSO:
 ```
 
 ### Se você é PRODUCT MANAGER
+
 ```
 1. Leia DASHBOARD.md → status visual
 2. Leia "DEFINIÇÃO DE SUCESSO - SEMANA 2" em ANALISE_FALTANDO.md
@@ -116,6 +128,7 @@ PRÓXIMO PASSO:
 ## 📋 ÍNDICE DE TODOS OS DOCUMENTOS
 
 ### Documentos de Análise (NOVOS - criados hoje)
+
 ```
 ✅ SEMANA2_RESUMO_RAPIDO.md           (5 min read - Status & Next Steps)
 ✅ SEMANA2_DASHBOARD.md                (10 min read - Visual Overview)
@@ -124,12 +137,14 @@ PRÓXIMO PASSO:
 ```
 
 ### Documentos de Planejamento (EXISTENTES)
+
 ```
 ✅ WEEK2_PLAN.md                       (Master plan - 631 linhas)
 ✅ WEEK2_DAILY_STATUS.md               (Daily progress - 933 linhas)
 ```
 
 ### Documentos de Implementação (Semana 1 - para referência)
+
 ```
 ✅ SEMANA1_COMPLETE.md                 (Semana 1 status final)
 ✅ SEMANA1_FINAL_VERIFICATION.md       (Verification report)
@@ -212,6 +227,7 @@ Status Tests:               ✅ ZERO FAILURES
 ## 💡 INSIGHTS PRINCIPAIS
 
 ### O que está funcionando bem
+
 1. **Padrões reutilizáveis** - Shared package patterns
 2. **Documentação simultânea** - Não deixar para depois
 3. **Zero regressions** - Código limpo na primeira vez
@@ -219,11 +235,13 @@ Status Tests:               ✅ ZERO FAILURES
 5. **Build rápido** - ~4s para compilar tudo
 
 ### Próximas prioridades
+
 1. **Service Discovery** (4h, sem bloqueadores, HOJE)
 2. **Automated Backups** (3h, depois de #1)
 3. **Multi-region** (6h+, Semana 3 com mais tempo)
 
 ### Recomendações
+
 - ✅ Continuar com mesmos padrões (funcionando!)
 - ✅ Manter documentação simultânea
 - ✅ Deixar buffer para testes (13h disponível)
@@ -234,6 +252,7 @@ Status Tests:               ✅ ZERO FAILURES
 ## 🎯 PRÓXIMAS AÇÕES
 
 ### HOJE (AGORA)
+
 ```
 1. [ ] Escolher um documento para ler
 2. [ ] Compartilhar com seu time
@@ -242,6 +261,7 @@ Status Tests:               ✅ ZERO FAILURES
 ```
 
 ### AMANHÃ-DEPOIS (DIAS 6-8)
+
 ```
 1. [ ] Iniciar Service Discovery
 2. [ ] Ler SEMANA2_CHECKLIST.md (Item #6)
@@ -250,6 +270,7 @@ Status Tests:               ✅ ZERO FAILURES
 ```
 
 ### DIAS 9-11
+
 ```
 1. [ ] Implementar Automated Backups
 2. [ ] Ler SEMANA2_CHECKLIST.md (Item #7)
@@ -258,6 +279,7 @@ Status Tests:               ✅ ZERO FAILURES
 ```
 
 ### SEMANA 3
+
 ```
 1. [ ] Planejar Multi-region deployment
 2. [ ] Alocar 6+ horas com calma
@@ -270,18 +292,23 @@ Status Tests:               ✅ ZERO FAILURES
 ## 📞 PERGUNTAS FREQUENTES
 
 ### P: E se não conseguir terminar em 4 horas?
+
 **R:** Tem buffer de 20.5 horas! Pior caso você gasta 6h e ainda tem tempo.
 
 ### P: Por que adiar Multi-region?
+
 **R:** Complexidade ALTA (6h+) + depende de 2 features antes (SD + Backups). Melhor em Semana 3 com mais planejamento.
 
 ### P: Qual é a velocidade real?
+
 **R:** 1.5h por feature (1.9x mais rápido que estimado 3h). Se continuar assim, termina 7/8 features em 11 horas (21 dias restantes).
 
 ### P: Posso fazer Multi-region em Semana 2?
+
 **R:** Tecnicamente sim (13h buffer), mas não recomendado. Melhor fazer Service Discovery + Backups bem em Semana 2, depois Multi-region em Semana 3 com mais calma.
 
 ### P: Como sabe que está pronto para produção?
+
 **R:** Build passing, tests passing, zero errors, documentação completa, padrões testados.
 
 ---
@@ -304,16 +331,19 @@ Status Tests:               ✅ ZERO FAILURES
 ## 📌 QUICK LINKS
 
 **Para desenvolvedores começarem agora:**
+
 1. Ler → `SEMANA2_CHECKLIST.md` (Item #6)
 2. Fazer → 25+ tarefas de Service Discovery
 3. Commit → Quando terminar
 
 **Para gerentes/leads:**
+
 1. Ler → `SEMANA2_DASHBOARD.md`
 2. Revisar → Timeline e blockers
 3. Aprovar → Próximos passos
 
 **Para análise técnica profunda:**
+
 1. Ler → `SEMANA2_ANALISE_FALTANDO.md`
 2. Revisar → Estimativas e riscos
 3. Discutir → Com arquitetura
@@ -325,4 +355,4 @@ Status Tests:               ✅ ZERO FAILURES
 **Próximo:** Leia o documento apropriado para seu papel  
 **Ação:** Inicie Service Discovery HOJE
 
-*Bem vindo à Semana 2! Vamos terminar esses 3 features com excelência.* 🚀
+_Bem vindo à Semana 2! Vamos terminar esses 3 features com excelência._ 🚀

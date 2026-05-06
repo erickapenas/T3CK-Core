@@ -1,11 +1,81 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import { createHmac } from 'crypto';
 import { config } from '../config';
 import { AuthPayload } from '../types';
 import { Logger } from '@t3ck/shared';
 
 const logger = new Logger('AuthMiddleware');
+
+const getAllowedJwtAlgorithms = (): Array<'RS256' | 'HS256'> => {
+  if (config.env === 'production') {
+    if (!config.jwtPublicKey) {
+      throw new Error('JWT_PUBLIC_KEY is required in production');
+    }
+    return ['RS256'];
+  }
+
+  return config.jwtPublicKey ? ['RS256'] : ['HS256'];
+};
+
+const getJwtVerificationSecret = (): string => {
+  if (config.env === 'production') {
+    if (!config.jwtPublicKey) {
+      throw new Error('JWT_PUBLIC_KEY is required in production');
+    }
+    return config.jwtPublicKey;
+  }
+
+  return config.jwtPublicKey || config.jwtSecret;
+};
+
+type AdminSessionToken = {
+  user?: {
+    id?: string;
+    tenantId?: string;
+    username?: string;
+    email?: string;
+    role?: string;
+  };
+  expiresAt?: number;
+};
+
+const getAdminSessionSecret = (): string =>
+  process.env.ADMIN_SESSION_SECRET || process.env.JWT_SECRET || 'dev-admin-session-secret';
+
+const verifyAdminSessionToken = (token: string): AuthPayload | null => {
+  const [payload, signature] = token.split('.');
+  if (!payload || !signature || token.split('.').length !== 2) {
+    return null;
+  }
+
+  const expected = createHmac('sha256', getAdminSessionSecret()).update(payload).digest('base64url');
+  if (expected !== signature) {
+    return null;
+  }
+
+  try {
+    const session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as AdminSessionToken;
+    if (!session.user || !session.expiresAt || session.expiresAt < Date.now()) {
+      return null;
+    }
+
+    return {
+      tenantId: session.user.tenantId || '',
+      userId: session.user.id || session.user.username || '',
+      email: session.user.email || session.user.username || '',
+      roles: [session.user.role || 'usuario'],
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(session.expiresAt / 1000),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const userHasGlobalTenantAccess = (user?: AuthPayload): boolean =>
+  Boolean(user?.roles?.some((role) => ['admin', 'owner', 'manager'].includes(role)));
 
 export interface AuthRequest extends Request {
   user?: AuthPayload;
@@ -44,11 +114,24 @@ export const authenticate = async (
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const adminSession = verifyAdminSessionToken(token);
+    if (adminSession) {
+      req.user = adminSession;
+      req.tenantId = adminSession.tenantId;
+
+      logger.info('Admin session authenticated', {
+        userId: adminSession.userId,
+        tenantId: adminSession.tenantId,
+        roles: adminSession.roles,
+      });
+
+      next();
+      return;
+    }
 
     // Verify JWT token
-    const secret = config.jwtPublicKey || config.jwtSecret;
-    const decoded = jwt.verify(token, secret, {
-      algorithms: ['RS256', 'HS256'],
+    const decoded = jwt.verify(token, getJwtVerificationSecret(), {
+      algorithms: getAllowedJwtAlgorithms(),
     }) as AuthPayload;
 
     // Attach user to request
@@ -117,9 +200,8 @@ export const optionalAuth = async (
     }
 
     const token = authHeader.substring(7);
-    const secret = config.jwtPublicKey || config.jwtSecret;
-    const decoded = jwt.verify(token, secret, {
-      algorithms: ['RS256', 'HS256'],
+    const decoded = jwt.verify(token, getJwtVerificationSecret(), {
+      algorithms: getAllowedJwtAlgorithms(),
     }) as AuthPayload;
 
     req.user = decoded;
@@ -134,7 +216,7 @@ export const optionalAuth = async (
 
 async function verifyApiKey(apiKey: string): Promise<AuthPayload | null> {
   try {
-    const authService = config.services.find(service => service.prefix === '/api/v1/auth');
+    const authService = config.services.find((service) => service.prefix === '/api/v1/auth');
     const target = authService?.target || process.env.AUTH_SERVICE_URL || 'http://localhost:3002';
 
     const response = await axios.post(`${target}/auth/api-keys/verify`, { apiKey });
@@ -168,6 +250,10 @@ export const enforceTenantIsolation = (
 ): void => {
   const tenantIdHeader = req.headers['x-tenant-id'] as string;
   const userTenantId = req.user?.tenantId;
+  const requestWithBody = req as AuthRequest & {
+    body?: Record<string, unknown>;
+    query?: Record<string, unknown>;
+  };
 
   if (!userTenantId) {
     res.status(401).json({
@@ -177,12 +263,22 @@ export const enforceTenantIsolation = (
     return;
   }
 
-  // If X-Tenant-ID header is provided, verify it matches user's tenant
-  if (tenantIdHeader && tenantIdHeader !== userTenantId) {
+  const bodyTenantId =
+    requestWithBody.body && typeof requestWithBody.body.tenantId === 'string'
+      ? requestWithBody.body.tenantId
+      : undefined;
+  const queryTenantId =
+    requestWithBody.query && typeof requestWithBody.query.tenantId === 'string'
+      ? requestWithBody.query.tenantId
+      : undefined;
+  const requestedTenantId = tenantIdHeader || bodyTenantId || queryTenantId;
+  const canSelectTenant = userHasGlobalTenantAccess(req.user);
+
+  if (requestedTenantId && requestedTenantId !== userTenantId && !canSelectTenant) {
     logger.warn('Tenant isolation violation attempt', {
       userId: req.user?.userId,
       userTenantId,
-      requestedTenantId: tenantIdHeader,
+      requestedTenantId,
     });
 
     res.status(403).json({
@@ -192,8 +288,16 @@ export const enforceTenantIsolation = (
     return;
   }
 
-  // Set tenant ID header for downstream services
-  req.headers['x-tenant-id'] = userTenantId;
+  const effectiveTenantId = canSelectTenant && requestedTenantId ? requestedTenantId : userTenantId;
+
+  req.headers['x-tenant-id'] = effectiveTenantId;
+  req.tenantId = effectiveTenantId;
+  if (requestWithBody.body && typeof requestWithBody.body === 'object') {
+    requestWithBody.body.tenantId = effectiveTenantId;
+  }
+  if (requestWithBody.query && typeof requestWithBody.query === 'object') {
+    requestWithBody.query.tenantId = effectiveTenantId;
+  }
 
   next();
 };
@@ -212,7 +316,7 @@ export const requireRole = (...roles: string[]) => {
     }
 
     const userRoles = req.user.roles || [];
-    const hasRole = roles.some(role => userRoles.includes(role));
+    const hasRole = roles.some((role) => userRoles.includes(role));
 
     if (!hasRole) {
       logger.warn('Insufficient permissions', {

@@ -57,7 +57,9 @@ export class ProductService {
   }
 
   listProducts(tenantId: string, filters?: ProductFilters): Product[] {
-    let result = Array.from(this.products.values()).filter((product) => product.tenantId === tenantId);
+    let result = Array.from(this.products.values()).filter(
+      (product) => product.tenantId === tenantId
+    );
 
     if (!filters) {
       return result;
@@ -86,7 +88,9 @@ export class ProductService {
     }
 
     if (typeof filters.inStock === 'boolean') {
-      result = result.filter((product) => (filters.inStock ? product.stock > 0 : product.stock === 0));
+      result = result.filter((product) =>
+        filters.inStock ? product.stock > 0 : product.stock === 0
+      );
     }
 
     if (filters.tag) {
@@ -170,7 +174,9 @@ export class ProductService {
   }
 
   listCategories(tenantId: string): Category[] {
-    return Array.from(this.categories.values()).filter((category) => category.tenantId === tenantId);
+    return Array.from(this.categories.values()).filter(
+      (category) => category.tenantId === tenantId
+    );
   }
 
   updateCategory(tenantId: string, categoryId: string, input: UpdateCategoryInput): Category {
@@ -330,7 +336,10 @@ export class ProductService {
     return candidates.map((item) => item.candidate);
   }
 
-  getInventory(tenantId: string, productId: string): {
+  getInventory(
+    tenantId: string,
+    productId: string
+  ): {
     productId: string;
     stock: number;
     variants: { id: string; stock: number }[];

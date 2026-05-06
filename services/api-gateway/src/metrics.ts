@@ -134,8 +134,8 @@ export const getMetricsSummary = async (): Promise<MetricsData> => {
   const metrics = await register.getMetricsAsJSON();
 
   // Parse metrics
-  const totalRequests = metrics.find(m => m.name === 'http_requests_total');
-  const requestDuration = metrics.find(m => m.name === 'http_request_duration_seconds');
+  const totalRequests = metrics.find((m) => m.name === 'http_requests_total');
+  const requestDuration = metrics.find((m) => m.name === 'http_request_duration_seconds');
 
   // Calculate totals
   let total = 0;
@@ -170,14 +170,14 @@ export const getMetricsSummary = async (): Promise<MetricsData> => {
   }
 
   // Get rate limit hits
-  const rateLimitMetric = metrics.find(m => m.name === 'rate_limit_hits_total');
+  const rateLimitMetric = metrics.find((m) => m.name === 'rate_limit_hits_total');
   let rateLimitHitsTotal = 0;
   if (rateLimitMetric && 'values' in rateLimitMetric) {
     rateLimitHitsTotal = rateLimitMetric.values.reduce((sum: number, v: any) => sum + v.value, 0);
   }
 
   // Get auth failures
-  const authFailureMetric = metrics.find(m => m.name === 'auth_failures_total');
+  const authFailureMetric = metrics.find((m) => m.name === 'auth_failures_total');
   let authFailuresTotal = 0;
   if (authFailureMetric && 'values' in authFailureMetric) {
     authFailuresTotal = authFailureMetric.values.reduce((sum: number, v: any) => sum + v.value, 0);

@@ -13,6 +13,7 @@
 **Por que é crítica:** Sem documentação, clientes não conseguem usar a API
 
 **Solução recomendada:**
+
 ```bash
 npm install swagger-ui-express swagger-jsdoc
 npm install --save-dev @types/swagger-ui-express
@@ -23,6 +24,7 @@ npm install --save-dev @types/swagger-ui-express
 **Complexidade:** Baixa
 
 **Implementação:**
+
 ```typescript
 // auth-service/src/swagger.ts
 import swaggerUi from 'swagger-ui-express';
@@ -38,16 +40,17 @@ const swaggerSpec = swaggerJsdoc({
     },
     servers: [
       { url: 'http://localhost:3001', description: 'Development' },
-      { url: 'https://api.t3ck.io', description: 'Production' }
-    ]
+      { url: 'https://api.t3ck.io', description: 'Production' },
+    ],
   },
-  apis: ['./src/**/*.ts']
+  apis: ['./src/**/*.ts'],
 });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 ```
 
 **Benefícios:**
+
 - ✅ Documentação automática
 - ✅ Testes interativos (Swagger UI)
 - ✅ Validação de schema
@@ -62,6 +65,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 **Por que é crítica:** Sem rate limiting, API é vulnerável a DDoS e abuso
 
 **Solução recomendada:**
+
 ```bash
 npm install express-rate-limit redis
 ```
@@ -71,6 +75,7 @@ npm install express-rate-limit redis
 **Complexidade:** Baixa
 
 **Implementação:**
+
 ```typescript
 // shared/src/middleware/rate-limit.ts
 import rateLimit from 'express-rate-limit';
@@ -96,6 +101,7 @@ app.use('/api/', apiLimiter);
 ```
 
 **Benefícios:**
+
 - ✅ Proteção contra DDoS
 - ✅ Proteção contra abuso de API
 - ✅ Distribuído (Redis-backed)
@@ -110,6 +116,7 @@ app.use('/api/', apiLimiter);
 **Por que é crítica:** Validar entrada em tempo de execução previne erros
 
 **Solução recomendada: Zod** (mais moderno que Joi)
+
 ```bash
 npm install zod
 ```
@@ -119,6 +126,7 @@ npm install zod
 **Complexidade:** Média
 
 **Implementação:**
+
 ```typescript
 // shared/src/validation/schemas.ts
 import { z } from 'zod';
@@ -145,15 +153,13 @@ export const validateRequest = (schema: z.ZodSchema) => {
 };
 
 // Usage
-app.post('/provision',
-  validateRequest(ProvisioningSchema),
-  async (req, res) => {
-    // req.body é 100% validado
-  }
-);
+app.post('/provision', validateRequest(ProvisioningSchema), async (req, res) => {
+  // req.body é 100% validado
+});
 ```
 
 **Benefícios:**
+
 - ✅ Validação em runtime
 - ✅ Type-safe (schema → TypeScript types)
 - ✅ Mensagens de erro claras
@@ -168,6 +174,7 @@ app.post('/provision',
 **Por que é crítica:** Sem tracing, é impossível debugar fluxos distribuídos
 
 **Solução recomendada: OpenTelemetry** (agnóstico)
+
 ```bash
 npm install @opentelemetry/api @opentelemetry/sdk-node \
     @opentelemetry/auto-instrumentations-node \
@@ -180,6 +187,7 @@ npm install @opentelemetry/api @opentelemetry/sdk-node \
 **Complexidade:** Média-Alta
 
 **Implementação:**
+
 ```typescript
 // shared/src/tracing.ts
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -203,6 +211,7 @@ sdk.start();
 ```
 
 **Benefícios:**
+
 - ✅ Rastreamento automático de requisições
 - ✅ Integração com CloudWatch/DataDog
 - ✅ Span context entre serviços
@@ -217,6 +226,7 @@ sdk.start();
 **Por que é crítica:** Tarefas de longa duração precisam de fila
 
 **Solução recomendada: Bull Queue** (Redis-backed)
+
 ```bash
 npm install bullmq
 ```
@@ -226,6 +236,7 @@ npm install bullmq
 **Complexidade:** Média
 
 **Implementação:**
+
 ```typescript
 // shared/src/queues/provisioning-queue.ts
 import { Queue, Worker } from 'bullmq';
@@ -267,6 +278,7 @@ worker.on('failed', (job, error) => {
 ```
 
 **Benefícios:**
+
 - ✅ Processamento assíncrono
 - ✅ Retry automático
 - ✅ Distribuído
@@ -281,6 +293,7 @@ worker.on('failed', (job, error) => {
 **Por que é crítica:** Schema evolui, precisa-se de migrations versionadas
 
 **Solução recomendada: Firestore Migrations** (custom)
+
 ```typescript
 // infrastructure/migrations/001_initial_schema.ts
 export const migration = {
@@ -289,21 +302,19 @@ export const migration = {
   up: async (firestore: FirebaseFirestore.Firestore) => {
     // Create collections
     const batch = firestore.batch();
-    
+
     // Create tenant collection with indexes
-    await firestore.collection('tenants')
-      .doc('_schema')
-      .set({
-        version: 1,
-        createdAt: new Date(),
-      });
-    
+    await firestore.collection('tenants').doc('_schema').set({
+      version: 1,
+      createdAt: new Date(),
+    });
+
     await batch.commit();
   },
   down: async (firestore: FirebaseFirestore.Firestore) => {
     // Rollback
     await firestore.collection('tenants').doc('_schema').delete();
-  }
+  },
 };
 
 // infrastructure/migrations/index.ts
@@ -313,18 +324,15 @@ const migrations = [migration001];
 
 export async function runMigrations() {
   const db = getFirestore();
-  
+
   // Track applied migrations
   for (const migration of migrations) {
-    const applied = await db
-      .collection('_migrations')
-      .doc(migration.migration.version)
-      .get();
-    
+    const applied = await db.collection('_migrations').doc(migration.migration.version).get();
+
     if (!applied.exists) {
       console.log(`Running migration ${migration.migration.version}`);
       await migration.migration.up(db);
-      
+
       await db
         .collection('_migrations')
         .doc(migration.migration.version)
@@ -335,6 +343,7 @@ export async function runMigrations() {
 ```
 
 **Benefícios:**
+
 - ✅ Schema versionado
 - ✅ Rollback automático
 - ✅ Auditoria
@@ -346,35 +355,36 @@ export async function runMigrations() {
 
 ## 🟡 8 IMPORTANTES (Próximas 2-3 semanas)
 
-| # | Tecnologia | Esforço | Impacto | Next Step |
-|---|-----------|---------|--------|-----------|
-| 7 | Health Check (@godaddy/terminus) | 1-2h | Alto | Padronizar /health |
-| 8 | Metrics (prom-client) | 3-4h | Médio | Dashboard Prometheus |
-| 9 | Service Discovery (AWS SD) | 3-4h | Médio | DNS automático |
-| 10 | Config Management (Parameter Store) | 2-3h | Médio | Config central |
-| 11 | Error Tracking (Sentry) | 2-3h | Médio | Error alerts |
-| 12 | Caching (ElastiCache) | 2-3h | Médio | Expandir Redis |
-| 13 | Backups (AWS Backup) | 2-3h | Médio | Disaster recovery |
-| 14 | Multi-region (Route53) | 4-6h | Alto | High availability |
+| #   | Tecnologia                          | Esforço | Impacto | Next Step            |
+| --- | ----------------------------------- | ------- | ------- | -------------------- |
+| 7   | Health Check (@godaddy/terminus)    | 1-2h    | Alto    | Padronizar /health   |
+| 8   | Metrics (prom-client)               | 3-4h    | Médio   | Dashboard Prometheus |
+| 9   | Service Discovery (AWS SD)          | 3-4h    | Médio   | DNS automático       |
+| 10  | Config Management (Parameter Store) | 2-3h    | Médio   | Config central       |
+| 11  | Error Tracking (Sentry)             | 2-3h    | Médio   | Error alerts         |
+| 12  | Caching (ElastiCache)               | 2-3h    | Médio   | Expandir Redis       |
+| 13  | Backups (AWS Backup)                | 2-3h    | Médio   | Disaster recovery    |
+| 14  | Multi-region (Route53)              | 4-6h    | Alto    | High availability    |
 
 ---
 
 ## 🟢 6 NICE-TO-HAVE (Futuro)
 
-| # | Tecnologia | Esforço | Impacto | Use Case |
-|----|-----------|---------|--------|----------|
-| 15 | Feature Flags (LaunchDarkly) | 2-3h | Médio | Canary releases |
-| 16 | GraphQL (Apollo Server) | 5-7h | Baixo | API alternativa |
-| 17 | WebSocket (Socket.io) | 3-4h | Baixo | Real-time updates |
-| 18 | gRPC (gRPC-js) | 4-5h | Baixo | Perf entre serviços |
-| 19 | Performance Tests (k6) | 3-4h | Médio | Load testing |
-| 20 | Chaos Engineering (AWS FIS) | 4-6h | Médio | Resiliência |
+| #   | Tecnologia                   | Esforço | Impacto | Use Case            |
+| --- | ---------------------------- | ------- | ------- | ------------------- |
+| 15  | Feature Flags (LaunchDarkly) | 2-3h    | Médio   | Canary releases     |
+| 16  | GraphQL (Apollo Server)      | 5-7h    | Baixo   | API alternativa     |
+| 17  | WebSocket (Socket.io)        | 3-4h    | Baixo   | Real-time updates   |
+| 18  | gRPC (gRPC-js)               | 4-5h    | Baixo   | Perf entre serviços |
+| 19  | Performance Tests (k6)       | 3-4h    | Médio   | Load testing        |
+| 20  | Chaos Engineering (AWS FIS)  | 4-6h    | Médio   | Resiliência         |
 
 ---
 
 ## 📊 ROADMAP SUGERIDO
 
 ### SEMANA 1-2 (Críticas)
+
 ```
 DIA 1-2:  API Documentation (Swagger)          2-4h ✅
 DIA 3-4:  Rate Limiting                        1-2h ✅
@@ -387,6 +397,7 @@ TOTAL: 17-26 horas (parallelizável: 1-2 semanas)
 ```
 
 ### SEMANA 3-4 (Importantes)
+
 ```
 PARALELO:
 - Health Check Library          1-2h
@@ -402,6 +413,7 @@ TOTAL: 19-28 horas (2-3 semanas em paralelo)
 ```
 
 ### MÊS 2+ (Nice-to-have)
+
 ```
 Implementação conforme demanda/prioridade
 - Feature Flags
@@ -418,34 +430,37 @@ TOTAL: 21-31 horas (escalável)
 
 ## 💰 ROI (Return on Investment)
 
-| Tecnologia | Investimento | Payoff | ROI |
-|-----------|-------------|--------|-----|
-| API Documentation | 2-4h | +30% de produtividade cliente | Alto |
-| Rate Limiting | 1-2h | Evita DDoS | Crítico |
-| Request Validation | 3-5h | -50% bugs de input | Alto |
-| Tracing | 4-6h | -40% debug time | Alto |
-| Message Queues | 4-5h | Handles long tasks | Alto |
-| Health Checks | 1-2h | Better deploys | Médio |
-| Metrics | 3-4h | Better alerts | Médio |
-| Error Tracking | 2-3h | Proactive fixes | Médio |
-| Feature Flags | 2-3h | Safer releases | Médio |
-| Multi-region | 4-6h | 99.99% uptime | Alto |
+| Tecnologia         | Investimento | Payoff                        | ROI     |
+| ------------------ | ------------ | ----------------------------- | ------- |
+| API Documentation  | 2-4h         | +30% de produtividade cliente | Alto    |
+| Rate Limiting      | 1-2h         | Evita DDoS                    | Crítico |
+| Request Validation | 3-5h         | -50% bugs de input            | Alto    |
+| Tracing            | 4-6h         | -40% debug time               | Alto    |
+| Message Queues     | 4-5h         | Handles long tasks            | Alto    |
+| Health Checks      | 1-2h         | Better deploys                | Médio   |
+| Metrics            | 3-4h         | Better alerts                 | Médio   |
+| Error Tracking     | 2-3h         | Proactive fixes               | Médio   |
+| Feature Flags      | 2-3h         | Safer releases                | Médio   |
+| Multi-region       | 4-6h         | 99.99% uptime                 | Alto    |
 
 ---
 
 ## 🎯 PRÓXIMOS PASSOS
 
 ### Hoje
+
 - [ ] Revisar este documento com a equipe
 - [ ] Votar em top 3 críticas para semana que vem
 - [ ] Criar issues no GitHub para cada tecnologia
 
 ### Próxima Semana
+
 - [ ] Começar com crítica #1 (API Documentation)
 - [ ] Setup de repositório para cada feature
 - [ ] Code reviews para cada implementação
 
 ### Próximos 2 Meses
+
 - [ ] Completar todas as 6 críticas
 - [ ] Implementar 50% das importantes
 - [ ] Avaliação de nice-to-have
@@ -455,6 +470,7 @@ TOTAL: 21-31 horas (escalável)
 ## 📞 SUPORTE
 
 **Dúvidas sobre implementação?**
+
 - Consulte documentação oficial de cada biblioteca
 - Veja arquivos `TECHNOLOGY_STACK.md` e `TECHNOLOGY_SUMMARY.md`
 - Crie issue no GitHub com tag `[tech-implementation]`

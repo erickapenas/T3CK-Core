@@ -72,6 +72,8 @@ describe('SettingsModule', () => {
 
     await settings.updatePaymentMethods(['card', 'pix']);
 
-    expect(client.put).toHaveBeenCalledWith('/settings/payment-methods', { methods: ['card', 'pix'] });
+    expect(client.put).toHaveBeenCalledWith('/settings/payment-methods', {
+      methods: ['card', 'pix'],
+    });
   });
 });

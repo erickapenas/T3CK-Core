@@ -10,8 +10,10 @@
 Segundo o `IMPLEMENTATION_ROADMAP.md`, a Semana 1 deveria ter:
 
 ### 1. ✅ API DOCUMENTATION (Swagger/OpenAPI)
+
 **Status:** COMPLETO ✅  
 **O que foi feito:**
+
 - `packages/shared/src/swagger.ts` criado (setup padrão)
 - Integrado em `services/auth-service/src/swagger.ts`
 - Integrado em `services/webhook-service/src/swagger.ts`
@@ -20,6 +22,7 @@ Segundo o `IMPLEMENTATION_ROADMAP.md`, a Semana 1 deveria ter:
 - Swagger UI funcionando localmente
 
 **Validação:**
+
 ```
 ✅ pnpm build: PASSED
 ✅ Imports resolvidos
@@ -29,13 +32,16 @@ Segundo o `IMPLEMENTATION_ROADMAP.md`, a Semana 1 deveria ter:
 ---
 
 ### 2. ✅ RATE LIMITING
+
 **Status:** PARCIAL ⚠️  
 **O que foi feito:**
+
 - `services/auth-service/src/rate-limiter.ts` implementado (classe RateLimiter)
 - Integrado apenas em `auth-service/src/index.ts` via `rateLimitMiddleware`
 - Rate limiter baseado em memory (não Redis-backed)
 
 **O que FALTA:**
+
 - ❌ `express-rate-limit` package NÃO instalado
 - ❌ `rate-limit-redis` NÃO implementado
 - ❌ Integração em `webhook-service` faltando
@@ -43,6 +49,7 @@ Segundo o `IMPLEMENTATION_ROADMAP.md`, a Semana 1 deveria ter:
 - ❌ Não é Redis-backed (não escalável para produção)
 
 **Código esperado (não implementado):**
+
 ```typescript
 // shared/src/middleware/rate-limit.ts
 import rateLimit from 'express-rate-limit';
@@ -65,11 +72,13 @@ export const apiLimiter = rateLimit({
 ---
 
 ### 3. ✅ REQUEST VALIDATION SCHEMA (Zod)
+
 **Status:** COMPLETO ✅  
 **O que foi feito:**
+
 - `packages/shared/src/validation.ts` criado com:
   - `validateRequest(schema)` middleware
-  - `AuthLoginSchema` 
+  - `AuthLoginSchema`
   - `ProvisioningSubmitSchema`
   - `AuthRefreshSchema`
   - `AuthVerifySchema`
@@ -82,6 +91,7 @@ export const apiLimiter = rateLimit({
 - `zod` instalado em `packages/shared`
 
 **Validação:**
+
 ```
 ✅ pnpm build: PASSED (todos 3 serviços compilam)
 ✅ pnpm test: PASSED (todos 3 serviços passam testes)
@@ -91,10 +101,12 @@ export const apiLimiter = rateLimit({
 ---
 
 ### 4. ❌ DISTRIBUTED TRACING (OpenTelemetry)
+
 **Status:** NÃO INICIADO ❌  
 **O que foi feito:** NADA
 
 **O que FALTA:**
+
 ```
 ❌ @opentelemetry/api NÃO instalado
 ❌ @opentelemetry/sdk-node NÃO instalado
@@ -110,10 +122,12 @@ export const apiLimiter = rateLimit({
 ---
 
 ### 5. ❌ MESSAGE QUEUE SYSTEM (Bull Queue)
+
 **Status:** NÃO INICIADO ❌  
 **O que foi feito:** NADA
 
 **O que FALTA:**
+
 ```
 ❌ bullmq NÃO instalado
 ❌ Queue abstraction NÃO implementada
@@ -127,10 +141,12 @@ export const apiLimiter = rateLimit({
 ---
 
 ### 6. ❌ DATABASE MIGRATIONS
+
 **Status:** NÃO INICIADO ❌  
 **O que foi feito:** NADA
 
 **O que FALTA:**
+
 ```
 ❌ Migration framework NÃO escolhido (Firestore custom vs autre)
 ❌ infrastructure/migrations/ directory NÃO criado
@@ -148,8 +164,10 @@ export const apiLimiter = rateLimit({
 Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 
 ### 1. ✅ HEALTH CHECK LIBRARY (@godaddy/terminus)
+
 **Status:** COMPLETO ✅  
-**Localização:** 
+**Localização:**
+
 - `services/auth-service/src/health.ts`
 - `services/webhook-service/src/health.ts`
 - `services/tenant-service/src/health.ts`
@@ -157,8 +175,10 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 ---
 
 ### 2. ✅ ERROR TRACKING (Sentry)
+
 **Status:** COMPLETO ✅  
 **Localização:**
+
 - `services/auth-service/src/sentry.ts`
 - `services/webhook-service/src/sentry.ts`
 - `services/tenant-service/src/sentry.ts`
@@ -167,8 +187,10 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 ---
 
 ### 3. ✅ METRICS & MONITORING (Prometheus)
+
 **Status:** COMPLETO ✅  
 **Localização:**
+
 - `services/auth-service/src/metrics.ts`
 - `services/webhook-service/src/metrics.ts`
 - `services/tenant-service/src/metrics.ts`
@@ -177,8 +199,10 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 ---
 
 ### 4. ✅ ENHANCED CACHING (Redis)
+
 **Status:** COMPLETO ✅  
 **Localização:**
+
 - `services/auth-service/src/cache.ts`
 - `services/webhook-service/src/cache.ts`
 - `services/tenant-service/src/cache.ts`
@@ -187,8 +211,10 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 ---
 
 ### 5. ✅ CONFIG MANAGEMENT (Parameter Store)
+
 **Status:** COMPLETO ✅  
 **Localização:**
+
 - `services/auth-service/src/config.ts`
 - `services/webhook-service/src/config.ts`
 - `services/tenant-service/src/config.ts`
@@ -197,8 +223,10 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 ---
 
 ### 6. ✅ SERVICE DISCOVERY (AWS Cloud Map)
+
 **Status:** COMPLETO ✅  
 **Localização:**
+
 - `services/auth-service/src/service-registry.ts`
 - `services/webhook-service/src/service-registry.ts`
 - `services/tenant-service/src/service-registry.ts`
@@ -208,8 +236,10 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 ---
 
 ### 7. ✅ AUTOMATED BACKUPS
+
 **Status:** COMPLETO ✅  
 **Localização:**
+
 - `services/auth-service/src/backup.ts`
 - `services/webhook-service/src/backup.ts`
 - `services/tenant-service/src/backup.ts`
@@ -223,14 +253,14 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 
 ### SEMANA 1 - CRÍTICAS (6 itens)
 
-| # | Tecnologia | Status | Observação |
-|---|-----------|--------|-----------|
-| 1 | API Documentation (Swagger) | ✅ COMPLETO | Endpoints `/api-docs` em 3 serviços |
-| 2 | Rate Limiting | ⚠️ PARCIAL | Apenas em auth-service, não é Redis-backed |
-| 3 | Request Validation (Zod) | ✅ COMPLETO | 9 schemas implementados, aplicados em 5 endpoints |
-| 4 | Distributed Tracing (OpenTelemetry) | ❌ FALTANDO | 0% implementado (4-6 horas) |
-| 5 | Message Queue (Bull Queue) | ❌ FALTANDO | 0% implementado (4-5 horas) |
-| 6 | Database Migrations | ❌ FALTANDO | 0% implementado (3-4 horas) |
+| #   | Tecnologia                          | Status      | Observação                                        |
+| --- | ----------------------------------- | ----------- | ------------------------------------------------- |
+| 1   | API Documentation (Swagger)         | ✅ COMPLETO | Endpoints `/api-docs` em 3 serviços               |
+| 2   | Rate Limiting                       | ⚠️ PARCIAL  | Apenas em auth-service, não é Redis-backed        |
+| 3   | Request Validation (Zod)            | ✅ COMPLETO | 9 schemas implementados, aplicados em 5 endpoints |
+| 4   | Distributed Tracing (OpenTelemetry) | ❌ FALTANDO | 0% implementado (4-6 horas)                       |
+| 5   | Message Queue (Bull Queue)          | ❌ FALTANDO | 0% implementado (4-5 horas)                       |
+| 6   | Database Migrations                 | ❌ FALTANDO | 0% implementado (3-4 horas)                       |
 
 **Percentual Semana 1:** 50% COMPLETO (3/6 críticas)
 
@@ -238,16 +268,16 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 
 ### SEMANA 2 - IMPORTANTES (8 itens)
 
-| # | Tecnologia | Status | Observação |
-|---|-----------|--------|-----------|
-| 1 | Health Checks | ✅ COMPLETO | /health e /ready em 3 serviços |
-| 2 | Error Tracking (Sentry) | ✅ COMPLETO | Integrado com error handlers |
-| 3 | Metrics (Prometheus) | ✅ COMPLETO | /metrics endpoints em 3 serviços |
-| 4 | Caching (Redis) | ✅ COMPLETO | Cache-aside pattern implementado |
-| 5 | Config Management | ✅ COMPLETO | AWS SSM + Secrets Manager |
-| 6 | Service Discovery | ✅ COMPLETO | AWS Cloud Map integration |
-| 7 | Backups | ✅ COMPLETO | Docker + Terraform + CDK examples |
-| 8 | Multi-region | ⏳ PENDENTE | Próximo (complexo, 6+ horas) |
+| #   | Tecnologia              | Status      | Observação                        |
+| --- | ----------------------- | ----------- | --------------------------------- |
+| 1   | Health Checks           | ✅ COMPLETO | /health e /ready em 3 serviços    |
+| 2   | Error Tracking (Sentry) | ✅ COMPLETO | Integrado com error handlers      |
+| 3   | Metrics (Prometheus)    | ✅ COMPLETO | /metrics endpoints em 3 serviços  |
+| 4   | Caching (Redis)         | ✅ COMPLETO | Cache-aside pattern implementado  |
+| 5   | Config Management       | ✅ COMPLETO | AWS SSM + Secrets Manager         |
+| 6   | Service Discovery       | ✅ COMPLETO | AWS Cloud Map integration         |
+| 7   | Backups                 | ✅ COMPLETO | Docker + Terraform + CDK examples |
+| 8   | Multi-region            | ⏳ PENDENTE | Próximo (complexo, 6+ horas)      |
 
 **Percentual Semana 2:** 87.5% COMPLETO (7/8 importantes)
 
@@ -290,6 +320,7 @@ Segundo `WEEK2_PLAN.md`, Semana 2 (Feb 3-9) deveria ter:
 **Semana 1 Status:** 50% das críticas implementadas + 87.5% da Semana 2
 
 **Faltando de CRÍTICA (Semana 1):**
+
 - ❌ Distributed Tracing (OpenTelemetry)
 - ❌ Message Queue (Bull Queue)
 - ❌ Database Migrations

@@ -52,11 +52,15 @@ function buildUnifiedRouteSpec() {
   const workspaceRoot = path.resolve(__dirname, '../../..');
   const servicesRoot = path.join(workspaceRoot, 'services');
   const serviceDirs = fs.existsSync(servicesRoot)
-    ? fs.readdirSync(servicesRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name)
+    ? fs
+        .readdirSync(servicesRoot, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
     : [];
 
   const paths: Record<string, Record<string, unknown>> = {};
-  const methodRegex = /(app|router)\.(get|post|put|patch|delete|options|head)\s*\(\s*['"`]([^'"`]+)['"`]/g;
+  const methodRegex =
+    /(app|router)\.(get|post|put|patch|delete|options|head)\s*\(\s*['"`]([^'"`]+)['"`]/g;
 
   for (const serviceName of serviceDirs) {
     const sourceDir = path.join(servicesRoot, serviceName, 'src');
@@ -111,7 +115,10 @@ function buildUnifiedRouteSpec() {
   };
 }
 
-export function setupSwagger(app: Express, opts?: { title?: string; version?: string; basePath?: string }) {
+export function setupSwagger(
+  app: Express,
+  opts?: { title?: string; version?: string; basePath?: string }
+) {
   const title = opts?.title ?? 'Tenant Service API';
   const version = opts?.version ?? process.env.SERVICE_VERSION ?? '1.0.0';
 
@@ -121,7 +128,10 @@ export function setupSwagger(app: Express, opts?: { title?: string; version?: st
     servers: [{ url: `http://localhost:${process.env.PORT || 3003}`, description: 'Local' }],
   };
 
-  const options = { swaggerDefinition, apis: ['./src/**/*.ts', './src/**/*.js'] } as swaggerJsdoc.Options;
+  const options = {
+    swaggerDefinition,
+    apis: ['./src/**/*.ts', './src/**/*.js'],
+  } as swaggerJsdoc.Options;
   const swaggerSpec = swaggerJsdoc(options);
   const unifiedSpec = buildUnifiedRouteSpec();
   app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec));

@@ -19,23 +19,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run tests with coverage
-        run: pnpm test --coverage --coverageThreshold='{"global":{"lines":80,"functions":80,"branches":80,"statements":80}}'
+        run: pnpm test:coverage
 
       - name: Check coverage targets per service
         run: pnpm coverage:targets
@@ -48,28 +48,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run Snyk security scan
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
-      
+
       - name: Run Dependabot check
         run: pnpm audit --audit-level=high
 
@@ -78,33 +78,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.0
-      
+
       - name: Terraform Init
         working-directory: infrastructure/terraform
-        run: terraform init
-      
+        run: terraform init -backend=false
+
       - name: Terraform Validate
         working-directory: infrastructure/terraform
         run: terraform validate
-      
+
       - name: Terraform Format Check
         working-directory: infrastructure/terraform
         run: terraform fmt -check
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      
+
       - name: Install CDK dependencies
         working-directory: infrastructure/cdk
         run: npm install
-      
+
       - name: CDK Synth
         working-directory: infrastructure/cdk
         run: npm run synth

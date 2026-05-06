@@ -54,6 +54,7 @@ pnpm add @sentry/node @sentry/tracing
 ```
 
 **Versions**:
+
 - `@sentry/node`: ^10.38.0 (or latest v10.x)
 - `@sentry/tracing`: ^10.38.0 (or latest v10.x)
 
@@ -71,6 +72,7 @@ SERVICE_VERSION=1.0.0       # Release version for tracking
 ```
 
 **Getting your DSN**:
+
 1. Sign up at https://sentry.io/
 2. Create a new project (select Node.js)
 3. Copy the DSN from Settings → Client Keys (DSN)
@@ -334,6 +336,7 @@ SERVICE_VERSION=<production-version>
 4. **Critical Error Alert**: Alert on high-severity errors
 
 **Example Rule**:
+
 ```
 When: Error rate
   of: [project] is
@@ -359,12 +362,13 @@ The default configuration samples 10% of transactions:
 
 ```typescript
 Sentry.init({
-  tracesSampleRate: 0.1,  // 10% of all transactions
+  tracesSampleRate: 0.1, // 10% of all transactions
   // ...
 });
 ```
 
 Adjust based on traffic:
+
 - **High traffic**: 0.05 (5%)
 - **Medium traffic**: 0.1 (10%)
 - **Low traffic**: 0.5 (50%)
@@ -375,7 +379,7 @@ Release tags help track which version has issues:
 
 ```typescript
 Sentry.init({
-  release: '1.0.0',  // From package.json version
+  release: '1.0.0', // From package.json version
   // ...
 });
 ```
@@ -440,6 +444,7 @@ sentry-cli releases finalize v1.0.0
 ## Best Practices
 
 ✅ **DO**:
+
 - Initialize Sentry as the very first thing in your app
 - Use context methods to add request/user info to errors
 - Set appropriate sampling rates for your traffic
@@ -448,6 +453,7 @@ sentry-cli releases finalize v1.0.0
 - Monitor error trends regularly
 
 ❌ **DON'T**:
+
 - Try to suppress all errors
 - Send raw error stacks with credentials
 - Use Sentry for normal application logging
@@ -459,6 +465,7 @@ sentry-cli releases finalize v1.0.0
 ### PII Handling
 
 Sentry's `beforeSend()` removes:
+
 - Authorization headers
 - Cookies and sessions
 - API keys and tokens
@@ -494,16 +501,19 @@ If you're adding Sentry to an existing service:
 ## Maintenance
 
 **Weekly**:
+
 - Review error dashboard for trends
 - Check alert rules are working
 - Investigate new error patterns
 
 **Monthly**:
+
 - Review sampling rates vs quota
 - Update alert thresholds
 - Rotate sensitive credentials if needed
 
 **Quarterly**:
+
 - Review retention policies
 - Audit PII scrubbing settings
 - Plan performance optimizations

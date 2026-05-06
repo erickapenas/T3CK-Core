@@ -63,9 +63,7 @@ describe('EventHandler', () => {
   });
 
   it('extracts tenantId from nested order object', async () => {
-    getWebhooksByTenant.mockResolvedValue([
-      { id: 'w1', active: true, events: ['order.updated'] },
-    ]);
+    getWebhooksByTenant.mockResolvedValue([{ id: 'w1', active: true, events: ['order.updated'] }]);
 
     const handler = new EventHandler();
 

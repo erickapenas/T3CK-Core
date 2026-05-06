@@ -9,11 +9,13 @@ Semana 3 está **100% completa**. Este documento guia novos devs a entender e co
 ## 🎯 Começar a Trabalhar
 
 ### 1. Clonar/Navegar ao Projeto
+
 ```bash
 cd "c:\Users\erick\Desktop\T3CK Core"
 ```
 
 ### 2. Entender a Estrutura
+
 ```
 T3CK Core/
 ├── docs/                          # Documentação (7 arquivos)
@@ -31,6 +33,7 @@ T3CK Core/
 ```
 
 ### 3. Instalar Dependências
+
 ```bash
 # Globalmente
 pnpm install -g pnpm@latest
@@ -181,8 +184,8 @@ try {
 }
 
 // 4. Use meaningful names
-async function processProvisioningJob() {}  // ✅
-async function process() {}                 // ❌
+async function processProvisioningJob() {} // ✅
+async function process() {} // ❌
 
 // 5. Add JSDoc comments
 /**
@@ -228,11 +231,11 @@ describe('ProvisioningFormService', () => {
       contactEmail: 'admin@test.com',
       contactName: 'Admin',
       numberOfSeats: 50,
-      region: 'us-east-1'
+      region: 'us-east-1',
     };
-    
+
     const result = service.validateProvisioningForm(formData);
-    
+
     expect(result.success).toBe(true);
     expect(result.errors).toEqual([]);
   });
@@ -302,24 +305,26 @@ tail -f logs/provisioning.log
 
 ### Comum Problemas
 
-| Erro | Causa | Solução |
-|------|-------|---------|
-| `Cannot connect to database` | MySQL down | `mysql.server start` ou `systemctl start mysql` |
-| `EADDRINUSE` | Porta em uso | Mudar porta em `package.json` |
-| `Queue worker not processing` | Redis down | Checar Redis está rodando |
-| `TypeError: db is undefined` | Imports incorretos | Checar imports em index.ts |
+| Erro                          | Causa              | Solução                                         |
+| ----------------------------- | ------------------ | ----------------------------------------------- |
+| `Cannot connect to database`  | MySQL down         | `mysql.server start` ou `systemctl start mysql` |
+| `EADDRINUSE`                  | Porta em uso       | Mudar porta em `package.json`                   |
+| `Queue worker not processing` | Redis down         | Checar Redis está rodando                       |
+| `TypeError: db is undefined`  | Imports incorretos | Checar imports em index.ts                      |
 
 ---
 
 ## 📚 Documentação para Devs
 
 ### Leia Primeiro
+
 1. [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Entender design
 2. [API.md](./docs/API.md) - Endpoints disponíveis
 3. [PROVISIONING.md](./docs/PROVISIONING.md) - Fluxo
 4. [ADMIN_PANEL_GUIDE.md](./docs/ADMIN_PANEL_GUIDE.md) - UI/UX
 
 ### Código Existente
+
 - `services/tenant-service/src/index.ts` - Main app
 - `services/tenant-service/src/__tests__/` - Test examples
 - `docs/ADMIN_PANEL.html` - Frontend code
@@ -328,25 +333,32 @@ tail -f logs/provisioning.log
 
 Quando adicionar feature:
 
-```markdown
+````markdown
 ## Minha Nova Feature
 
 ### O que faz
+
 Descrever funcionalidade
 
 ### Como usar
+
 Exemplos de código
 
 ### API
+
 Endpoints criados/modificados
 
 ### Testes
+
 Testes adicionados
 
 ### Exemplo
+
 ```bash
 curl -X POST http://localhost:3003/new-endpoint
 ```
+````
+
 ```
 
 ---
@@ -356,6 +368,7 @@ curl -X POST http://localhost:3003/new-endpoint
 Antes de fazer push:
 
 ```
+
 [ ] Código compila sem erros
 [ ] Todos testes passam (36/36)
 [ ] Coverage > 90%
@@ -364,7 +377,8 @@ Antes de fazer push:
 [ ] TypeScript strict mode passa
 [ ] Sem breaking changes
 [ ] PR criado e reviewado
-```
+
+````
 
 ### Fazer Deploy
 
@@ -384,7 +398,7 @@ git commit -m "feat: my feature"
 git push origin main
 
 # 5. Deploy (automático via CI/CD)
-```
+````
 
 ---
 
@@ -406,13 +420,13 @@ git push origin main
 
 ### Atalhos Úteis
 
-| Comando | VSCode |
-|---------|--------|
-| Format code | Shift+Alt+F |
-| Quick fix | Ctrl+. |
-| Go to definition | F12 |
-| Find references | Shift+F12 |
-| Run tests | Ctrl+Shift+D |
+| Comando          | VSCode       |
+| ---------------- | ------------ |
+| Format code      | Shift+Alt+F  |
+| Quick fix        | Ctrl+.       |
+| Go to definition | F12          |
+| Find references  | Shift+F12    |
+| Run tests        | Ctrl+Shift+D |
 
 ### Scripts Úteis
 
@@ -477,7 +491,7 @@ asdfgh
 // ❌ RUIM - N+1 problem
 const tenants = await getTenants();
 for (const tenant of tenants) {
-  const jobs = await getJobs(tenant.id);  // N queries!
+  const jobs = await getJobs(tenant.id); // N queries!
 }
 
 // ✅ BOM - Single query with join
@@ -493,16 +507,14 @@ for (const tenant of tenants) {
 }
 
 // ✅ BOM - Paralelo
-await Promise.all(
-  tenants.map(t => processProvisioning(t))
-);
+await Promise.all(tenants.map((t) => processProvisioning(t)));
 ```
 
 ### Caching
 
 ```typescript
 // ❌ RUIM - Sem cache
-const status = await getTenantStatus(id);  // DB query
+const status = await getTenantStatus(id); // DB query
 
 // ✅ BOM - Com cache
 const cached = await cache.get(id);
@@ -539,7 +551,7 @@ import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
 });
 
 app.use(limiter);
@@ -548,11 +560,13 @@ app.use(limiter);
 ### CORS
 
 ```typescript
-app.use(cors({
-  origin: 'http://localhost:8080',
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:8080',
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 ```
 
 ---
@@ -560,6 +574,7 @@ app.use(cors({
 ## 📞 Contato
 
 Dúvidas sobre código:
+
 - Abrir issue no repositório
 - Checar documentação em `docs/`
 - Olhar exemplos em `__tests__/`

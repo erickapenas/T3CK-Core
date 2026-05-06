@@ -33,7 +33,8 @@ export class RateLimiter {
 
       if (count >= config.maxRequests) {
         const oldest = await this.redis.zrange(key, 0, 0, 'WITHSCORES');
-        const resetAt = oldest.length > 0 ? parseInt(oldest[1], 10) + config.windowMs : now + config.windowMs;
+        const resetAt =
+          oldest.length > 0 ? parseInt(oldest[1], 10) + config.windowMs : now + config.windowMs;
 
         return {
           allowed: false,

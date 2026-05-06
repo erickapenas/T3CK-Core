@@ -13,14 +13,32 @@ export const TransformOptionsSchema = z.object({
 
 export const TransformQuerySchema = z.object({
   url: z.string().url(),
-  w: z.string().optional().transform((v) => v ? parseInt(v, 10) : undefined),
-  h: z.string().optional().transform((v) => v ? parseInt(v, 10) : undefined),
+  w: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
+  h: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
   fit: z.enum(['cover', 'contain', 'fill', 'inside', 'outside']).optional(),
   format: z.enum(['webp', 'avif', 'jpeg', 'png']).optional(),
-  quality: z.string().optional().transform((v) => v ? parseInt(v, 10) : undefined),
-  blur: z.string().optional().transform((v) => v ? parseFloat(v) : undefined),
-  grayscale: z.string().optional().transform((v) => v === 'true'),
-  sharpen: z.string().optional().transform((v) => v === 'true'),
+  quality: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v, 10) : undefined)),
+  blur: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseFloat(v) : undefined)),
+  grayscale: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
+  sharpen: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
 });
 
 export const PresetSchema = z.object({

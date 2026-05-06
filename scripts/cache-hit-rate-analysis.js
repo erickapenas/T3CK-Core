@@ -16,7 +16,9 @@ if (!inputPath || !fs.existsSync(inputPath)) {
     process.exit(1);
   }
 
-  console.warn('⚠️ cache-metrics.json not found locally; using fallback metrics from env/default values.');
+  console.warn(
+    '⚠️ cache-metrics.json not found locally; using fallback metrics from env/default values.'
+  );
   const fallback = {
     hits: Number(process.env.CACHE_HITS || 80),
     misses: Number(process.env.CACHE_MISSES || 20),
@@ -25,9 +27,13 @@ if (!inputPath || !fs.existsSync(inputPath)) {
   const hitRateFallback = totalFallback > 0 ? (fallback.hits / totalFallback) * 100 : 0;
   const minHitRateFallback = Number(process.env.CACHE_MIN_HIT_RATE || 70);
 
-  console.log(`Cache hits=${fallback.hits}, misses=${fallback.misses}, hitRate=${hitRateFallback.toFixed(2)}%`);
+  console.log(
+    `Cache hits=${fallback.hits}, misses=${fallback.misses}, hitRate=${hitRateFallback.toFixed(2)}%`
+  );
   if (hitRateFallback < minHitRateFallback) {
-    console.error(`❌ Cache hit rate below target: ${hitRateFallback.toFixed(2)}% < ${minHitRateFallback}%`);
+    console.error(
+      `❌ Cache hit rate below target: ${hitRateFallback.toFixed(2)}% < ${minHitRateFallback}%`
+    );
     process.exit(1);
   }
 

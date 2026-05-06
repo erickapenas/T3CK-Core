@@ -26,7 +26,14 @@ export const ShipmentCreateSchema = z.object({
 export const StatusUpdateSchema = z.object({
   body: z.object({
     tenantId: z.string().min(1),
-    status: z.enum(['created', 'label_generated', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered']),
+    status: z.enum([
+      'created',
+      'label_generated',
+      'picked_up',
+      'in_transit',
+      'out_for_delivery',
+      'delivered',
+    ]),
     location: z.string().optional(),
     message: z.string().optional(),
   }),

@@ -112,9 +112,9 @@ export async function getMigrationStatus() {
   }
 
   try {
-    const migrations = await dataSource.query(
+    const migrations = (await dataSource.query(
       `SELECT * FROM typeorm_metadata WHERE type = 'migration'`
-    ) as any[];
+    )) as any[];
     return {
       executed: migrations.length,
       pending: 0, // Would need to compare with migration files

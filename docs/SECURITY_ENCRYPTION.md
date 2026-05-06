@@ -10,6 +10,7 @@ This document defines data security practices for T3CK Core, covering retention,
 - **Temporary data**: 7 days (sessions, caches).
 
 Retention is enforced through:
+
 - S3 lifecycle policies for backup artifacts.
 - Redis TTL for session and token data.
 - Database retention windows via scheduled cleanup jobs (to be scheduled per service).
@@ -43,6 +44,7 @@ Retention is enforced through:
 - **Restricted**: authentication secrets, payment tokens, encrypted PII.
 
 Classifications are used to:
+
 - Define retention and backup requirements.
 - Determine encryption and access controls.
 - Apply stricter monitoring and alerting.

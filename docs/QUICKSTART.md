@@ -22,6 +22,7 @@ mysql --version
 ```
 
 Se não tiver algum deles, instale:
+
 - [Node.js LTS](https://nodejs.org/)
 - [MySQL Community Edition](https://dev.mysql.com/downloads/mysql/)
 
@@ -43,6 +44,7 @@ node scripts/server.js
 ```
 
 **Você verá**:
+
 ```
 Starting server on port 8080
 
@@ -65,6 +67,7 @@ pnpm start
 ```
 
 **Você verá**:
+
 ```
 ✅ Tenant service running on port 3003
 ✅ Database connected
@@ -86,6 +89,7 @@ Demo Dashboard: http://localhost:8080/DEMO_FULL.html
 ### 5. Teste Criar um Tenant! 🎉
 
 **No Admin Panel**:
+
 1. Preencha o formulário:
    - Tenant ID: `test-empresa-001`
    - Empresa: `Test Company`
@@ -155,6 +159,7 @@ node scripts\server.js
 ```
 
 **Output esperado**:
+
 ```
 Starting server on port 8080
 
@@ -167,7 +172,7 @@ Starting server on port 8080
 Se tiver erro de porta (EADDRINUSE), algo já está usando porta 8080. Edite `scripts/server.js` linha 7:
 
 ```javascript
-const PORT = 8081;  // Ou outra porta
+const PORT = 8081; // Ou outra porta
 ```
 
 ### Passo 5: Iniciar Serviço de Tenant
@@ -181,6 +186,7 @@ pnpm start
 ```
 
 **Output esperado**:
+
 ```
 ✅ Tenant service running on port 3003
 ✅ Database connected
@@ -188,6 +194,7 @@ pnpm start
 ```
 
 Se receber erro de banco de dados:
+
 1. Verifique que MySQL está rodando: `mysql -u root -p`
 2. Verifique credenciais no `.env`
 3. O banco será criado automaticamente
@@ -201,6 +208,7 @@ http://localhost:8080/ADMIN_PANEL.html
 ```
 
 Você verá uma página com:
+
 - ✅ Formulário de provisionamento
 - ✅ Cards de estatísticas
 - ✅ Busca de status
@@ -209,6 +217,7 @@ Você verá uma página com:
 ### Passo 7: Criar um Tenant
 
 1. **Preencha o formulário** com dados válidos:
+
    ```
    Tenant ID:   empresa-001
    Empresa:     Minha Empresa
@@ -222,6 +231,7 @@ Você verá uma página com:
 2. **Clique PROVISIONAR**
 
 3. **Veja a confirmação**:
+
    ```
    ✅ Tenant "Minha Empresa" criado com sucesso!
    Job ID: job-uuid-12345
@@ -265,6 +275,7 @@ pnpm test --coverage
 ```
 
 **Resultado esperado**:
+
 ```
 Test Suites: 3 passed, 3 total
 Tests:       36 passed, 36 total
@@ -276,30 +287,38 @@ Tests:       36 passed, 36 total
 ## 📊 Acessar Dashboards
 
 ### Admin Panel
+
 ```
 http://localhost:8080/ADMIN_PANEL.html
 ```
+
 Use para:
+
 - ✅ Criar novos tenants
 - ✅ Consultar status
 - ✅ Ver estatísticas
 - ✅ Listar tenants
 
 ### Demo Dashboard
+
 ```
 http://localhost:8080/DEMO_FULL.html
 ```
+
 Use para:
+
 - 📊 Visualizar sistema completo
 - 📈 Ver arquitetura
 - 🔌 Testar endpoints
 
 ### Métricas (Prometheus)
+
 ```
 http://localhost:3003/metrics
 ```
 
 ### API Status
+
 ```
 http://localhost:3003/health
 ```
@@ -313,6 +332,7 @@ http://localhost:3003/health
 **Problema**: Porta 8080 já está em uso
 
 **Solução**:
+
 ```powershell
 # Opção 1: Matar processo
 netstat -ano | findstr :8080
@@ -328,6 +348,7 @@ const PORT = 8081;
 **Problema**: MySQL não está rodando ou credenciais incorretas
 
 **Solução**:
+
 ```powershell
 # Verificar MySQL
 mysql -u root -p
@@ -343,6 +364,7 @@ mysql -u root -p
 **Problema**: Serviço de tenant não está rodando
 
 **Solução**:
+
 ```powershell
 # Verificar se rodando
 netstat -ano | findstr :3003
@@ -357,6 +379,7 @@ pnpm start
 **Problema**: Servidor demo não encontra arquivo
 
 **Solução**:
+
 ```powershell
 # Verificar arquivo existe
 ls docs\ADMIN_PANEL.html
@@ -374,6 +397,7 @@ curl http://localhost:8080/DEMO_FULL.html
 **Problema**: Admin Panel não consegue conectar à API
 
 **Solução**:
+
 1. Verificar se tenant-service está rodando: `curl http://localhost:3003/health`
 2. Verificar CORS está habilitado (deve estar por padrão)
 3. Recarregar página (Ctrl+Shift+R)
@@ -383,6 +407,7 @@ curl http://localhost:8080/DEMO_FULL.html
 **Problema**: Dados do formulário inválidos
 
 **Solução**:
+
 - Tenant ID: use apenas letras, números e hífens
 - Email: use email válido (ex: test@test.com)
 - Assentos: use número inteiro entre 1 e 10000
@@ -393,6 +418,7 @@ curl http://localhost:8080/DEMO_FULL.html
 ## 📈 Monitorar Execução
 
 ### Terminal 1: Servidor Demo
+
 ```
 Mostra: Requisições HTTP
 Quando funciona:
@@ -402,6 +428,7 @@ Quando funciona:
 ```
 
 ### Terminal 2: Serviço de Tenant
+
 ```
 Mostra: API requests, queue processing
 Quando funciona:
@@ -411,6 +438,7 @@ Quando funciona:
 ```
 
 ### Browser Console (F12)
+
 ```
 Mostra: JavaScript errors
 Quando funciona:
@@ -443,23 +471,27 @@ Quando funciona:
 ## 🎯 Próximos Passos Após Setup
 
 ### 1. Explore o Admin Panel
+
 - Crie 3-5 tenants com dados diferentes
 - Observe o fluxo: PENDING → PROVISIONING → ACTIVE
 - Use busca para consultar status
 - Veja estatísticas atualizarem
 
 ### 2. Rode os Testes
+
 ```powershell
 cd services\tenant-service
 pnpm test
 ```
 
 ### 3. Leia a Documentação
+
 - [SEMANA3_SUMMARY.md](./SEMANA3_SUMMARY.md) - Visão completa
 - [ADMIN_PANEL_GUIDE.md](./ADMIN_PANEL_GUIDE.md) - Como usar painel
 - [API.md](./API.md) - Especificação API
 
 ### 4. Teste a API (curl ou Postman)
+
 ```powershell
 # Criar tenant
 curl -X POST http://localhost:3003/provisioning/submit `
@@ -488,6 +520,7 @@ curl http://localhost:3003/provisioning/curl-test-001/status
 Se você chegou aqui, tudo deve estar funcionando! 🎊
 
 **Você tem agora:**
+
 - ✅ Sistema completo de provisionamento
 - ✅ Admin panel funcional
 - ✅ 36 testes passando
@@ -497,6 +530,7 @@ Se você chegou aqui, tudo deve estar funcionando! 🎊
 - ✅ Monitoramento
 
 **Pode agora:**
+
 - 🏢 Provisionar novos tenants
 - 📊 Monitorar progress
 - 🧪 Rodar testes
@@ -507,13 +541,13 @@ Se você chegou aqui, tudo deve estar funcionando! 🎊
 
 ## 💬 Precisa de Help?
 
-| Problema | Verificar |
-|----------|-----------|
-| Porta ocupada | `netstat -ano \| findstr :[PORT]` |
-| MySQL não conecta | `mysql -u root -p` |
-| Arquivo não encontrado | `ls docs\ADMIN_PANEL.html` |
-| API não responde | `curl http://localhost:3003/health` |
-| Testes falhando | `pnpm test --verbose` |
+| Problema               | Verificar                           |
+| ---------------------- | ----------------------------------- |
+| Porta ocupada          | `netstat -ano \| findstr :[PORT]`   |
+| MySQL não conecta      | `mysql -u root -p`                  |
+| Arquivo não encontrado | `ls docs\ADMIN_PANEL.html`          |
+| API não responde       | `curl http://localhost:3003/health` |
+| Testes falhando        | `pnpm test --verbose`               |
 
 ---
 

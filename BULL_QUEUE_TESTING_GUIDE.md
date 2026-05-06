@@ -3,12 +3,14 @@
 ## Start Services
 
 ### Terminal 1: Start Tenant Service
+
 ```bash
 cd c:\Users\erick\Desktop\T3CK Core\services\tenant-service
 pnpm dev
 ```
 
 Expected output:
+
 ```
 tenant service running on port 3003
 Queue Redis client connected
@@ -20,6 +22,7 @@ Tracing initialized: tenant-service
 ## Test Bull Queue
 
 ### Terminal 2: Submit Provisioning Job
+
 ```bash
 curl -X POST http://localhost:3003/provisioning/submit \
   -H "Content-Type: application/json" \
@@ -32,6 +35,7 @@ curl -X POST http://localhost:3003/provisioning/submit \
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -51,11 +55,13 @@ Expected response:
 ---
 
 ### Check Queue Statistics
+
 ```bash
 curl http://localhost:3003/queue/stats
 ```
 
 Expected response:
+
 ```json
 {
   "queueName": "provisioning",
@@ -71,6 +77,7 @@ Expected response:
 ---
 
 ### Submit Multiple Jobs
+
 ```bash
 # Submit 5 jobs in rapid succession
 for i in {1..5}; do
@@ -139,11 +146,13 @@ Expected: 17/17 tests passing
 ## Common Issues & Solutions
 
 ### Issue: Redis connection timeout
+
 ```
 Error: connect ECONNREFUSED 127.0.0.1:6379
 ```
 
 **Solution**: Start Redis
+
 ```bash
 # Windows: If using WSL or Docker
 docker run -d -p 6379:6379 redis:7
@@ -152,11 +161,13 @@ redis-server
 ```
 
 ### Issue: Port 3003 already in use
+
 ```
 Error: listen EADDRINUSE :::3003
 ```
 
 **Solution**: Kill process on port 3003
+
 ```bash
 # PowerShell
 Get-Process -Id (Get-NetTCPConnection -LocalPort 3003).OwningProcess | Stop-Process
@@ -166,12 +177,15 @@ PORT=3004 pnpm dev
 ```
 
 ### Issue: No jobs being processed
+
 **Solution**: Check logs for worker creation:
+
 ```
 Worker created for queue: provisioning
 ```
 
 If not present, the worker wasn't created. Check:
+
 1. Redis connection active
 2. No console errors
 3. Queue stats show jobs (waiting > 0)
@@ -181,6 +195,7 @@ If not present, the worker wasn't created. Check:
 ## Performance Testing
 
 ### Load Test - 100 Jobs
+
 ```bash
 # Submit 100 jobs
 for i in {1..100}; do
@@ -205,6 +220,7 @@ Expected: All 100 jobs completed in ~20 seconds (2 concurrent workers × 2 secon
 ### Endpoints
 
 #### Submit Provisioning Form
+
 ```
 POST /provisioning/submit
 Content-Type: application/json
@@ -227,6 +243,7 @@ Response:
 ```
 
 #### Get Queue Statistics
+
 ```
 GET /queue/stats
 
@@ -243,6 +260,7 @@ Response:
 ```
 
 #### Get Provisioning Status
+
 ```
 GET /provisioning/:tenantId/status
 
@@ -268,6 +286,7 @@ Response:
 ## Next: Database Migrations
 
 After testing Bull Queue, the next critical item is Database Migrations:
+
 - [ ] Choose ORM (TypeORM or Knex)
 - [ ] Design database schema
 - [ ] Implement migration runner
@@ -278,4 +297,4 @@ This will complete Semana 1 (100% of 6 critical items).
 ---
 
 **Last Updated**: February 2, 2026  
-**Status**: ✅ Ready for Testing  
+**Status**: ✅ Ready for Testing

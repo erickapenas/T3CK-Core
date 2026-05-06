@@ -39,5 +39,17 @@ describe('Order + Payment integration', () => {
     expect(paymentRes.status).toBe(201);
     expect(paymentRes.body.status).toBe('AWAITING_PAYMENT');
     expect(paymentRes.body.paymentId).toBeDefined();
+
+    const paymentStatusRes = await request(orderApp)
+      .patch(`/orders/${orderRes.body.data.id}/payment-status`)
+      .send({
+        tenantId: 'tenant-flow',
+        paymentId: paymentRes.body.paymentId,
+        paymentStatus: paymentRes.body.status,
+      });
+
+    expect(paymentStatusRes.status).toBe(200);
+    expect(paymentStatusRes.body.data.paymentId).toBe(paymentRes.body.paymentId);
+    expect(paymentStatusRes.body.data.paymentStatus).toBe('AWAITING_PAYMENT');
   });
 });

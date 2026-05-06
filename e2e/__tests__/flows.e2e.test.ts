@@ -14,9 +14,7 @@ describe('E2E Business Flows', () => {
     const cart = {
       tenantId: 'tenant-e2e',
       customerId: 'customer-e2e',
-      items: [
-        { productId: 'p1', quantity: 2, unitPrice: 50 },
-      ],
+      items: [{ productId: 'p1', quantity: 2, unitPrice: 50 }],
     };
 
     const checkoutTotal = cart.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);

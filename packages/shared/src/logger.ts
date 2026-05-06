@@ -13,7 +13,10 @@ export interface LogContext {
 }
 
 export class Logger {
-  constructor(private service: string, private level: LogLevel = LogLevel.INFO) {}
+  constructor(
+    private service: string,
+    private level: LogLevel = LogLevel.INFO
+  ) {}
 
   private shouldLog(level: LogLevel): boolean {
     const levels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];

@@ -35,7 +35,7 @@ export function initSentry(serviceName: string): void {
         if (status.startsWith('4')) return null;
       }
       return event;
-    }
+    },
   });
 
   console.info(`[${serviceName}] Sentry initialized (${environment})`);
@@ -84,7 +84,7 @@ export function setSentryUser(userId: string, email?: string, username?: string)
   Sentry.setUser({
     id: userId,
     email,
-    username
+    username,
   });
 }
 
@@ -107,7 +107,7 @@ export function addBreadcrumb(
     message,
     category,
     level,
-    timestamp: Date.now() / 1000
+    timestamp: Date.now() / 1000,
   });
 }
 

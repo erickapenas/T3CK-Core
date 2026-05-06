@@ -21,7 +21,12 @@ export class SessionService {
     this.ttlSeconds = ttlSeconds;
   }
 
-  async createSession(tenantId: string, userId: string, ip?: string, userAgent?: string): Promise<SessionMetadata> {
+  async createSession(
+    tenantId: string,
+    userId: string,
+    ip?: string,
+    userAgent?: string
+  ): Promise<SessionMetadata> {
     const sessionId = crypto.randomUUID();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.ttlSeconds * 1000);
@@ -62,7 +67,7 @@ export class SessionService {
 
   async revokeUserSessions(userId: string): Promise<void> {
     const sessions = await this.listByIndex(`session_index:user:${userId}`);
-    await Promise.all(sessions.map(session => this.cache.delete(`session:${session.sessionId}`)));
+    await Promise.all(sessions.map((session) => this.cache.delete(`session:${session.sessionId}`)));
   }
 
   private async addToIndex(indexKey: string, sessionId: string): Promise<void> {

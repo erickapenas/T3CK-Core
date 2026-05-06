@@ -28,9 +28,10 @@ class Logger {
   }
 
   error(message: string, data?: Record<string, unknown> | Error): void {
-    const errorData = data instanceof Error
-      ? { error: { name: data.name, message: data.message, stack: data.stack } }
-      : data;
+    const errorData =
+      data instanceof Error
+        ? { error: { name: data.name, message: data.message, stack: data.stack } }
+        : data;
     this.formatLog('ERROR', message, errorData);
   }
 

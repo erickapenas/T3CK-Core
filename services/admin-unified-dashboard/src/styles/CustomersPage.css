@@ -1,0 +1,302 @@
+.customers-page {
+  display: grid;
+  gap: 16px;
+  color: var(--color-text);
+}
+
+.customers-toolbar,
+.customer-pagination,
+.customer-profile-head,
+.customer-risk-actions,
+.customer-inline-form,
+.customer-form-actions,
+.customer-filter-actions,
+.customers-actions,
+.customer-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.customers-toolbar {
+  justify-content: space-between;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  padding: var(--density-card-padding);
+}
+
+.customers-toolbar h2 {
+  margin: 4px 0;
+  font-size: 24px;
+}
+
+.customers-toolbar p {
+  margin: 0;
+  max-width: 780px;
+  color: var(--color-muted);
+}
+
+.customers-eyebrow {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.customers-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.customers-kpis,
+.customer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.customer-kpi,
+.customer-summary-grid .ds-card {
+  min-height: 104px;
+  align-content: center;
+}
+
+.customer-kpi span,
+.customer-summary-grid span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.customer-kpi strong,
+.customer-summary-grid strong {
+  font-size: 24px;
+}
+
+.customer-filter-grid,
+.customer-form-grid,
+.customer-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.customer-filter-actions,
+.customer-form-actions {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.customer-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.customer-form-wide {
+  grid-column: 1 / -1;
+}
+
+.customer-consent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.customer-consent-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customer-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.customer-row-actions .ds-button {
+  min-height: 30px;
+  padding: 5px 8px;
+}
+
+.ds-table-wrap td span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.customer-pagination {
+  justify-content: space-between;
+  margin-top: 12px;
+  color: var(--color-muted);
+}
+
+.customer-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+
+.customers-alert {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-weight: 750;
+}
+
+.customers-alert--error {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.customers-alert--success {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.customer-details {
+  display: grid;
+  gap: 14px;
+}
+
+.customer-avatar {
+  display: grid;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--color-primary) 18%, var(--color-surface));
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+.customer-profile-head {
+  align-items: flex-start;
+}
+
+.customer-profile-head p {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+}
+
+.customer-badges {
+  flex-wrap: wrap;
+}
+
+.customer-tab-panel {
+  margin-top: 16px;
+}
+
+.customer-detail-grid h4 {
+  margin: 0 0 8px;
+}
+
+.customer-detail-grid p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.customer-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.customer-inline-form {
+  align-items: flex-start;
+}
+
+.customer-inline-form .ds-input {
+  max-width: 420px;
+}
+
+.customer-note {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: 12px;
+}
+
+.customer-note p {
+  margin: 6px 0;
+}
+
+.customer-note span,
+.customer-empty span {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.customer-risk-actions {
+  flex-wrap: wrap;
+}
+
+.customer-risk-actions .ds-input {
+  max-width: 480px;
+}
+
+.customer-empty {
+  display: grid;
+  gap: 4px;
+  min-height: 110px;
+  place-content: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.customer-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-skeleton span {
+  display: block;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--color-surface) 88%, var(--color-border)),
+    color-mix(in oklch, var(--color-surface) 70%, var(--color-primary)),
+    color-mix(in oklch, var(--color-surface) 88%, var(--color-border))
+  );
+  background-size: 200% 100%;
+  animation: customer-skeleton-pulse var(--motion-duration-normal) var(--motion-easing) infinite;
+}
+
+@keyframes customer-skeleton-pulse {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .customers-toolbar,
+  .customer-pagination,
+  .customer-profile-head,
+  .customer-inline-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customers-actions,
+  .customer-filter-actions,
+  .customer-form-actions {
+    justify-content: stretch;
+  }
+
+  .customers-actions .ds-button,
+  .customer-filter-actions .ds-button,
+  .customer-form-actions .ds-button,
+  .customer-inline-form .ds-button {
+    width: 100%;
+  }
+}

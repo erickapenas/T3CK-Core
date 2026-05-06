@@ -25,7 +25,9 @@ export class ApiKeyService {
     this.ttlSeconds = ttlSeconds;
   }
 
-  async createApiKey(metadata: Omit<ApiKeyMetadata, 'keyId' | 'createdAt' | 'lastUsedAt' | 'revokedAt'>) {
+  async createApiKey(
+    metadata: Omit<ApiKeyMetadata, 'keyId' | 'createdAt' | 'lastUsedAt' | 'revokedAt'>
+  ) {
     const rawKey = `t3ck_${crypto.randomBytes(24).toString('hex')}`;
     const keyHash = this.hashKey(rawKey);
     const keyId = keyHash.substring(0, 12);
@@ -42,7 +44,11 @@ export class ApiKeyService {
     await this.addToIndex(`api_key_index:tenant:${metadata.tenantId}`, keyId);
     await this.addToIndex(`api_key_index:user:${metadata.userId}`, keyId);
 
-    this.logger.info('API key created', { keyId, tenantId: metadata.tenantId, userId: metadata.userId });
+    this.logger.info('API key created', {
+      keyId,
+      tenantId: metadata.tenantId,
+      userId: metadata.userId,
+    });
     return { apiKey: rawKey, metadata: stored };
   }
 
@@ -79,7 +85,11 @@ export class ApiKeyService {
 
     metadata.revokedAt = new Date().toISOString();
     await this.cache.set(`api_key:${idEntry.keyHash}`, metadata, this.ttlSeconds);
-    this.logger.info('API key revoked', { keyId, tenantId: metadata.tenantId, userId: metadata.userId });
+    this.logger.info('API key revoked', {
+      keyId,
+      tenantId: metadata.tenantId,
+      userId: metadata.userId,
+    });
   }
 
   async listKeysByTenant(tenantId: string): Promise<ApiKeyMetadata[]> {

@@ -1,14 +1,17 @@
 # Webhook Testing & Event Versioning Guide
 
 ## Overview
+
 This document covers webhook testing capabilities and event versioning management for backward compatibility as your API evolves.
 
 ## 1. Webhook Testing Service
 
 ### Purpose
+
 Enable developers to test webhook configurations with sample events before going to production.
 
 ### Features
+
 - **Test Payload Generation** - Automatic sample data for each event type
 - **URL Validation** - Verify webhook endpoint accessibility
 - **Response Inspection** - Capture status codes, response times, headers
@@ -18,6 +21,7 @@ Enable developers to test webhook configurations with sample events before going
 ### Testing Endpoints
 
 #### Send Test Webhook
+
 ```
 POST /webhooks/test
 Content-Type: application/json
@@ -58,6 +62,7 @@ Response:
 ```
 
 #### Get Test History
+
 ```
 GET /webhooks/test/history/:webhookId?limit=10
 
@@ -77,6 +82,7 @@ Response:
 ```
 
 #### Get Sample Data
+
 ```
 GET /webhooks/test/sample/:eventType
 
@@ -100,6 +106,7 @@ Response:
 ```
 
 #### Validate URL
+
 ```
 POST /webhooks/test/validate-url
 Content-Type: application/json
@@ -118,6 +125,7 @@ Response:
 ### Event Types & Sample Data
 
 #### order.created
+
 ```json
 {
   "orderId": "ORD-abc123",
@@ -136,6 +144,7 @@ Response:
 ```
 
 #### payment.processed
+
 ```json
 {
   "paymentId": "PAY-abc123",
@@ -148,6 +157,7 @@ Response:
 ```
 
 #### user.created
+
 ```json
 {
   "userId": "USER-abc123",
@@ -162,11 +172,13 @@ Response:
 ## 2. Event Versioning Management
 
 ### Purpose
+
 Support backward compatibility as event schemas evolve, allowing subscribers to maintain subscriptions across API versions.
 
 ### Versioning Strategy
 
 Events follow semantic versioning:
+
 - **Major Version** (V1 → V2): Breaking changes to schema
 - **Minor Version** (1.0 → 1.1): Non-breaking additions
 - **Patch Version** (1.0.0 → 1.0.1): Bug fixes, metadata changes
@@ -176,6 +188,7 @@ Events follow semantic versioning:
 #### order.created
 
 **V1.0** (Deprecated)
+
 ```json
 {
   "orderId": "string",
@@ -194,6 +207,7 @@ Events follow semantic versioning:
 ```
 
 **V2.0** (Current)
+
 ```json
 {
   "orderId": "string",
@@ -215,16 +229,17 @@ Events follow semantic versioning:
       "productId": "string",
       "quantity": "number",
       "price": "number",
-      "sku": "string"  // NEW in V2
+      "sku": "string" // NEW in V2
     }
   ],
-  "shippingCost": "number",  // NEW in V2
-  "taxCost": "number",       // NEW in V2
+  "shippingCost": "number", // NEW in V2
+  "taxCost": "number", // NEW in V2
   "createdAt": "ISO-8601 datetime"
 }
 ```
 
 **Breaking Changes in V2:**
+
 - Added required fields: `billingAddress`, `shippingAddress`
 - Item structure now includes `sku` field
 - New top-level fields: `shippingCost`, `taxCost`
@@ -232,6 +247,7 @@ Events follow semantic versioning:
 #### payment.processed
 
 **V1.0** (Deprecated)
+
 ```json
 {
   "paymentId": "string",
@@ -244,26 +260,28 @@ Events follow semantic versioning:
 ```
 
 **V2.0** (Current)
+
 ```json
 {
   "paymentId": "string",
   "orderId": "string",
   "amount": "number",
   "currency": "string",
-  "status": "success|failed|pending|disputed",  // Added 'disputed'
+  "status": "success|failed|pending|disputed", // Added 'disputed'
   "method": "string",
   "methodDetails": {
     "last4": "string",
     "brand": "string",
     "country": "string"
   },
-  "threeDSecure": "boolean",  // NEW in V2
-  "riskScore": "number",       // NEW in V2
+  "threeDSecure": "boolean", // NEW in V2
+  "riskScore": "number", // NEW in V2
   "processedAt": "ISO-8601 datetime"
 }
 ```
 
 **Non-Breaking Changes in V2:**
+
 - Added new `methodDetails` object
 - Added `threeDSecure` and `riskScore` fields
 - Added `disputed` status option
@@ -272,6 +290,7 @@ Events follow semantic versioning:
 ### Version Management Endpoints
 
 #### Get Available Versions
+
 ```
 GET /webhooks/events/versions/:eventType
 
@@ -284,6 +303,7 @@ Response:
 ```
 
 #### Get Event Schema
+
 ```
 GET /webhooks/events/schema/:eventType/:version
 
@@ -302,6 +322,7 @@ Response:
 ```
 
 #### Validate Event Payload
+
 ```
 POST /webhooks/events/validate
 Content-Type: application/json
@@ -330,10 +351,10 @@ When subscribing to V1 events in a V2 system:
 ```javascript
 // Example: Subscribe to events with version compatibility
 const subscription = {
-  webhookUrl: "https://api.example.com/webhooks/orders",
-  eventTypes: ["order.created"],
-  supportedVersions: ["1.0", "2.0"],  // Accepts both
-  autoMigrate: true  // Automatically upgrade V1 → V2 if possible
+  webhookUrl: 'https://api.example.com/webhooks/orders',
+  eventTypes: ['order.created'],
+  supportedVersions: ['1.0', '2.0'], // Accepts both
+  autoMigrate: true, // Automatically upgrade V1 → V2 if possible
 };
 ```
 
@@ -403,20 +424,22 @@ The webhook testing UI should include:
 ## 4. Best Practices
 
 ### For Event Producers
+
 - Always include `version` in event metadata
 - Document breaking changes prominently
 - Provide migration guides for major versions
 - Support at least 2 previous versions
 
 ### For Event Consumers
+
 - Specify which event versions you support
 - Implement version-aware handlers
 - Test with multiple versions before updating
 - Log received event versions for debugging
 
 ### For Operations
+
 - Monitor which event versions are in use
 - Plan deprecation timelines carefully
 - Communicate breaking changes 3 months in advance
 - Provide automated migration tools
-

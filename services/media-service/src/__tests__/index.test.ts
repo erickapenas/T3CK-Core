@@ -23,7 +23,7 @@ describe('Media Service API', () => {
       const mockPresets = [
         { name: 'thumbnail', width: 150, height: 150, format: 'webp', quality: 80 },
       ];
-      
+
       (MediaTransformer.prototype.getPresets as jest.Mock).mockReturnValue(mockPresets);
 
       const response = await request(app).get('/presets');

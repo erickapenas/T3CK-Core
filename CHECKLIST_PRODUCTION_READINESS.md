@@ -3,6 +3,7 @@
 ## 🏗️ INFRAESTRUTURA
 
 ### Cloud & Compute
+
 - [x] AWS VPC Network
 - [x] EC2 / ECS Fargate
 - [x] RDS MySQL Database
@@ -15,6 +16,7 @@
 - [x] Load Balancer Advanced Config (target groups, health checks, sticky sessions, SSL/TLS, listener rules)
 
 ### Infrastructure as Code
+
 - [x] Terraform Modules
 - [x] AWS CDK
 - [x] CDK Synth
@@ -26,6 +28,7 @@
 ## 🔐 SEGURANÇA
 
 ### Authentication & Authorization
+
 - [x] Firebase Auth
 - [x] Cognito Integration
 - [x] JWT Implementation
@@ -37,6 +40,7 @@
 - [x] Multi-factor Authentication (MFA)
 
 ### Encryption & Secrets
+
 - [x] AWS Secrets Manager
 - [x] AWS KMS
 - [x] Data Encryption (AES-256-GCM)
@@ -46,6 +50,7 @@
 - [x] Backup Key Storage
 
 ### API Security
+
 - [x] CORS Configuration
 - [x] Rate Limiting
 - [x] CSRF Protection
@@ -57,6 +62,7 @@
 - [x] Web Application Firewall (WAF) - AWS managed rule sets, rate limiting, geo-blocking, IP blacklist
 
 ### Data Security
+
 - [x] Field-Level Encryption
 - [x] TLS/HTTPS
 - [x] Firestore Security Rules
@@ -71,6 +77,7 @@
 ## 🛠️ SERVIÇOS PRINCIPAIS
 
 ### Auth Service
+
 - [x] Firebase Authentication
 - [x] Cognito Integration
 - [x] JWT Generation
@@ -82,6 +89,7 @@
 - [x] Token Blacklist/Revocation
 
 ### Webhook Service
+
 - [x] Event Publishing
 - [x] Webhook Management
 - [x] Delivery Tracking
@@ -91,6 +99,7 @@
 - [x] Event Versioning Management (V1/V2 schemas, compatibility checks, auto-migration)
 
 ### Tenant Service
+
 - [x] Provisioning Form
 - [x] Tenant Creation
 - [x] Tenant Isolation
@@ -99,6 +108,7 @@
 - [x] Tenant Data Export (JSON/CSV formats with audit trail)
 
 ### API Gateway ✅ IMPLEMENTADO
+
 - [x] Request Routing
 - [x] Auth Middleware
 - [x] Rate Limit Enforcement
@@ -117,6 +127,7 @@
 - [x] Graceful Shutdown
 
 ### Product Service ✅ IMPLEMENTADO
+
 - [x] Product CRUD
 - [x] Category Management
 - [x] Product Variants
@@ -127,6 +138,7 @@
 - [x] Stock Management
 
 ### Payment Service ✅ IMPLEMENTADO
+
 - [x] AbacatePay Integration
 - [x] Pix/Boleto (Brasil)
 - [x] Payment Processing
@@ -138,6 +150,7 @@
 - [x] Receipt Email
 
 ### Payment Reliability / UX / Segurança ✅ IMPLEMENTADO
+
 - [x] Idempotency Keys (anti-cobrança duplicada)
 - [x] Error Handling com mensagens amigáveis (cartão recusado/Pix expirado)
 - [x] Status Mapping (AbacatePay → status interno)
@@ -151,6 +164,7 @@
 - [x] Relatórios Financeiros / Dashboard diário e mensal
 
 ### Order Service ✅ IMPLEMENTADO
+
 - [x] Order Creation
 - [x] Order Status Tracking
 - [x] Order History
@@ -158,6 +172,7 @@
 - [x] Order Analytics
 
 ### Shipping Service ✅ IMPLEMENTADO
+
 - [x] Shipping Calculations
 - [x] Carrier Integration
 - [x] Tracking API
@@ -165,6 +180,7 @@
 - [x] Shipping Notifications
 
 ### Admin Service ✅ IMPLEMENTADO
+
 - [x] Dashboard (React)
 - [x] Product Management
 - [x] Order Management
@@ -175,6 +191,7 @@
 - [x] Audit Logs
 
 ### Media Transformation Service ✅ IMPLEMENTADO
+
 - [x] Image Optimization (Sharp)
 - [x] WebP Conversion
 - [x] AVIF Conversion
@@ -185,6 +202,7 @@
 - [x] Stats & Metrics
 
 ### Edge Computing Service ✅ IMPLEMENTADO
+
 - [x] Pre-rendering (SSG)
 - [x] Incremental Static Regeneration (ISR)
 - [x] Server-Side Rendering (SSR)
@@ -204,6 +222,7 @@
 ## 📦 SDK & CLIENT LIBRARIES
 
 ### TypeScript SDK
+
 - [x] Client Module
 - [x] Cart Module
 - [x] Catalog Module
@@ -215,6 +234,7 @@
 - [ ] Changelog Management
 
 ### Shared Package
+
 - [x] Logger
 - [x] Encryption
 - [x] Validation (Zod Schemas)
@@ -228,6 +248,7 @@
 ## 🧪 QUALIDADE & TESTES
 
 ### Unit Tests
+
 - [x] Auth Service
 - [x] Admin Service
 - [x] Cart Module
@@ -246,6 +267,7 @@
 - [x] Shipping Service
 
 ### Integration Tests
+
 - [x] Webhook Delivery
 - [x] Auth Flow
 - [x] Payment Processing
@@ -253,6 +275,7 @@
 - [x] Shipping Integration
 
 ### E2E Tests
+
 - [x] Smoke Tests (6 testes)
 - [x] Authentication Flow
 - [x] Cart → Checkout → Payment
@@ -261,6 +284,7 @@
 - [ ] Mobile Client (IGNORAR)
 
 ### Performance Tests
+
 - Nota: local sem k6 pode executar em modo skip com aviso; em CI a execução é obrigatória.
 - [x] Load Testing (k6 ou similar)
 - [x] Stress Testing
@@ -269,6 +293,7 @@
 - [x] Cache Hit Rate Analysis
 
 ### Security Tests
+
 - Nota: pentest baseline pode ser skip local sem Docker daemon/target; em CI permanece estrito.
 - [x] Penetration Testing
 - [x] OWASP Top 10 Validation
@@ -277,6 +302,7 @@
 - [x] Token Expiration Testing
 
 ### Test Coverage
+
 - [x] 80% enforced in CI
 - [x] Coverage reports
 - [x] Coverage per service target
@@ -287,6 +313,7 @@
 ## 📊 OBSERVABILITY & MONITORING
 
 ### Logging
+
 - [x] CloudWatch Logs
 - [x] Logger Service
 - [x] Log Levels
@@ -295,6 +322,7 @@
 - [ ] Error Tracking (Sentry)
 
 ### Metrics & Monitoring
+
 - [x] Prometheus Metrics
 - [x] Custom Metrics
 - [ ] Grafana Dashboards
@@ -303,12 +331,14 @@
 - [ ] Slack Integration
 
 ### Tracing
+
 - [x] Jaeger Distributed Tracing
 - [x] Trace Instrumentation
 - [ ] Trace Analysis
 - [ ] Performance Bottleneck Detection
 
 ### Health Checks
+
 - [x] Service Health Endpoints
 - [x] Readiness Probes
 - [ ] Liveness Probes
@@ -319,6 +349,7 @@
 ## 📚 DOCUMENTATION
 
 ### API Documentation
+
 - [x] Swagger/OpenAPI
 - [x] API Reference
 - [ ] API Client Guide (per language)
@@ -326,6 +357,7 @@
 - [ ] Error Codes Reference
 
 ### Architecture
+
 - [x] Architecture Overview
 - [x] Component Diagrams
 - [x] Data Flow Diagrams
@@ -334,6 +366,7 @@
 - [ ] Disaster Recovery Plan
 
 ### Operational
+
 - [x] Quick Start Guide
 - [x] Provisioning Guide
 - [x] Deployment Guide
@@ -345,6 +378,7 @@
 - [ ] Performance Tuning Guide
 
 ### Developer
+
 - [x] Setup Instructions
 - [x] Development Guide
 - [x] Contributing Guidelines
@@ -357,6 +391,7 @@
 ## 🚀 CI/CD & DEPLOYMENT
 
 ### Version Control
+
 - [x] Git Repository
 - [x] Branch Strategy (main/develop)
 - [x] Pull Request Workflow
@@ -364,6 +399,7 @@
 - [ ] Changelog Management
 
 ### CI Pipeline
+
 - [x] GitHub Actions Workflows
 - [x] ESLint
 - [x] Prettier
@@ -375,6 +411,7 @@
 - [ ] Dependency Audit
 
 ### Build & Registry
+
 - [x] Docker Images
 - [x] Docker Compose (dev)
 - [x] ECR Registry
@@ -384,6 +421,7 @@
 - [ ] Multi-stage Builds
 
 ### Deployment
+
 - [x] ECS Fargate Deployments
 - [x] Blue-Green Strategy
 - [x] Smoke Tests
@@ -394,6 +432,7 @@
 - [ ] Zero-Downtime Deployments
 
 ### Infrastructure Deployment
+
 - [x] Terraform Apply
 - [x] CDK Synth/Deploy
 - [x] Infrastructure Validation
@@ -405,6 +444,7 @@
 ## 🗄️ DATABASE & DATA
 
 ### Schema Management
+
 - [ ] Prisma Schema
 - [ ] Database Migrations
 - [ ] Seed Data Scripts
@@ -412,6 +452,7 @@
 - [ ] Backward Compatibility
 
 ### Backup & Recovery
+
 - [ ] Automated Backups
 - [ ] Point-in-Time Recovery
 - [ ] Backup Testing
@@ -420,6 +461,7 @@
 - [ ] Retention Policy
 
 ### Scaling & Performance
+
 - [ ] Database Read Replicas
 - [ ] Query Optimization
 - [ ] Indexing Strategy
@@ -431,6 +473,7 @@
 ## 🎯 BUSINESS FEATURES
 
 ### E-Commerce Core
+
 - [x] **Payment Processing** ✅
 - [x] **Product Catalog** ✅
 - [x] **Inventory Management** ✅
@@ -440,6 +483,7 @@
 - [x] **Shipping** ✅
 
 ### Customer Management
+
 - [ ] Customer Profiles
 - [ ] Address Management
 - [ ] Order History
@@ -448,6 +492,7 @@
 - [ ] Loyalty Points
 
 ### Analytics & Reporting
+
 - [x] Sales Dashboard
 - [x] Product Performance
 - [x] Customer Analytics
@@ -457,6 +502,7 @@
 - [x] Custom Reports
 
 ### Marketing & Promotions
+
 - [ ] Coupon/Discount Codes
 - [ ] Promotions Engine
 - [ ] Email Marketing
@@ -469,6 +515,7 @@
 ## 🌐 FRONTEND & UI
 
 ### Web Application
+
 - [ ] React/Vue/Next.js App
 - [ ] Product Listing
 - [ ] Product Details
@@ -481,6 +528,7 @@
 - [ ] Mobile Responsive
 
 ### Admin Dashboard
+
 - [x] HTML Prototype
 - [x] React/Next.js Implementation
 - [x] Product Management UI
@@ -491,6 +539,7 @@
 - [x] Tenant Configuration
 
 ### Mobile Apps (FUTURAMENTE, IGNORAR POR AGORA)
+
 - [ ] iOS App (React Native/Swift)
 - [ ] Android App (React Native/Kotlin)
 - [ ] Push Notifications
@@ -501,6 +550,7 @@
 ## 📱 INTEGRATIONS
 
 ### Payment Gateways
+
 - [ ] AbacatePay
 - [ ] PayPal
 - [ ] Pix (Brasil)
@@ -509,6 +559,7 @@
 - [ ] Google Pay
 
 ### Shipping Providers
+
 - [ ] Correios
 - [ ] Shopee Fulfillment
 - [ ] Loggi
@@ -516,6 +567,7 @@
 - [ ] Manual Tracking
 
 ### Communication
+
 - [ ] SMTP / Email
 - [ ] SMS (Twilio)
 - [ ] Slack Webhooks
@@ -523,12 +575,14 @@
 - [ ] Telegram Bots
 
 ### Analytics
+
 - [ ] Google Analytics
 - [ ] Amplitude
 - [ ] Segment
 - [ ] Mixpanel
 
 ### Other
+
 - [ ] GitHub Integration
 - [ ] Zapier
 - [ ] PagerDuty
@@ -538,6 +592,7 @@
 ## ✅ DEPLOYMENT CHECKLIST
 
 ### Pre-Deployment
+
 - [ ] All tests passing
 - [ ] Code review completed
 - [ ] Security scan passed
@@ -548,6 +603,7 @@
 - [ ] Status page updated
 
 ### Deployment
+
 - [ ] Feature flags configured
 - [ ] Environment variables set
 - [ ] Secrets properly configured
@@ -556,6 +612,7 @@
 - [ ] On-call engineer assigned
 
 ### Post-Deployment
+
 - [ ] Smoke tests passed
 - [ ] User testing completed
 - [ ] Performance metrics normal
@@ -568,6 +625,7 @@
 ## 📊 SUMMARY
 
 ### By Status
+
 - ✅ **Implemented:** 77 items
 - ⚠️ **Partial:** 12 items
 - ❌ **Missing:** 26 items
@@ -575,20 +633,24 @@
 - **Completion:** ~67%
 
 ### Critical Issues
+
 1. **Database Schema/Migrations** ❌ MISSING
 2. **Performance & Security hardening final** ⚠️ EM ABERTO
 3. **Frontend e integrações externas** ⚠️ EM ABERTO
 
 ### High Priority (Week 1-2)
+
 - Setup Database Schema
 - Endurecimento final de segurança/performance
 
 ### Medium Priority (Week 3-4)
+
 - Order Management
 - Shipping Integration
 - Add Deployment Hardening (Canary/rollback)
 
 ### Low Priority (Week 5+)
+
 - Analytics & Reporting
 - Marketing Features
 - Mobile Apps

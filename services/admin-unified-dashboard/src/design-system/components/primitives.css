@@ -1,0 +1,200 @@
+.ds-card {
+  display: grid;
+  gap: var(--density-card-padding);
+  min-width: 0;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  padding: var(--density-card-padding);
+}
+
+.ds-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ds-card__header span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ds-card__header h3 {
+  margin: 3px 0 0;
+  color: var(--color-text);
+  font-size: 16px;
+}
+
+.ds-button,
+.ds-input,
+.ds-tabs button {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing),
+    background var(--motion-duration-fast) var(--motion-easing),
+    transform var(--motion-duration-fast) var(--motion-easing);
+}
+
+.ds-button {
+  background: color-mix(in oklch, var(--color-surface) 82%, var(--color-primary));
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 750;
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.ds-button:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.ds-button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-background);
+}
+
+.ds-button--success {
+  border-color: var(--color-success);
+}
+
+.ds-button--warning {
+  border-color: var(--color-warning);
+}
+
+.ds-button--danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+}
+
+.ds-badge--primary {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.ds-badge--success {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.ds-badge--warning {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.ds-badge--danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.ds-input {
+  width: 100%;
+  min-width: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.ds-input:focus,
+.ds-button:focus-visible,
+.ds-tabs button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.ds-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ds-tabs button {
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-weight: 750;
+  padding: 8px 10px;
+}
+
+.ds-tabs button.active {
+  background: color-mix(in oklch, var(--color-primary) 16%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.ds-table-wrap {
+  overflow-x: auto;
+}
+
+.ds-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ds-table-wrap th,
+.ds-table-wrap td {
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  height: var(--density-table-row-height);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.ds-table-wrap th {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.ds-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.42);
+}
+
+.ds-modal {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 18px;
+}
+
+.ds-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ds-chart {
+  min-height: 180px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--color-surface) 88%, var(--color-primary));
+}

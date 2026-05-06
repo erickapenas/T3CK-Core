@@ -10,7 +10,7 @@ const logger = new Logger('APIGateway');
  * Generates unique ID for each request for tracing
  */
 export const requestIdMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const requestId = req.headers['x-request-id'] as string || uuidv4();
+  const requestId = (req.headers['x-request-id'] as string) || uuidv4();
   req.headers['x-request-id'] = requestId;
   res.setHeader('X-Request-ID', requestId);
   next();
@@ -37,7 +37,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   // Log response when finished
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    
+
     const logData = {
       requestId: requestId as string,
       method: req.method,
@@ -77,12 +77,7 @@ export const morganLogger = morgan(
 /**
  * Error Logger Middleware
  */
-export const errorLogger = (
-  err: Error,
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
+export const errorLogger = (err: Error, req: Request, _res: Response, next: NextFunction) => {
   logger.error('Unhandled error', {
     error: err.message,
     stack: err.stack,
@@ -106,7 +101,8 @@ export const performanceMonitor = (req: Request, res: Response, next: NextFuncti
     const duration = Number(endTime - startTime) / 1e6; // Convert to milliseconds
 
     // Track slow requests
-    if (duration > 1000) { // > 1 second
+    if (duration > 1000) {
+      // > 1 second
       logger.warn('Slow request detected', {
         method: req.method,
         url: req.url,

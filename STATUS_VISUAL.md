@@ -22,7 +22,7 @@
 │ 🔴 JWT RS256 Configuration             │ ⏱️ 2-3 horas
 │    Erro: usando HS256 com RS256       │    Corrigir hoje
 ├────────────────────────────────────────┤
-│ 🔴 Payment Gateway (STRIPE/PIX/BOLETO) │ ⏱️ 3-4 dias  
+│ 🔴 Payment Gateway (STRIPE/PIX/BOLETO) │ ⏱️ 3-4 dias
 │    Falta: serviço completo de pagtos  │    Crítico
 ├────────────────────────────────────────┤
 │ 🔴 API Gateway / BFF Router             │ ⏱️ 1-2 dias
@@ -328,20 +328,24 @@ TEMPO: 2-3 dias
 ## 📞 PRÓXIMOS PASSOS
 
 **HOJE (1 hora):**
+
 - [ ] Ler RESUMO_EXECUTIVO.md
 - [ ] Ler ANALISE_COMPLETA_READINESS.md
 
 **AMANHÃ (3 horas):**
+
 - [ ] Gerar chaves RSA
 - [ ] Começar correção JWT
 
 **ESTA SEMANA (4 dias):**
+
 - [ ] Completar JWT
 - [ ] Criar Payment Service
 - [ ] Implementar API Gateway
 - [ ] Setup Database Schema
 
 **PRÓXIMAS 3 SEMANAS:**
+
 - [ ] Seguir roadmap 4 semanas
 
 ---
@@ -349,18 +353,21 @@ TEMPO: 2-3 dias
 ## 🎓 RECOMENDAÇÕES
 
 ### FAZER ✅
+
 - Corrigir JWT hoje
 - Implementar Payment (semana)
 - Seguir roadmap 4 semanas
 - Usar documentação criada
 
 ### NÃO FAZER ❌
+
 - Fazer deploy AGORA
 - Convidar cliente AGORA
 - Ignorar bloqueadores críticos
 - Pular para produção sem MVP
 
 ### CONSIDERAR ⚠️
+
 - Usar Firebase até semana 2
 - Implementar feature flags
 - Adicionar BDD tests
@@ -389,15 +396,15 @@ TEMPO: 2-3 dias
 
 ## 🚀 CONCLUSÃO
 
-| Pergunta | Resposta |
-|----------|----------|
-| Está pronto? | ❌ NÃO |
-| Falta algo? | ✅ SIM (muito) |
-| Precisa melhorar? | ✅ SIM (segurança) |
-| Pode fazer deploy? | ❌ NÃO |
-| Pode usar com cliente? | ❌ NÃO AGORA |
-| Quanto tempo? | 4 semanas |
-| Por onde começar? | JWT hoje |
+| Pergunta               | Resposta           |
+| ---------------------- | ------------------ |
+| Está pronto?           | ❌ NÃO             |
+| Falta algo?            | ✅ SIM (muito)     |
+| Precisa melhorar?      | ✅ SIM (segurança) |
+| Pode fazer deploy?     | ❌ NÃO             |
+| Pode usar com cliente? | ❌ NÃO AGORA       |
+| Quanto tempo?          | 4 semanas          |
+| Por onde começar?      | JWT hoje           |
 
 ---
 

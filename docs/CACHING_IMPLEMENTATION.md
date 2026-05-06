@@ -86,6 +86,7 @@ REDIS_DB=0
 ### Redis Setup
 
 **Local Development**:
+
 ```bash
 # macOS
 brew install redis
@@ -100,6 +101,7 @@ docker run -d -p 6379:6379 redis:7-alpine
 ```
 
 **Production**:
+
 ```bash
 # AWS ElastiCache (managed Redis)
 # Azure Cache for Redis
@@ -115,44 +117,45 @@ Each service has a `cache.ts` module providing:
 
 ```typescript
 interface CacheOptions {
-  ttl?: number;      // Time to live in seconds (default: 3600)
-  prefix?: string;   // Key prefix for namespace isolation
+  ttl?: number; // Time to live in seconds (default: 3600)
+  prefix?: string; // Key prefix for namespace isolation
 }
 
 class CacheService {
   // Basic operations
-  get<T>(key: string): Promise<T | null>
-  set<T>(key: string, value: T, ttl?: number): Promise<void>
-  delete(key: string): Promise<void>
-  deleteMany(keys: string[]): Promise<void>
-  clear(): Promise<void>
+  get<T>(key: string): Promise<T | null>;
+  set<T>(key: string, value: T, ttl?: number): Promise<void>;
+  delete(key: string): Promise<void>;
+  deleteMany(keys: string[]): Promise<void>;
+  clear(): Promise<void>;
 
   // Query operations
-  exists(key: string): Promise<boolean>
-  keys(pattern: string): Promise<string[]>
+  exists(key: string): Promise<boolean>;
+  keys(pattern: string): Promise<string[]>;
 
   // Advanced patterns
-  getOrSet<T>(key: string, fn: () => Promise<T>, ttl?: number): Promise<T>
+  getOrSet<T>(key: string, fn: () => Promise<T>, ttl?: number): Promise<T>;
 
   // Counter operations
-  increment(key: string, amount?: number): Promise<number>
-  decrement(key: string, amount?: number): Promise<number>
+  increment(key: string, amount?: number): Promise<number>;
+  decrement(key: string, amount?: number): Promise<number>;
 
   // TTL management
-  expire(key: string, seconds: number): Promise<void>
+  expire(key: string, seconds: number): Promise<void>;
 
   // Statistics
-  getStats(): { hits, misses, total, hitRate }
-  getSize(): Promise<number>
+  getStats(): { hits; misses; total; hitRate };
+  getSize(): Promise<number>;
 
   // Lifecycle
-  close(): Promise<void>
+  close(): Promise<void>;
 }
 ```
 
 ### Service Setup
 
 **auth-service/src/index.ts**:
+
 ```typescript
 import { initializeCache } from './cache';
 
@@ -161,12 +164,17 @@ initializeCache({ prefix: 'auth:' });
 
 // Now use cache in routes
 const cache = getCache();
-const user = await cache.getOrSet(`user:${userId}`, async () => {
-  return await authService.getUser(userId);
-}, 3600); // 1 hour TTL
+const user = await cache.getOrSet(
+  `user:${userId}`,
+  async () => {
+    return await authService.getUser(userId);
+  },
+  3600
+); // 1 hour TTL
 ```
 
 **webhook-service/src/index.ts**:
+
 ```typescript
 import { initializeCache } from './cache';
 
@@ -174,6 +182,7 @@ initializeCache({ prefix: 'webhook:' });
 ```
 
 **tenant-service/src/index.ts**:
+
 ```typescript
 import { initializeCache } from './cache';
 
@@ -268,11 +277,7 @@ if (!allowed) {
 const cache = getCache();
 
 // Delete multiple keys
-await cache.deleteMany([
-  'user:123',
-  'user:456',
-  'user:789',
-]);
+await cache.deleteMany(['user:123', 'user:456', 'user:789']);
 
 // Get all keys matching pattern
 const userKeys = await cache.keys('user:*');
@@ -318,16 +323,16 @@ const exists = await cache.exists('temporary:key');
 
 ```typescript
 // Very short lived (seconds)
-cache.set(key, value, 60);           // 1 minute for rate limits
+cache.set(key, value, 60); // 1 minute for rate limits
 
 // Short lived (minutes)
-cache.set(key, value, 300);          // 5 minutes for user profiles
+cache.set(key, value, 300); // 5 minutes for user profiles
 
 // Medium lived (hours)
-cache.set(key, value, 3600);         // 1 hour for catalog data
+cache.set(key, value, 3600); // 1 hour for catalog data
 
 // Long lived (days)
-cache.set(key, value, 86400);        // 24 hours for config
+cache.set(key, value, 86400); // 24 hours for config
 ```
 
 ### Key Naming Convention
@@ -347,23 +352,19 @@ cache.set('ratelimit:user:123', ...)     // Rate limit counter
 const cache = getCache();
 
 // Delete multiple related keys at once
-await cache.deleteMany([
-  `user:${userId}`,
-  `user:${userId}:permissions`,
-  `user:${userId}:sessions`,
-]);
+await cache.deleteMany([`user:${userId}`, `user:${userId}:permissions`, `user:${userId}:sessions`]);
 ```
 
 ### Cache Invalidation
 
 ```typescript
 // 1. TTL-based (automatic)
-await cache.set(key, value, 3600);  // Auto-expires after 1 hour
+await cache.set(key, value, 3600); // Auto-expires after 1 hour
 
 // 2. Event-based (on update)
 async function updateUser(userId: string, data: any) {
   await database.update('users', data);
-  await cache.delete(`user:${userId}`);  // Invalidate on update
+  await cache.delete(`user:${userId}`); // Invalidate on update
 }
 
 // 3. Pattern-based (multiple related)
@@ -421,12 +422,12 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -434,7 +435,7 @@ services:
   auth-service:
     build: ./services/auth-service
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -466,21 +467,21 @@ spec:
         app: redis
     spec:
       containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        volumeMounts:
-        - name: redis-data
-          mountPath: /data
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
   volumeClaimTemplates:
-  - metadata:
-      name: redis-data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 10Gi
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources:
+          requests:
+            storage: 10Gi
 
 ---
 # Redis Service
@@ -493,8 +494,8 @@ spec:
   selector:
     app: redis
   ports:
-  - port: 6379
-    targetPort: 6379
+    - port: 6379
+      targetPort: 6379
 
 ---
 # Service using Redis
@@ -503,8 +504,8 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  REDIS_HOST: "redis"
-  REDIS_PORT: "6379"
+  REDIS_HOST: 'redis'
+  REDIS_PORT: '6379'
 ```
 
 ### AWS ElastiCache
@@ -587,6 +588,7 @@ redis-cli SLOWLOG GET 10
 ## Best Practices
 
 ✅ **DO**:
+
 - Use cache-aside pattern (getOrSet)
 - Set appropriate TTLs based on data
 - Use prefixes for namespace isolation
@@ -597,6 +599,7 @@ redis-cli SLOWLOG GET 10
 - Batch operations when possible
 
 ❌ **DON'T**:
+
 - Store large objects (> 1MB)
 - Cache everything indefinitely
 - Use cache as primary storage
@@ -689,16 +692,19 @@ rate(redis_evicted_keys_total[5m])
 ## Maintenance
 
 **Daily**:
+
 - Monitor cache hit rate
 - Check memory usage
 - Verify no connection errors
 
 **Weekly**:
+
 - Review cache invalidation logic
 - Check for memory leaks
 - Monitor key eviction
 
 **Monthly**:
+
 - Optimize TTL values
 - Review cache patterns
 - Plan capacity upgrades

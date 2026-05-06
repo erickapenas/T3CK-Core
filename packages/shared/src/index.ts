@@ -12,4 +12,5 @@ export * from './service-discovery';
 export * from './backup';
 export * from './multi-region';
 export * from './data-governance';
+export * from './ecommerce';
 export { Tenant } from './entities/tenant';

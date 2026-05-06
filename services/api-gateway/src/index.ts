@@ -145,9 +145,7 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
     return res.status(500).json({
       error: 'Internal Server Error',
-      message: process.env.NODE_ENV === 'production'
-        ? 'An error occurred'
-        : err.message,
+      message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message,
       requestId: req.headers['x-request-id'] as string,
     });
   }
@@ -196,7 +194,7 @@ server.listen(config.port, () => {
   logger.info(`CSRF Protection: ${config.enableCsrf ? 'Enabled' : 'Disabled'}`);
   logger.info(`Metrics: ${config.enableMetrics ? 'Enabled' : 'Disabled'}`);
   logger.info(`\nConfigured Services:`);
-  config.services.forEach(service => {
+  config.services.forEach((service) => {
     logger.info(`  ${service.prefix} -> ${service.target} (auth: ${service.requiresAuth})`);
   });
   logger.info('\n🔒 Security Features Enabled:');

@@ -33,14 +33,12 @@ describe('shipping-service HTTP integration', () => {
   it('creates shipment, generates label, updates tracking and sends notifications', async () => {
     const { default: app } = await import('../index');
 
-    const created = await request(app)
-      .post('/shipping/shipments')
-      .send({
-        tenantId: 'tenant-http-ship',
-        orderId: 'order-http-ship',
-        carrier: 'loggi',
-        serviceLevel: 'express',
-      });
+    const created = await request(app).post('/shipping/shipments').send({
+      tenantId: 'tenant-http-ship',
+      orderId: 'order-http-ship',
+      carrier: 'loggi',
+      serviceLevel: 'express',
+    });
 
     expect(created.status).toBe(201);
     const shipmentId = created.body.data.shipmentId as string;
@@ -71,15 +69,13 @@ describe('shipping-service HTTP integration', () => {
     expect(tracking.status).toBe(200);
     expect(tracking.body.data.length).toBeGreaterThanOrEqual(2);
 
-    const notification = await request(app)
-      .post('/shipping/notifications')
-      .send({
-        tenantId: 'tenant-http-ship',
-        shipmentId,
-        channel: 'email',
-        recipient: 'customer@test.com',
-        message: 'Seu pedido está em trânsito',
-      });
+    const notification = await request(app).post('/shipping/notifications').send({
+      tenantId: 'tenant-http-ship',
+      shipmentId,
+      channel: 'email',
+      recipient: 'customer@test.com',
+      message: 'Seu pedido está em trânsito',
+    });
 
     expect(notification.status).toBe(201);
     expect(notification.body.data.id).toBeDefined();

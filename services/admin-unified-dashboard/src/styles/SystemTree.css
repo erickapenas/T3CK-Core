@@ -1,0 +1,124 @@
+/* System Tree Component Styles */
+
+.system-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tree-search {
+  position: relative;
+}
+
+.tree-search-input {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tree-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 8%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 18%, transparent);
+}
+
+.tree-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: color-mix(in oklch, var(--color-surface) 84%, transparent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 12px;
+}
+
+.tree-item:hover {
+  background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.tree-item.active {
+  background: color-mix(in oklch, var(--color-primary) 14%, transparent);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.tree-icon {
+  font-size: 16px;
+  min-width: 20px;
+}
+
+.tree-label {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tree-badge {
+  background: color-mix(in oklch, var(--color-secondary) 16%, transparent);
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-family-mono);
+}
+
+.tree-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.loading-spinner {
+  display: inline-block;
+  font-size: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.tree-loading span:last-child {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tree-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--color-muted);
+  font-size: 12px;
+  text-align: center;
+  background: color-mix(in oklch, var(--color-surface) 80%, transparent);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}

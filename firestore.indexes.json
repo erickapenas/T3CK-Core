@@ -1,6 +1,159 @@
 {
   "indexes": [
     {
+      "collectionGroup": "migration_projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "sourcePlatform", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_projects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "action", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_runs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_runs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "module", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "sourcePlatform", "order": "ASCENDING" },
+        { "fieldPath": "sourceId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "t3ckResourceType", "order": "ASCENDING" },
+        { "fieldPath": "t3ckResourceId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_normalized_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "module", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_source_mappings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "sourcePlatform", "order": "ASCENDING" },
+        { "fieldPath": "sourceResourceType", "order": "ASCENDING" },
+        { "fieldPath": "sourceId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_column_mappings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "module", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_validation_issues",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "severity", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "migration_redirects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenantId", "order": "ASCENDING" },
+        { "fieldPath": "projectId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "products",
       "queryScope": "COLLECTION",
       "fields": [
@@ -297,16 +450,6 @@
       ]
     },
     {
-      "collectionGroup": "enderecos",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "updatedAt", "order": "DESCENDING" }]
-    },
-    {
-      "collectionGroup": "wishlist",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "createdAt", "order": "DESCENDING" }]
-    },
-    {
       "collectionGroup": "interacoesClientes",
       "queryScope": "COLLECTION",
       "fields": [
@@ -323,42 +466,12 @@
       ]
     },
     {
-      "collectionGroup": "cupons",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "code", "order": "ASCENDING" }]
-    },
-    {
-      "collectionGroup": "regrasFrete",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "isActive", "order": "ASCENDING" }]
-    },
-    {
-      "collectionGroup": "configuracoesTransportadora",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "isActive", "order": "ASCENDING" }]
-    },
-    {
-      "collectionGroup": "relatoriosVendas",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "generatedAt", "order": "DESCENDING" }]
-    },
-    {
       "collectionGroup": "pdfsRelatoriosVendas",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "reportId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "rascunhosCampanhasEmail",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "createdAt", "order": "DESCENDING" }]
-    },
-    {
-      "collectionGroup": "campanhasEmail",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "createdAt", "order": "DESCENDING" }]
     },
     {
       "collectionGroup": "integrations",
@@ -777,11 +890,6 @@
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "position", "order": "ASCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "timeline",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "createdAt", "order": "DESCENDING" }]
     }
   ],
   "fieldOverrides": []

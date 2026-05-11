@@ -48,6 +48,61 @@ service cloud.firestore {
       allow write: if tenantMatchesClaim(tenantId) && isTenantAdmin();
     }
 
+    // Admin migration assistant data is intentionally server-side only.
+    // The admin-service uses Firebase Admin SDK and enforces tenant_id, permissions,
+    // audit logs, and LGPD sanitization before touching these collections.
+    match /tenants/{tenantId}/admin/data/migration_projects/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_events/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_runs/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_records/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_source_connections/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_raw_batches/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_normalized_records/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_validation_issues/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_import_results/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_source_mappings/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_column_mappings/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_redirects/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /tenants/{tenantId}/admin/data/migration_go_live_checks/{document=**} {
+      allow read, write: if false;
+    }
+
     match /tenants/{tenantId}/admin/{document=**} {
       allow read, write: if false;
     }

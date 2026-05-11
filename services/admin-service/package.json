@@ -12,6 +12,9 @@
     "migrate:audit": "ts-node src/migrations/20260506000300-create-admin-unified-audit-firestore-schema.ts",
     "migrate:products": "ts-node src/migrations/20260506000400-create-admin-unified-products-firestore-schema.ts",
     "migrate:orders": "ts-node src/migrations/20260506000500-create-admin-unified-orders-firestore-schema.ts",
+    "migrate:migration": "ts-node src/migrations/20260511000100-create-admin-unified-migration-firestore-schema.ts",
+    "migrate:migration:columns": "ts-node src/migrations/20260511000200-update-admin-unified-migration-column-mappings.ts",
+    "migrate:migration:normalized-records": "ts-node src/migrations/20260511000300-complete-admin-unified-migration-normalized-records.ts",
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit",
@@ -21,6 +24,7 @@
     "@t3ck/shared": "workspace:*",
     "express": "^4.18.2",
     "firebase-admin": "12.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.22.4"
   },
   "devDependencies": {

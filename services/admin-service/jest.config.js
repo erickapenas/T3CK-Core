@@ -8,5 +8,6 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@t3ck/shared$': '<rootDir>/../../packages/shared/src',
+    '^xlsx$': '<rootDir>/src/test-support/xlsx-shim.ts',
   },
 };

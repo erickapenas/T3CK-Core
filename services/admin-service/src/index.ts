@@ -32,6 +32,7 @@ import { createCustomerCrmRouter } from './customers/routes';
 import { createProductCatalogRouter } from './products/routes';
 import { createOrderManagementRouter } from './orders/routes';
 import { createIntegrationManagementRouter } from './integrations/routes';
+import { createMigrationRouter } from './migration/routes';
 import { createEcommerceRouter } from './ecommerce/routes';
 import { createAdminUnifiedRouter, createAdminUnifiedWebhookRouter } from './fiscal/routes';
 import { AdminSessionUser } from './types';
@@ -545,6 +546,14 @@ app.use(
 app.use(
   '/api/admin-unified-dashboard',
   createIntegrationManagementRouter((req: Request, res: Response) => ({
+    tenantId: requireTenantId(req),
+    user: requireCurrentUser(res),
+  }))
+);
+
+app.use(
+  '/api/admin-unified-dashboard',
+  createMigrationRouter((req: Request, res: Response) => ({
     tenantId: requireTenantId(req),
     user: requireCurrentUser(res),
   }))

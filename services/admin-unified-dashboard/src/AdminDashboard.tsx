@@ -13,6 +13,7 @@ import { EcommerceDashboardPage } from './components/EcommerceDashboardPage';
 import { SettingsPage } from './components/SettingsPage';
 import { CustomersPage } from './components/CustomersPage';
 import { AuditLogsPage } from './components/AuditLogsPage';
+import { MigrationPage } from './components/MigrationPage';
 import { AdminSessionUser, DashboardEntity, dashboardApi } from './apiClient';
 import { useTheme } from './design-system/providers/ThemeProvider';
 
@@ -34,6 +35,7 @@ function titleForEntity(entity: DashboardEntity | null): string {
   if (entity === 'fiscal-settings') return 'Fiscal Control';
   if (entity === 'orders') return 'Pedidos';
   if (entity === 'settings') return 'Visual Settings';
+  if (entity === 'migration') return 'Migração Assistida';
   return 'Entity Control';
 }
 
@@ -44,6 +46,7 @@ function indicatorForEntity(entity: DashboardEntity | null): string {
   if (entity === 'products') return 'Catalogo e Estoque';
   if (entity === 'orders') return 'Operacao de Pedidos';
   if (entity === 'logging') return 'Audit Trail';
+  if (entity === 'migration') return 'Migracao Assistida';
   if (entity) return entity;
   return 'Select Entity';
 }
@@ -212,6 +215,8 @@ export default function AdminDashboard({
             <AuditLogsPage tenantId={tenantId} currentUser={currentUser} />
           ) : selectedEntity === 'settings' ? (
             <SettingsPage tenantId={tenantId} currentUser={currentUser} />
+          ) : selectedEntity === 'migration' ? (
+            <MigrationPage tenantId={tenantId} currentUser={currentUser} />
           ) : (
             <EntityCommandCenter
               entity={selectedEntity}

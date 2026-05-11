@@ -117,6 +117,7 @@ export type DashboardEntity =
   | 'customers'
   | 'settings'
   | 'tenant-config'
+  | 'migration'
   | 'webhooks'
   | 'payments'
   | 'cache';
@@ -1284,6 +1285,208 @@ export type ImportOrdersResult = {
   imported: number;
   skippedDuplicates: number;
   orders: Array<Record<string, unknown>>;
+};
+
+export type MigrationSourcePlatform =
+  | 'shopify'
+  | 'woocommerce'
+  | 'nuvemshop'
+  | 'tray'
+  | 'vtex'
+  | 'loja_integrada'
+  | 'magento'
+  | 'csv'
+  | 'xml'
+  | 'merchant_feed'
+  | 'sitemap'
+  | 'other';
+
+export type MigrationAccessMethod = 'api' | 'file' | 'feed' | 'sitemap' | 'public_read' | 'manual';
+export type MigrationModuleKey = 'catalog' | 'customers' | 'orders' | 'seo' | 'layout' | 'content' | 'redirects';
+export type MigrationConnectionPayload = {
+  apiKey?: string;
+  accessToken?: string;
+  consumerKey?: string;
+  consumerSecret?: string;
+  feedUrl?: string;
+  fileName?: string;
+  fileContent?: string;
+  fileContentBase64?: string;
+  contentType?: string;
+  timeoutMs?: number;
+  perPage?: number;
+  authorizationConfirmed?: boolean;
+};
+export type MigrationStatus =
+  | 'draft'
+  | 'connected'
+  | 'discovered'
+  | 'validated'
+  | 'importing'
+  | 'imported'
+  | 'syncing'
+  | 'ready_for_go_live'
+  | 'live'
+  | 'blocked';
+
+export type MigrationProject = {
+  id: string;
+  tenantId: string;
+  name: string;
+  sourcePlatform: MigrationSourcePlatform;
+  sourceUrl: string;
+  accessMethod: MigrationAccessMethod;
+  status: MigrationStatus;
+  environment: 'homologacao';
+  modules: Record<MigrationModuleKey, 'pending' | 'ready' | 'warning' | 'blocked' | 'imported'>;
+  credentialsConfigured: boolean;
+  authorizationConfirmed: boolean;
+  temporaryDataExpiresAt?: string;
+  discovery?: {
+    platformDetected: MigrationSourcePlatform;
+    products: number;
+    categories: number;
+    images: number;
+    customers: number;
+    orders: number;
+    indexableUrls: number;
+    pages: number;
+    redirects: number;
+    complexity: 'baixa' | 'media' | 'alta';
+    availableSources: MigrationAccessMethod[];
+  };
+  validation?: {
+    validRecords: number;
+    warningRecords: number;
+    blockedRecords: number;
+    issues: Array<{
+      id: string;
+      module: MigrationModuleKey;
+      severity: 'info' | 'warning' | 'error' | 'critical';
+      title: string;
+      description: string;
+      recommendation: string;
+    }>;
+    lgpdWarnings: string[];
+    generatedAt: string;
+  };
+  importSummary?: {
+    importedProducts: number;
+    importedCustomers: number;
+    importedOrders: number;
+    importedPages: number;
+    createdRedirects: number;
+    skippedSensitiveFields: string[];
+    environment: 'homologacao';
+    generatedAt: string;
+  };
+  goLiveChecklist: Array<{ key: string; label: string; done: boolean; required: boolean }>;
+  notes?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  lastRunAt?: string;
+};
+
+export type MigrationEvent = {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  userId: string;
+  action: string;
+  status: 'success' | 'warning' | 'error';
+  message: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type MigrationRun = {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  operation: 'connect' | 'discover' | 'validate' | 'import' | 'incremental_sync' | 'go_live_checklist';
+  status: 'running' | 'completed' | 'partial' | 'failed';
+  createdBy: string;
+  startedAt: string;
+  finishedAt?: string;
+  stats?: Record<string, unknown>;
+  errorMessage?: string;
+};
+
+export type MigrationRecord = {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  runId: string;
+  module: MigrationModuleKey;
+  sourcePlatform: MigrationSourcePlatform;
+  sourceResourceType: string;
+  sourceId: string;
+  recordLabel?: string;
+  status: 'raw' | 'normalized' | 'validated' | 'warning' | 'blocked' | 'imported' | 'skipped' | 'failed';
+  recordCount: number;
+  issueCount: number;
+  t3ckResourceType?: string;
+  t3ckResourceId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MigrationColumnMapping = {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  module: MigrationModuleKey;
+  targetField: string;
+  sourceField?: string;
+  required: boolean;
+  confidence: 'high' | 'medium' | 'low';
+  status: 'suggested' | 'confirmed' | 'ignored';
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MigrationNormalizedRecord = {
+  id: string;
+  tenantId: string;
+  projectId: string;
+  runId: string;
+  module: MigrationModuleKey;
+  sourcePlatform: MigrationSourcePlatform;
+  sourceResourceType: string;
+  sourceId: string;
+  recordLabel?: string;
+  t3ckResourceType: string;
+  t3ckResourceId?: string;
+  fields: Record<string, unknown>;
+  columnMappings: Array<{
+    targetField: string;
+    sourceField?: string;
+    required: boolean;
+    confidence: 'high' | 'medium' | 'low';
+    status: 'suggested' | 'confirmed' | 'ignored';
+  }>;
+  warnings: string[];
+  status: 'ready' | 'warning' | 'blocked' | 'imported' | 'skipped' | 'failed';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MigrationPipelineSnapshot = {
+  project: MigrationProject;
+  runs: MigrationRun[];
+  rawBatches: Array<Record<string, unknown>>;
+  records: MigrationRecord[];
+  normalizedRecords: MigrationNormalizedRecord[];
+  validationIssues: Array<Record<string, unknown>>;
+  importResults: Array<Record<string, unknown>>;
+  sourceMappings: Array<Record<string, unknown>>;
+  columnMappings: MigrationColumnMapping[];
+  redirects: Array<Record<string, unknown>>;
 };
 
 export function loadAdminSession(): AdminSession | null {
@@ -2549,6 +2752,160 @@ export const integrationsApi = {
   },
 };
 
+export const migrationApi = {
+  listProjects: async (tenantId?: string) => {
+    return apiRequest('/api/admin-unified-dashboard/migration/projects', {}, tenantId);
+  },
+  createProject: async (
+    payload: {
+      name: string;
+      sourcePlatform: MigrationSourcePlatform;
+      sourceUrl: string;
+      accessMethod: MigrationAccessMethod;
+      modules?: MigrationModuleKey[];
+      notes?: string;
+    },
+    tenantId?: string
+  ) => {
+    return apiRequest(
+      '/api/admin-unified-dashboard/migration/projects',
+      { method: 'POST', body: JSON.stringify(payload) },
+      tenantId
+    );
+  },
+  updateProject: async (projectId: string, payload: Partial<MigrationProject>, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}`,
+      { method: 'PUT', body: JSON.stringify(payload) },
+      tenantId
+    );
+  },
+  connect: async (
+    projectId: string,
+    payload: MigrationConnectionPayload,
+    tenantId?: string
+  ) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/connect`,
+      { method: 'POST', body: JSON.stringify(payload) },
+      tenantId
+    );
+  },
+  discover: async (projectId: string, tenantId?: string, payload: Partial<MigrationConnectionPayload> = {}) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/discover`,
+      { method: 'POST', body: JSON.stringify(payload) },
+      tenantId
+    );
+  },
+  validate: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/validate`,
+      { method: 'POST', body: JSON.stringify({}) },
+      tenantId
+    );
+  },
+  importToStaging: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/import`,
+      { method: 'POST', body: JSON.stringify({}) },
+      tenantId
+    );
+  },
+  incrementalSync: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/incremental-sync`,
+      { method: 'POST', body: JSON.stringify({}) },
+      tenantId
+    );
+  },
+  updateChecklist: async (
+    projectId: string,
+    checklist: Array<{ key: string; done: boolean }>,
+    tenantId?: string
+  ) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/go-live-checklist`,
+      { method: 'PUT', body: JSON.stringify({ checklist }) },
+      tenantId
+    );
+  },
+  report: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/report`,
+      {},
+      tenantId
+    );
+  },
+  pipeline: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/pipeline`,
+      {},
+      tenantId
+    );
+  },
+  runs: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/runs`,
+      {},
+      tenantId
+    );
+  },
+  records: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/records`,
+      {},
+      tenantId
+    );
+  },
+  mappings: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/mappings`,
+      {},
+      tenantId
+    );
+  },
+  columnMappings: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/column-mappings`,
+      {},
+      tenantId
+    );
+  },
+  saveColumnMappings: async (
+    projectId: string,
+    mappings: Array<{
+      module: MigrationModuleKey;
+      targetField: string;
+      sourceField?: string;
+      required?: boolean;
+      confidence?: 'high' | 'medium' | 'low';
+      status?: 'suggested' | 'confirmed' | 'ignored';
+    }>,
+    tenantId?: string
+  ) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/column-mappings`,
+      { method: 'PUT', body: JSON.stringify({ mappings }) },
+      tenantId
+    );
+  },
+  normalizedRecords: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/normalized-records`,
+      {},
+      tenantId
+    );
+  },
+  redirects: async (projectId: string, tenantId?: string) => {
+    return apiRequest(
+      `/api/admin-unified-dashboard/migration/projects/${encodeURIComponent(projectId)}/redirects`,
+      {},
+      tenantId
+    );
+  },
+};
+
 export const themeApi = {
   getBundle: async (tenantId?: string) => {
     return apiRequest('/api/admin-unified-dashboard/theme', {}, tenantId);
@@ -3124,6 +3481,7 @@ export async function getEntityCounts(tenantId?: string): Promise<Record<string,
     customers: 0,
     settings: 0,
     'tenant-config': 0,
+    migration: 0,
     payments: 0,
     webhooks: 0,
     logging: 0,
@@ -3133,7 +3491,17 @@ export async function getEntityCounts(tenantId?: string): Promise<Record<string,
   try {
     // Only fetch endpoints that work without special auth.
     // Skip webhooks and payments as they return 401.
-    const [tenantsRes, usersRes, productsRes, ordersRes, fiscalRes, integrationsRes, customersRes, logsRes] = await Promise.all(
+    const [
+      tenantsRes,
+      usersRes,
+      productsRes,
+      ordersRes,
+      fiscalRes,
+      integrationsRes,
+      customersRes,
+      logsRes,
+      migrationRes,
+    ] = await Promise.all(
       [
       entityApi.tenants.list(),
       entityApi.users.list(tenantId),
@@ -3143,6 +3511,7 @@ export async function getEntityCounts(tenantId?: string): Promise<Record<string,
       integrationsApi.list(tenantId),
       entityApi.customers.list(tenantId),
       entityApi.logs.list(10, tenantId),
+      migrationApi.listProjects(tenantId),
     ]);
 
     if (tenantsRes.success && Array.isArray(tenantsRes.data)) {
@@ -3177,6 +3546,9 @@ export async function getEntityCounts(tenantId?: string): Promise<Record<string,
       counts.logging = logsRes.data.pagination.total;
     } else if (logsRes.success && Array.isArray(logsRes.data)) {
       counts.logging = logsRes.data.length;
+    }
+    if (migrationRes.success && Array.isArray(migrationRes.data)) {
+      counts.migration = migrationRes.data.length;
     }
     counts.dashboard = 1;
     counts.analytics = 1;

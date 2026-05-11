@@ -26,6 +26,7 @@ const entities: Array<{
   { id: 'integrations', label: 'Integração', icon: 'I' },
   { id: 'settings', label: 'Personalização Visual', icon: 'PX' },
   { id: 'tenant-config', label: 'Tenant Config', icon: 'TC', adminOnly: true },
+  { id: 'migration', label: 'Migração', icon: 'M', adminOnly: true },
   { id: 'logging', label: 'Logs de Auditoria', icon: 'L', permission: 'visualizar_logs_auditoria' },
 ];
 
